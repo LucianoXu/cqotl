@@ -11,6 +11,7 @@ license: "LICENSE"
 depends: [
   "ocaml"
   "dune" {>= "3.16"}
+  "menhir"
   "odoc" {with-doc}
 ]
 build: [

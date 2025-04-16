@@ -11,9 +11,10 @@
 (maintainers "Jam Kabeer Ali Khan")
 
 (license LICENSE)
+(using menhir 3.0)
 
 (package
  (name generator)
  (synopsis      "Generator for Proof obligations on Quantum While language with Classical variables.")
  (description   "The implementation utilizes a program logic and discharges proof obligation using a theorem prover.")
- (depends ocaml dune))
+ (depends ocaml dune menhir))

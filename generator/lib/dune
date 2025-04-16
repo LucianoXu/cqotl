@@ -1,3 +1,16 @@
+(menhir
+ (modules parser)
+)
+
+(ocamllex lexer)
+
 (library
  (name cqotl_vgc)
- (modules ast pretty_printer))
+ (modules
+  ast                  
+  pretty_printer       
+  parser               
+  lexer                
+  parser_utils)
+ (libraries menhirLib) 
+)
