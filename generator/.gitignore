@@ -1,0 +1,16 @@
+_build/
+
+*.cmo
+*.cmi
+*.cma
+*.cmx
+*.cmxa
+*.cmt
+*.cmti
+*.annot
+*.a
+*.o
+
+_opam/
+
+_doc/
