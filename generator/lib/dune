@@ -10,7 +10,8 @@
   ast                  
   pretty_printer       
   parser               
-  lexer                
-  parser_utils)
+  lexer
+  parser_utils
+  utils)
  (libraries menhirLib) 
 )
