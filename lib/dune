@@ -1,4 +1,0 @@
-(library
- (name classic_quantumRHL)
- (modules ast pretty_printer)
-)
