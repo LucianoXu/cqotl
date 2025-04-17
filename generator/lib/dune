@@ -11,7 +11,6 @@
   pretty_printer       
   parser               
   lexer
-  parser_utils
-  utils)
+  parser_utils)
  (libraries menhirLib) 
 )
