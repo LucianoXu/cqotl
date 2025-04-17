@@ -19,8 +19,7 @@ rule token = parse
     | "if"                          { IF }
     | "while"                       { WHILE }
     | "then"                        { THEN }
-    | "do"                          { DO }
-    | "od"                          { OD }
+    | "end"                         { END }
     | "="                           { EQ }
     | "H" | "X" | "Z" | "M" as op   { UNITARY_OP  (String.make 1 op) }
     | var   as v                    { Var v }
