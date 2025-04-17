@@ -1,0 +1,20 @@
+(lang dune 3.16)
+
+(name generator)
+
+(generate_opam_files true)
+
+(version 0.1.0)
+
+(authors "Jam Kabeer Ali Khan, Yingte Xu and Iván Renison")
+
+(maintainers "Jam Kabeer Ali Khan")
+
+(license LICENSE)
+(using menhir 3.0)
+
+(package
+ (name generator)
+ (synopsis      "Generator for Proof obligations on Quantum While language with Classical variables.")
+ (description   "The implementation utilizes a program logic and discharges proof obligation using a theorem prover.")
+ (depends ocaml dune menhir))
