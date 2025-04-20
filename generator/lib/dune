@@ -11,6 +11,14 @@
   pretty_printer       
   parser               
   lexer
-  parser_utils)
+  parser_utils
+  kernel)
  (libraries menhirLib) 
+)
+
+; Disable warnings for unused variables
+(env
+  (dev
+    (flags (:standard -warn-error -27))
+  )
 )

@@ -45,6 +45,7 @@ GitHub repository: https://github.com/LucianoXu/cqotl.git
     - [ ] (maybe) semantics
 
 - [ ] REPL
-    - [ ] Basic command line REPL
+    - [x] Basic command line REPL
+    - [ ] Solve the parsing conflicts (see _build/default/lib/parser.conflicts)
     - [ ] REPL context
     - [ ] Pretty-printing
