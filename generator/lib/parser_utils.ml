@@ -1,4 +1,6 @@
-open Ast
+
+
+exception SyntaxError of string
 
 let parse_top (input : string) : Ast.command list =
   let lexbuf = Lexing.from_string input in

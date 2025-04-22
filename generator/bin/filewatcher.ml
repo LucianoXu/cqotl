@@ -1,13 +1,8 @@
 open Unix
-open Cqotl_vgc.Ast
+(* open Cqotl_vgc.Ast *)
 (* open Cqotl_vgc.Pretty_printer *)
 open Cqotl_vgc.Parser_utils
 open Cqotl_vgc.Kernel
-
-
-
-let process (p : prover) (cmds : command list) : unit =
-    List.iter (fun cmd -> eval p cmd) cmds
 
 
 (** read the whole file as string *)
@@ -73,16 +68,9 @@ let () =
       let p = init_prover () in
       let status_content : string = 
       let content   = read_file source in
-        try
-          let cmds = parse_top content in
-            process p cmds;
-            get_status p None
-            
-        with
-        | SyntaxError msg ->
-          msg
-        | ProverError msg ->
-          get_status p (Some msg)
+        let cmds = parse_top content in
+        let eval_res = eval_list p cmds in
+          get_status p eval_res
       in
         write_file ~dst:status ~content:status_content;
         watcher_print (Printf.sprintf "%s updated -> %s\n%!" source status);

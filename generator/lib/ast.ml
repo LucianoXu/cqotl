@@ -1,7 +1,5 @@
 
 (* This exception represents the error raised by incorrect use of the prover, such as syntax error or rule application error. This will be reported in the status. *)
-exception SyntaxError of string
-exception ProverError of string
 
 type id                   = string
 type qreg                 = id list
@@ -17,11 +15,13 @@ type qreg                 = id list
 
 type command =
   | Def of {x : id; t : types; e : terms}
+  | DefWithoutType of {x : id; e : terms}
   | Var of {x : id; t : types}
   | Check of terms
   | Show of id
   | ShowAll
   | Undo
+  | Pause
 
 
 and types =

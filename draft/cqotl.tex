@@ -97,7 +97,11 @@ The rules for typing judgements are as follows.
     \qquad
     \frac{\WF{\Gamma} \qquad x := t : T \in \Gamma}{\Gamma \vdash x : T} \\
     \\
-    \frac{\Gamma \vdash q_i : \qvar \text{ for all } i = 1, 2, \dots, n}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
+    \frac{
+        \begin{aligned}
+            & \Gamma \vdash q_i : \qvar \text{ for all } i = 1, 2, \dots, n\\
+            & q_i \neq q_j \text{ for all } i \neq j
+        \end{aligned}}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
     \\
     \frac{\Gamma \vdash o : \lopt \qquad \text{$o$ is an assertion}}{\Gamma \vdash \assert{o} : \assn} \\
     \\

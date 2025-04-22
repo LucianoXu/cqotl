@@ -8,7 +8,7 @@
 %token COLON COMMA PERIOD ASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE PLUS
 
 (* token for commands *)
-%token DEF VAR CHECK SHOW SHOWALL UNDO
+%token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE
 
 (* token for types *)
 %token QVAR QREG OPT LOPT ASSERTION PROGRAM
@@ -31,11 +31,13 @@ command_list:
 
 command:
   | DEF x = ID COLON t = types ASSIGN e = terms PERIOD { Def {x; t; e} }
+  | DEF x = ID ASSIGN e = terms PERIOD { DefWithoutType {x; e} }
   | VAR x = ID COLON t = types PERIOD  { Var {x; t} }
   | CHECK e = terms PERIOD { Check e }
   | SHOW x = ID PERIOD { Show x }
   | SHOWALL PERIOD { ShowAll }
   | UNDO PERIOD { Undo }
+  | PAUSE PERIOD { Pause }
 
 types:
   | QVAR { QVar }

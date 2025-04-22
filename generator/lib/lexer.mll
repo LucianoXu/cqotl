@@ -34,6 +34,7 @@ rule token = parse
     | "Show"                        { SHOW }
     | "ShowAll"                     { SHOWALL }
     | "Undo"                        { UNDO }
+    | "Pause"                       { PAUSE }
 
     (* Types *)
     | "QVar"                        { QVAR }

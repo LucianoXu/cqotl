@@ -14,7 +14,8 @@ and command2str (c: command) : string =
   match c with
   | Def {x; t; e} -> 
       Printf.sprintf "Def %s : %s := %s." x (type2str t) (term2str e)
-      
+  | DefWithoutType {x; e} -> 
+      Printf.sprintf "Def %s := %s." x (term2str e)
   | Var {x; t}    -> 
       Printf.sprintf "Var %s : %s." x (type2str t) 
   | Check e      -> 
@@ -25,6 +26,8 @@ and command2str (c: command) : string =
       Printf.sprintf "ShowAll."
   | Undo         ->
       Printf.sprintf "Undo."
+  | Pause       ->
+      Printf.sprintf "Pause."
   (* | _ -> 
       Printf.sprintf "Command not implemented yet" *)
 
