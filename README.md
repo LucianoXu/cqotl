@@ -49,3 +49,23 @@ GitHub repository: https://github.com/LucianoXu/cqotl.git
     - [ ] Solve the parsing conflicts (see _build/default/lib/parser.conflicts)
     - [ ] REPL context
     - [ ] Pretty-printing
+
+
+### Coq Formalization in `coq_formal/`
+
+This folder contains the Coq formalization of this project.
+
+#### Prerequisites
+- **Coq Proof Assistant, version 8.20+** (including `coqc` and `coq_makefile`)
+
+#### Setup & Installation
+
+1. Generate a `Makefile`.
+```bash
+coq_makefile -f _CoqProject -o Makefile
+```
+
+2. Compile the `.v` files
+```bash
+make
+```
