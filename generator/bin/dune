@@ -1,4 +1,4 @@
 (executable
- (public_name generator)
- (name main)
- (libraries cqotl_vgc))
+ (public_name filewatcher)
+ (name filewatcher)
+ (libraries cqotl_vgc unix))

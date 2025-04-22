@@ -72,13 +72,13 @@ and stmt_seq_2_str (s: stmt_seq) : string =
 and stmt2str (s: stmt) : string =
   match s with
   | Skip                        -> 
-      "skip;"
+      "skip"
 
   | InitQubit q                 -> 
-      Printf.sprintf "%s := |0>;" q
+      Printf.sprintf "%s := |0>" q
 
   | Unitary {u_opt; qs}       ->
-      Printf.sprintf "%s%s;" (term2str u_opt) (qreg2str qs)
+      Printf.sprintf "%s%s" (term2str u_opt) (qreg2str qs)
 
   | IfMeas {m_opt; s1; s2}  ->
       Printf.sprintf "if %s then %s else %s end" 

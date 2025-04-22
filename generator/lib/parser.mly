@@ -70,16 +70,13 @@ opt:
 lopt:
   | opt = terms qs = qreg { Pair {opt; qs}}
 
-program:
-  | s = stmt_seq EOF { s }
-
 stmt_seq:
   | s = stmt ss = stmt_seq { s :: ss }
   | s = stmt { SingleCmd s }
 
 stmt:
-  | SKIP SEMICOLON                                                                     { Skip }
-  | q           = ID ASSIGN KET0 SEMICOLON                                            { InitQubit q }
+  | SKIP                                                                     { Skip }
+  | q           = ID ASSIGN KET0                                             { InitQubit q }
   | u_opt = terms qs = qreg { Unitary {u_opt; qs} }
   | IF m_opt = terms THEN s1 = terms ELSE s2 = terms END          { IfMeas {m_opt; s1; s2} }
   | WHILE m_opt    = terms DO s = terms END              { WhileMeas {m_opt; s} }

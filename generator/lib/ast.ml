@@ -1,4 +1,7 @@
 
+(* This exception represents the error raised by incorrect use of the prover, such as syntax error or rule application error. This will be reported in the status. *)
+exception SyntaxError of string
+exception ProverError of string
 
 type id                   = string
 type qreg                 = id list
