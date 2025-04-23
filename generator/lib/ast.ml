@@ -1,7 +1,5 @@
 
-
-type id                   = string
-type qreg                 = id list
+type qreg = string list
 
 (* qWhile Grammar:
   Seq ::= S1 S2 ... Sn    (n >= 1)
@@ -13,30 +11,50 @@ type qreg                 = id list
 *)
 
 type command =
-  | Def of {x : id; t : types; e : terms}
-  | Var of {x : id; t : types}
+  | Def of {x : string; t : types; e : terms}
+  | DefWithoutType of {x : string; e : terms}
+  | Var of {x : string; t : types}
   | Check of terms
-  | Show of id
+  | Show of string
   | ShowAll
   | Undo
+  | Pause
+  (* For defining hypotheses *)
+  | Assume of {x : string; p : props}
+  (* for interactive proof *)
+  | Prove of {x : string; p : props}
+  | Tactic of tactic
+  | QED
 
+and tactic =
+  | Sorry
+
+  (* The two sided rules *)
+  | R_SKIP
 
 and types =
   | QVar
   | QReg of int
   | Opt of int
   | LOpt
-  | Assertion
+  | MeasOpt
   | Program
+
+
+and props =
+  | Unitary of terms
+  | Assn of terms
+  | Meas of terms
   | Judgement of {
     pre: terms;
     s1 : terms;
     s2 : terms;
     post : terms;
   } 
+  | Eq of {t1: terms; t2: terms}
 
 and terms =
-  | Var of id
+  | Var of string
 
   | QRegTerm of qreg
 
@@ -44,13 +62,9 @@ and terms =
 
   | LOptTerm of lopt
 
-  (* Note that assertions can only be constructed from labeled operators by proof. *)
-  | Assertion of lopt 
+  | MeasOpt of {m1 : terms; m2 : terms}
 
   | Stmt of stmt_seq
-
-  (* The opaque proof term. *)
-  | Proof
 
 and opt =
   | Add of {o1: terms; o2: terms} (* It seems that use opt as the type is the best choice. It enables direct decomposition to operator arguments. *)
@@ -69,7 +83,7 @@ and stmt_seq =
 (* Single Statements *)
 and stmt =
   | Skip
-  | InitQubit of      id
+  | InitQubit of      string
   | Unitary of   {u_opt: terms; qs: qreg}
   | IfMeas of         {m_opt: terms; s1: terms; s2: terms}
   | WhileMeas of      {m_opt: terms; s: terms}

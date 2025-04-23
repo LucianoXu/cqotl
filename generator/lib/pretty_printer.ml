@@ -14,7 +14,8 @@ and command2str (c: command) : string =
   match c with
   | Def {x; t; e} -> 
       Printf.sprintf "Def %s : %s := %s." x (type2str t) (term2str e)
-      
+  | DefWithoutType {x; e} -> 
+      Printf.sprintf "Def %s := %s." x (term2str e)
   | Var {x; t}    -> 
       Printf.sprintf "Var %s : %s." x (type2str t) 
   | Check e      -> 
@@ -25,8 +26,23 @@ and command2str (c: command) : string =
       Printf.sprintf "ShowAll."
   | Undo         ->
       Printf.sprintf "Undo."
+  | Pause       ->
+      Printf.sprintf "Pause."
+  | Assume {x; p} ->
+      Printf.sprintf "Assume %s : %s." x (prop2str p)
+  | Prove {x; p}  ->
+      Printf.sprintf "Prove %s : %s." x (prop2str p)
+  | Tactic t      ->
+      (tactic2str t)
+  | QED -> "QED."
   (* | _ -> 
       Printf.sprintf "Command not implemented yet" *)
+
+and tactic2str (t: tactic) : string =
+  match t with
+  | Sorry -> "sorry."
+  | R_SKIP -> "r_skip."
+  (* | _ -> "Unknown tactic" *)
 
 and type2str (t: types) : string =
   match t with
@@ -34,13 +50,24 @@ and type2str (t: types) : string =
   | QReg n      -> Printf.sprintf "QReg %d" n
   | Opt n       -> Printf.sprintf "Opt %d" n
   | LOpt        -> "LOpt"
-  | Assertion   -> "Assertion"
+  | MeasOpt     -> "MeasOpt"
   | Program     -> "Program"
-  | Judgement {pre; s1; s2; post} -> 
-      Printf.sprintf "{%s} %s ~ %s {%s}" 
-        (term2str pre) (term2str s1) (term2str s2) (term2str post)
   (* | _ -> "Unknown type" *)
       
+and prop2str (p: props) : string =
+  match p with
+  | Unitary e -> 
+      Printf.sprintf "Unitary %s" (term2str e)
+  | Assn e ->
+      Printf.sprintf "Assn %s" (term2str e)
+  | Meas e ->
+      Printf.sprintf "Meas %s" (term2str e)
+  | Judgement {pre; s1; s2; post} -> 
+    Printf.sprintf "{%s} %s ~ %s {%s}" 
+      (term2str pre) (term2str s1) (term2str s2) (term2str post)
+  | Eq {t1; t2} ->
+      Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
+  (* | _ -> "Unknown proposition" *)
 
 and term2str (e: terms) : string =
   match e with
@@ -48,9 +75,9 @@ and term2str (e: terms) : string =
   | QRegTerm qs -> qreg2str qs
   | OptTerm o  -> opt2str o
   | LOptTerm lo -> lopt2str lo
-  | Assertion lo -> lopt2str lo
+  | MeasOpt {m1; m2} -> 
+      Printf.sprintf "<%s, %s>" (term2str m1) (term2str m2)
   | Stmt s      -> stmt_seq_2_str s
-  | Proof       -> "<opaque proof>"
   (* | _ -> "Unknown term" *)
 
 and opt2str (o: opt) : string =
@@ -72,13 +99,13 @@ and stmt_seq_2_str (s: stmt_seq) : string =
 and stmt2str (s: stmt) : string =
   match s with
   | Skip                        -> 
-      "skip;"
+      "skip"
 
   | InitQubit q                 -> 
-      Printf.sprintf "%s := |0>;" q
+      Printf.sprintf "%s := |0>" q
 
   | Unitary {u_opt; qs}       ->
-      Printf.sprintf "%s%s;" (term2str u_opt) (qreg2str qs)
+      Printf.sprintf "%s%s" (term2str u_opt) (qreg2str qs)
 
   | IfMeas {m_opt; s1; s2}  ->
       Printf.sprintf "if %s then %s else %s end" 

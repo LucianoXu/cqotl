@@ -1,5 +1,7 @@
 (menhir
  (modules parser)
+; --trace outputs the parsing trace, can be used for debugging purposes
+;  (flags --trace)
 )
 
 (ocamllex lexer)

@@ -1,0 +1,60 @@
+(* Assumption. *)
+	Var a : QVar.
+	Var b : QVar.
+	Var c : QVar.
+	
+	(* Pause the evaluation. *)
+	(* Pause. *)
+	
+	(* Type QReg 2 is not allowed for assumptions. *)
+	(* Var qs : QReg 2. *)
+	
+	Def qs : QReg 2 := [a, b].
+	
+	(* Name qs is already declared. *)
+	(* Def qs : QReg 1 := [a]. *)
+	
+	(* The variable qs2 is specified as type QReg 3, but term [a, b] has type QReg 2. *)
+	(* Def qs2 : QReg 3 := [a, b]. *)
+	
+	(* The quantum register [a, a] contains repeated variables. *)
+	(* Def qs3 : QReg 2 := [a, a]. *)
+	
+	Var X : Opt 1.
+	Assume X_unitary : Unitary X.
+	
+	
+	Def prog : Program := 
+		skip 
+		skip 
+		skip 
+		if P then skip else skip end.
+	
+	Var P : LOpt.
+	Var Q : LOpt.
+	Assume P_assn : Assn P.
+	Assume Q_assn : Assn Q.
+	
+	(* bug: it should check whether the prop is valid *)
+	Prove relational_proof : {P} skip ~ skip {P}.
+	
+		(* Error: The prover is in proof mode. *)
+		(* Var new_a : QVar. *)
+	
+		r_skip.
+	
+	QED.
+	
+		Pause.
+	
+	(* Check command *)
+	Check [a, c, b].
+	
+	(* Show command *)
+	Show prog.
+	Pause.
+	(* ShowAll command *)
+	ShowAll.
+	
+	(* Undo command *)
+	Undo.
