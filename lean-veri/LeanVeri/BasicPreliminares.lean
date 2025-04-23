@@ -86,6 +86,8 @@ omit [CompleteSpace E] [FiniteDimensional 𝕜 E]
 
 open scoped TensorProduct
 
+notation:100 T "⊗ₗ" N:100 => TensorProduct.map T N
+
 lemma zero_comp' (T : E →ₗ[𝕜] E) : (0 : E →ₗ[𝕜] E) ∘ₗ T = 0 := zero_comp T
 
 lemma comp_zero' (T : E →ₗ[𝕜] E) : T ∘ₗ (0 : E →ₗ[𝕜] E) = 0 := MulZeroClass.mul_zero T
@@ -104,23 +106,21 @@ lemma add_conmm (T N : E →ₗ[𝕜] E) : T + N = N + T := AddCommGroup.add_com
 
 lemma add_assoc (T N M : E →ₗ[𝕜] E) : T + (N + M) = (T + N) + M := (_root_.add_assoc T N M).symm
 
-lemma zero_tmul (T : E →ₗ[𝕜] E) : (0 : E) ⊗ₜ[𝕜] T = 0 := TensorProduct.zero_tmul E T
+lemma zero_tmul (T : E →ₗ[𝕜] E) : (0 : E →ₗ[𝕜] E) ⊗ₗ T = 0 := TensorProduct.map_zero_left T
 
-lemma tmul_zero (T : E →ₗ[𝕜] E) : T ⊗ₜ[𝕜] (0 : E) = 0 := TensorProduct.tmul_zero E T
+lemma tmul_zero (T : E →ₗ[𝕜] E) : T ⊗ₗ (0 : E →ₗ[𝕜] E) = 0 := TensorProduct.map_zero_right T
 
--- lemma tmul_assoc (T N M : E →ₗ[𝕜] E) : (T ⊗ₜ[𝕜] N) ⊗ₜ[𝕜] M = T ⊗ₜ[𝕜] (N ⊗ₜ[𝕜] M) := sorry
+-- lemma tmul_assoc (T N M : E →ₗ[𝕜] E) : (T ⊗ₗ N) ⊗ₗ M = T ⊗ₗ (N ⊗ₗ M) := sorry
 
-lemma tmul_add (T T0 T1 : E →ₗ[𝕜]E) : T ⊗ₜ[𝕜] (T0 + T1) = T ⊗ₜ[𝕜] T0 + T ⊗ₜ[𝕜] T1 := TensorProduct.tmul_add T T0 T1
+lemma tmul_add (T T0 T1 : E →ₗ[𝕜]E) : T ⊗ₗ (T0 + T1) = T ⊗ₗ T0 + T ⊗ₗ T1 := TensorProduct.map_add_right T T0 T1
 
-lemma tmul_add' (T T0 T1 : E →ₗ[𝕜]E) (m : 𝕜) : T ⊗ₜ[𝕜] (m • T0 + T1) = m • (T ⊗ₜ[𝕜] T0) + (T  ⊗ₜ[𝕜] T1) := by
-  rw [TensorProduct.tmul_add T (m • T0) T1]
-  simp
+lemma tmul_add' (T T0 T1 : E →ₗ[𝕜]E) (m : 𝕜) : T ⊗ₗ (m • T0 + T1) = m • (T ⊗ₗ T0) + (T  ⊗ₗ T1) := by
+  rw [TensorProduct.map_add_right T (m • T0) T1, TensorProduct.map_smul_right m T T0]
 
-lemma add_tmul (T T0 T1 : E →ₗ[𝕜]E) : (T + T0) ⊗ₜ[𝕜] T1 = T ⊗ₜ[𝕜] T1 + T0 ⊗ₜ[𝕜] T1 := TensorProduct.add_tmul T T0 T1
+lemma add_tmul (T T0 T1 : E →ₗ[𝕜]E) : (T + T0) ⊗ₗ T1 = T ⊗ₗ T1 + T0 ⊗ₗ T1 := TensorProduct.map_add_left T T0 T1
 
-lemma add_tmul' (T T0 T1 : E →ₗ[𝕜]E) (m : 𝕜) : (m • T + T0) ⊗ₜ[𝕜] T1 = m • (T ⊗ₜ[𝕜] T1) + (T0 ⊗ₜ[𝕜] T1) := by
-  rw [TensorProduct.add_tmul (m • T) T0 T1]
-  rfl
+lemma add_tmul' (T T0 T1 : E →ₗ[𝕜]E) (m : 𝕜) : (m • T + T0) ⊗ₗ T1 = m • (T ⊗ₗ T1) + (T0 ⊗ₗ T1) := by
+  rw [TensorProduct.map_add_left (m • T) T0 T1, TensorProduct.map_smul_left m T T1]
 
 lemma adjoint_zero (T : E →ₗ[𝕜]E) : InnerProductSpace.adjoint (0 : E) (T (0 : E)) = (0 : 𝕜) := by
   simp
