@@ -41,6 +41,7 @@ and command2str (c: command) : string =
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | R_SKIP -> "r_skip."
   (* | _ -> "Unknown tactic" *)
 
 and type2str (t: types) : string =
@@ -75,7 +76,7 @@ and term2str (e: terms) : string =
   | OptTerm o  -> opt2str o
   | LOptTerm lo -> lopt2str lo
   | MeasOpt {m1; m2} -> 
-      Printf.sprintf "{%s, %s}" (term2str m1) (term2str m2)
+      Printf.sprintf "<%s, %s>" (term2str m1) (term2str m2)
   | Stmt s      -> stmt_seq_2_str s
   (* | _ -> "Unknown term" *)
 

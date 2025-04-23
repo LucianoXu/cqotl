@@ -5,13 +5,14 @@
 %token <string> ID
 %token <int> INT
 
-%token COLON COMMA PERIOD ASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE PLUS
+%token COLON COMMA PERIOD ASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE ASSUME PROVE QED
 
 (* token for tactics *)
 %token SORRY
+%token R_SKIP
 
 (* token for types *)
 %token QVAR QREG OPT LOPT MEASOPT PROGRAM
@@ -51,6 +52,7 @@ command:
 
 tactic:
   | SORRY PERIOD { Sorry }
+  | R_SKIP PERIOD { R_SKIP }
 
 types:
   | QVAR { QVar }
@@ -72,7 +74,7 @@ terms:
   | qs = qreg { QRegTerm qs }
   | op = opt { OptTerm op }
   | lop = lopt { LOptTerm lop }
-  | LBRACE m1 = terms COMMA m2 = terms RBRACE { MeasOpt {m1; m2} }
+  | LANGLE m1 = terms COMMA m2 = terms RANGLE { MeasOpt {m1; m2} }
   | s = stmt_seq { Stmt s }
 
 

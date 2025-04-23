@@ -29,6 +29,9 @@ type command =
 and tactic =
   | Sorry
 
+  (* The two sided rules *)
+  | R_SKIP
+
 and types =
   | QVar
   | QReg of int

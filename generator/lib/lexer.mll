@@ -25,6 +25,8 @@ rule token = parse
     | "~"                           { TILDE }
     | "{"                           { LBRACE }
     | "}"                           { RBRACE }
+    | "<"                           { LANGLE }
+    | ">"                           { RANGLE }
     | "+"                           { PLUS }
 
     (* Commands *)
@@ -38,9 +40,6 @@ rule token = parse
     | "Assume"                      { ASSUME }
     | "Prove"                       { PROVE }
     | "QED"                         { QED }
-
-    (* Tactics *)
-    | "sorry"                       { SORRY }
 
     (* Types *)
     | "QVar"                        { QVAR }
@@ -66,6 +65,10 @@ rule token = parse
     | "while"                       { WHILE }
     | "do"                          { DO }
     | "end"                         { END }
+
+    (* Tactics *)
+    | "sorry"                       { SORRY }
+    | "r_skip"                      { R_SKIP }
 
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)
