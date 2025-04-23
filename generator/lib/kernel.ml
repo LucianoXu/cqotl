@@ -8,11 +8,55 @@ type envItem =
   | Hypothesis of {name: string; prop: props}
 
 type context = envItem list
-type frame = {
+
+type normal_frame = {
   env: context;
-  pending_proof: (string * props) option;
+}
+
+type proof_frame = {
+  env: context;
+  proof_name: string;
+  proof_prop: props;
   goals: props list;
 }
+
+(* The frame of the prover. *)
+type frame = 
+  | NormalFrame of normal_frame
+  | ProofFrame of proof_frame
+
+(* Find the item in the environment. *)
+
+let get_ctx (f: frame) : context =
+  match f with
+  | NormalFrame {env} -> env
+  | ProofFrame {env; _} -> env
+
+let add_envItem (f: normal_frame) (item: envItem) : frame =
+  NormalFrame {env = item::f.env}
+
+let open_proof (f: normal_frame) (name: string) (prop: props) : frame =
+  ProofFrame {
+    env = f.env;
+    proof_name = name;
+    proof_prop = prop;
+    goals = [prop]
+  }
+
+let close_proof (f: proof_frame) : frame =
+  NormalFrame {env = (Proof {name = f.proof_name; prop=f.proof_prop}) :: f.env}
+
+let discharge_first_goal (f: proof_frame) : frame =
+  match f.goals with
+  | [] -> ProofFrame f
+  | _ :: tl ->
+      let new_frame = {
+        env = f.env;
+        proof_name = f.proof_name;
+        proof_prop = f.proof_prop;
+        goals = tl
+      } in
+      ProofFrame new_frame
 
 (* Find the item in the environment. *)
 
@@ -24,7 +68,7 @@ let find_item (f: frame) (name: string) : envItem option =
       | Proof {name = n; _} -> n = name
       | Hypothesis {name = n; _} -> n = name
     ) 
-  f.env
+  (get_ctx f)
 
 type typing_result =
   | Type of types
@@ -65,8 +109,8 @@ let rec valid_prop (f : frame) (prop: props) : valid_prop_result =
   | Judgement {pre; s1; s2; post} -> 
       let t2 = calc_type f s1 in
       let t3 = calc_type f s2 in
-      let pre_proved = prop_proved f.env (Assn pre) in
-      let post_proved = prop_proved f.env (Assn post) in
+      let pre_proved = prop_proved f (Assn pre) in
+      let post_proved = prop_proved f (Assn post) in
         (match pre_proved, t2, t3, post_proved with
         | true, Type (Program), Type (Program), true -> Valid
         | false, _, _, _ -> 
@@ -93,16 +137,18 @@ let rec valid_prop (f : frame) (prop: props) : valid_prop_result =
   (* | _ -> raise (Failure "Not implemented yet") *)
 
 (* Check whether the proposition is proved in the context by directly search through the proofs and hypotheses *)
-and prop_proved (ctx : context) (prop: props) : bool =
-  match ctx with
-  | [] -> false
-  | hd :: tl -> 
-      match hd with
-      | Proof {name = _; prop = p} when p = prop -> true
-      | Hypothesis {name = _; prop = p} when p = prop -> true
-      | _ -> 
-          (* Check the rest of the environment *)
-          prop_proved tl prop
+and prop_proved (frame : frame) (prop: props) : bool =
+  let rec find_item_in_list (ctx: context) prop =
+    match ctx with
+    | [] -> false
+    | hd :: tl -> 
+        match hd with
+        | Proof {name = _; prop = p} when p = prop -> true
+        | Hypothesis {name = _; prop = p} when p = prop -> true
+        | _ -> 
+            (* Check the rest of the environment *)
+            find_item_in_list tl prop
+  in find_item_in_list (get_ctx frame) prop
   
 
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
@@ -194,7 +240,7 @@ and calc_type_stmt (f :frame) (s : stmt) : typing_result =
 
 (* The empty frame. *)
 let empty_frame : frame = 
-  {env = []; pending_proof = None; goals = []}
+  NormalFrame {env = []}
 
 (* Check whether a variable is defined in the frame. *)
 let is_defined (f: frame) (name: string) : bool =
@@ -237,7 +283,7 @@ let env2str (env: envItem list): string =
     |> Printf.sprintf "[\n%s\n]"
 
 
-let goals2str (f: frame): string =
+let goals2str (f: proof_frame): string =
   match f.goals with
   | [] -> "All Goals Clear.\n"
   | _ ->
@@ -251,13 +297,15 @@ let goals2str (f: frame): string =
 
 (* The whole information about the frame *)
 let frame2str (f: frame): string =
-  let env_str = env2str f.env in
-  let proof_mode_str = 
-    match f.pending_proof with
-    | None -> ""
-    | Some (name, prop) -> Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode] %s : %s\n\n%s" name (prop2str prop) (goals2str f)
-  in
-    Printf.sprintf "Context: %s%s" env_str proof_mode_str
+  match f with
+  | NormalFrame {env} -> 
+      let env_str = env2str env in
+        Printf.sprintf "Context: %s" env_str
+  | ProofFrame f ->
+    let env_str = env2str f.env in
+    let proof_mode_str = Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode] %s : %s\n\n%s" f.proof_name (prop2str f.proof_prop) (goals2str f)
+    in
+      Printf.sprintf "Context: %s%s" env_str proof_mode_str
 
 let prover2str (p: prover): string =
   let frame = get_frame p in
@@ -312,9 +360,10 @@ let rec eval (p: prover) (cmd: command) : eval_result =
 and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
-    if frame.pending_proof <> None then
+    match frame with
+    | ProofFrame _ -> 
       ProverError "The prover is in proof mode."
-    else
+    | NormalFrame normal_f ->
       (* check whether the name is already defined *)
       match find_item frame name with
       | Some _ -> 
@@ -324,11 +373,7 @@ and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
         match calc_type frame e with
         | Type t' when t = t' -> 
             (* Add the new definition to the frame. *)
-            p.stack <- {
-              env = Definition {name; t; e}::frame.env;
-              pending_proof = None;
-              goals = []
-            } :: p.stack;
+            p.stack <- (add_envItem normal_f (Definition {name; t; e})) :: p.stack;
             Success
         | Type t' -> 
             ProverError (Printf.sprintf "The variable %s is specified as type %s, but term %s has type %s." name (type2str t) (term2str e) (type2str t'))
@@ -339,9 +384,10 @@ and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
 and eval_def_without_type (p: prover) (name: string) (e: terms) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
-    if frame.pending_proof <> None then
+    match frame with
+    | ProofFrame _ -> 
       ProverError "The prover is in proof mode."
-    else
+    | NormalFrame normal_f ->
       (* check whether the name is already defined *)
       match find_item frame name with
       | Some _ -> 
@@ -351,11 +397,7 @@ and eval_def_without_type (p: prover) (name: string) (e: terms) : eval_result =
         match calc_type frame e with
         | Type t ->   
             (* Add the new definition to the frame. *)
-            p.stack <- {
-              env = Definition {name; t; e}::frame.env;
-              pending_proof = None;
-              goals = []
-            } :: p.stack;
+            p.stack <- (add_envItem normal_f (Definition {name; t; e})):: p.stack;
             Success
         | Proof _ -> ProverError (Printf.sprintf "The term %s is related to a proof." (term2str e))
         | TypeError msg ->
@@ -364,20 +406,17 @@ and eval_def_without_type (p: prover) (name: string) (e: terms) : eval_result =
 and eval_var (p: prover) (name: string) (t: types) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
-    if frame.pending_proof <> None then
+    match frame with
+    | ProofFrame _ ->
       ProverError "The prover is in proof mode."
-    else
+    | NormalFrame normal_f ->
       (* check whether the name is already defined *)
       match find_item frame name with
       | Some _ -> 
         ProverError (Printf.sprintf "Name %s is already declared." name)
       | None ->
           (* Add the new variable to the frame. *)
-          p.stack <- {
-            env = Assumption {name; t}::frame.env;
-            pending_proof = None;
-            goals = []
-          } :: p.stack;
+          p.stack <- (add_envItem normal_f (Assumption {name; t})) :: p.stack;
           Success
 
 and eval_check (p: prover) (e: terms) : eval_result =
@@ -415,7 +454,7 @@ and eval_show (p: prover) (x: string) : eval_result =
 
 and eval_showall (p: prover) : eval_result =
   let frame = get_frame p in
-  Printf.printf "ShowAll:\n%s\n" (env2str frame.env);
+  Printf.printf "ShowAll:\n%s\n" (env2str (get_ctx frame));
   Success
     
 
@@ -427,9 +466,10 @@ and eval_undo (p: prover) : eval_result =
 and eval_assume (p: prover) (x : string) (prop: props) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
-    if frame.pending_proof <> None then
+    match frame with
+    | ProofFrame _ -> 
       ProverError "The prover is in proof mode."
-    else
+    | NormalFrame normal_f ->
       (* check whether the name is already defined *)
       match find_item frame x with
       | Some _ -> 
@@ -439,11 +479,7 @@ and eval_assume (p: prover) (x : string) (prop: props) : eval_result =
           match valid_prop frame prop with
           | Valid -> 
               (* Add the new assumption to the frame. *)
-              p.stack <- {
-                env = Hypothesis {name = x; prop}::frame.env;
-                pending_proof = None;
-                goals = []
-              } :: p.stack;
+              p.stack <- (add_envItem normal_f (Hypothesis {name = x; prop})) :: p.stack;
               Success
           | Invalid msg -> 
               ProverError (Printf.sprintf "The proposition %s is not valid: %s" (prop2str prop) msg)
@@ -451,9 +487,10 @@ and eval_assume (p: prover) (x : string) (prop: props) : eval_result =
 and eval_prove (p: prover) (x : string) (prop: props) : eval_result =
   let frame = get_frame p in
   (* check whether it is in proof mode *)
-  if frame.pending_proof <> None then
+  match frame with
+  | ProofFrame _ -> 
     ProverError "The prover is in proof mode."
-  else
+  | NormalFrame normal_f ->
     (* check whether the name is already defined *)
     match find_item frame x with
     | Some _ -> 
@@ -463,11 +500,7 @@ and eval_prove (p: prover) (x : string) (prop: props) : eval_result =
         match valid_prop frame prop with
         | Valid -> 
             (* Open the proof mode *)
-            p.stack <- {
-              env = frame.env;
-              pending_proof = Some (x, prop);
-              goals = [prop]
-            } :: p.stack;
+            p.stack <- (open_proof normal_f x prop) :: p.stack;
             Success
         | Invalid msg -> 
             ProverError (Printf.sprintf "The proposition %s is not valid: %s" (prop2str prop) msg)
@@ -475,16 +508,16 @@ and eval_prove (p: prover) (x : string) (prop: props) : eval_result =
 and eval_tactic (p: prover) (tac : tactic) : eval_result =
   let frame = get_frame p in
     (* Check whether it is in proof mode *)
-    match frame.pending_proof with
-    | None -> 
+    match frame with
+    | NormalFrame _ -> 
         ProverError "The prover is not in proof mode."
-    | Some _ ->
+    | ProofFrame proof_f ->
         (* check tactic *)
         let tac_res = 
         begin
           match tac with
-          | Sorry -> eval_tac_sorry frame
-          | R_SKIP -> eval_tac_R_SKIP frame
+          | Sorry -> eval_tac_sorry proof_f
+          | R_SKIP -> eval_tac_R_SKIP proof_f
           (* | _ -> raise (Failure "Tactic not implemented yet") *)
         end
         in 
@@ -496,22 +529,18 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         | TacticError msg ->
             ProverError (Printf.sprintf "[Tactic error]\n%s" msg)
 
-and eval_tac_sorry (f: frame) : tactic_result =
+and eval_tac_sorry (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
-  | _ :: tl ->
+  | _ :: _ ->
       (* Add the proof to the frame. *)
-      let new_frame = {
-        env = f.env;
-        pending_proof = f.pending_proof;
-        goals = tl
-      } in
+      let new_frame = discharge_first_goal f in
       Success new_frame
 
-and eval_tac_R_SKIP (f: frame) : tactic_result =
+and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
-  | hd :: tl ->
+  | hd :: _ ->
       (* Check the application condition *)
       match hd with
       | Judgement {pre; s1; s2; post} when 
@@ -520,11 +549,8 @@ and eval_tac_R_SKIP (f: frame) : tactic_result =
         && s1 = Stmt (SingleCmd Skip)
         && s2 = Stmt (SingleCmd Skip)
           ) ->       
-        let new_frame = {
-          env = f.env;
-          pending_proof = f.pending_proof;
-          goals = tl
-        } in
+        let new_frame = discharge_first_goal f in
+        (* Add the proof to the frame. *)
         Success new_frame
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
               
@@ -532,18 +558,15 @@ and eval_tac_R_SKIP (f: frame) : tactic_result =
 and eval_QED (p: prover) : eval_result =
   let frame = get_frame p in
   (* check whether it is in proof mode and all goals are clear *)
-  match frame.pending_proof, frame.goals with
-  | None, _ -> 
+  match frame with
+  | NormalFrame _ -> 
       ProverError "The prover is not in proof mode."
-  | _, _::_ ->
-      ProverError "Pending Goals Remains."
-  | Some (name, prop), [] ->
+  | ProofFrame proof_f ->
+    if List.length proof_f.goals > 0 then
+      ProverError "Goals Remains."
+    else
       (* Add the proof to the frame. *)
-      let new_frame = {
-        env = Proof {name; prop} :: frame.env;
-        pending_proof = None;
-        goals = []
-      } in
+      let new_frame = close_proof proof_f in
       p.stack <- new_frame :: p.stack;
       Success
 
