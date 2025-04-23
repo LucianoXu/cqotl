@@ -67,10 +67,14 @@ let () =
       (* file changed *)
       let p = init_prover () in
       let status_content : string = 
-      let content   = read_file source in
-        let cmds = parse_top content in
-        let eval_res = eval_list p cmds in
-          get_status p eval_res
+        try
+          let content   = read_file source in
+          let cmds = parse_top content in
+          let eval_res = eval_list p cmds in
+            get_status p eval_res
+        with
+        | SyntaxError msg ->
+            Printf.sprintf "Syntax error: %s\n%!" msg
       in
         write_file ~dst:status ~content:status_content;
         watcher_print (Printf.sprintf "%s updated -> %s\n%!" source status);

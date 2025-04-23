@@ -8,10 +8,16 @@
 %token COLON COMMA PERIOD ASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE PLUS
 
 (* token for commands *)
-%token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE
+%token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE ASSUME PROVE QED
+
+(* token for tactics *)
+%token SORRY
 
 (* token for types *)
-%token QVAR QREG OPT LOPT ASSERTION PROGRAM
+%token QVAR QREG OPT LOPT MEASOPT PROGRAM
+
+(* token for propositions *)
+%token UNITARY ASSN MEAS
 
 (* token for terms *)
 %token SKIP IF THEN ELSE WHILE DO END
@@ -38,24 +44,36 @@ command:
   | SHOWALL PERIOD { ShowAll }
   | UNDO PERIOD { Undo }
   | PAUSE PERIOD { Pause }
+  | ASSUME x = ID COLON p = props PERIOD { Assume {x; p} }
+  | PROVE x = ID COLON p = props PERIOD { Prove {x; p} }
+  | QED PERIOD { QED }
+  | t = tactic { Tactic t }
+
+tactic:
+  | SORRY PERIOD { Sorry }
 
 types:
   | QVAR { QVar }
   | QREG d = INT { QReg d }
   | OPT d = INT { Opt d }
   | LOPT { LOpt }
-  | ASSERTION { Assertion }
+  | MEASOPT { MeasOpt }
   | PROGRAM { Program }
+
+props:
+  | UNITARY t = terms { Unitary t }
+  | ASSN t = terms { Assn t }
+  | MEAS t = terms { Meas t }
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE { Judgement {pre; s1; s2; post} }
+  | t1 = terms EQ t2 = terms { Eq {t1; t2} }
 
 terms:
   | v = ID { Var v }
   | qs = qreg { QRegTerm qs }
   | op = opt { OptTerm op }
   | lop = lopt { LOptTerm lop }
-  (* we don't parse assertion, but to construct them by proofs *)
+  | LBRACE m1 = terms COMMA m2 = terms RBRACE { MeasOpt {m1; m2} }
   | s = stmt_seq { Stmt s }
-  (* we don't parse proofs *)
 
 
 (* for qubit list *)

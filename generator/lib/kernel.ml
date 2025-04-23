@@ -2,27 +2,106 @@ open Ast
 open Pretty_printer
 
 type envItem =
-  | Assumption of {name: id; t: types}
-  | Definition of {name: id; t: types; e: terms}
+  | Assumption of {name: string; t: types}
+  | Definition of {name: string; t: types; e: terms}
+  | Proof of {name: string; prop: props}
+  | Hypothesis of {name: string; prop: props}
 
 type frame = {
   env: envItem list;
 }
 
-let find_item (f: frame) (name: id) : envItem option =
+let find_item (f: frame) (name: string) : envItem option =
   List.find_opt (
     function
       | Assumption {name = n; _} -> n = name
       | Definition {name = n; _} -> n = name
+      | Proof {name = n; _} -> n = name
+      | Hypothesis {name = n; _} -> n = name
     ) 
   f.env
 
 type typing_result =
   | Type of types
+  | Proof of props
   | TypeError of string
 
+type valid_prop_result =
+  | Valid
+  | Invalid of string
+
+(* decide whether the proposition is valid in the context *)
+let rec valid_prop (f : frame) (prop: props) : valid_prop_result =
+  match prop with
+  | Unitary e -> 
+      let t = calc_type f e in
+      (match t with
+      | Type (Opt _) -> Valid
+      | Type _ -> 
+          Invalid (Printf.sprintf "The term %s is not of operator type." (term2str e))
+      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str e))
+      )
+  | Assn lo ->
+      let t = calc_type f lo in
+      (match t with
+      | Type (LOpt) -> Valid
+      | Type _ -> 
+          Invalid (Printf.sprintf "The term %s is not of labeled operator type." (term2str lo))
+      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str lo))
+      )
+  | Meas m -> 
+      let t = calc_type f m in
+      (match t with
+      | Type (MeasOpt) -> Valid
+      | Type _ -> 
+          Invalid (Printf.sprintf "The term %s is not of measurement operator type." (term2str m))
+      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str m))
+      )
+  | Judgement {pre; s1; s2; post} -> 
+      let t2 = calc_type f s1 in
+      let t3 = calc_type f s2 in
+      let pre_proved = prop_proved f (Assn pre) in
+      let post_proved = prop_proved f (Assn post) in
+        (match pre_proved, t2, t3, post_proved with
+        | true, Type (Program), Type (Program), true -> Valid
+        | false, _, _, _ -> 
+            Invalid (Printf.sprintf "The precondition %s is not proved to be a valid assertion in the context." (term2str pre))
+        | _, _, _, false -> 
+            Invalid (Printf.sprintf "The postcondition %s is not proved to be a valid assertion in the context." (term2str post))
+        | _, TypeError msg, _, _ -> 
+            Invalid (Printf.sprintf "The term %s is not well typed: %s" (term2str s1) msg)
+        | _, _, TypeError msg, _ ->
+            Invalid (Printf.sprintf "The term %s is not well typed: %s" (term2str s2) msg)
+        | _ -> Invalid (Printf.sprintf "Invalid judgement: %s." (prop2str prop))
+        )
+  | Eq {t1; t2} ->
+      let t1_type = calc_type f t1 in
+      let t2_type = calc_type f t2 in
+        (match t1_type, t2_type with
+        | Type (Opt n), Type (Opt m) when n = m -> Valid
+        | Type LOpt, Type LOpt -> Valid
+        | Type (Opt _), Type (Opt _) -> 
+            Invalid (Printf.sprintf "The terms %s and %s are not of the same operator type." (term2str t1) (term2str t2))
+        | _ -> 
+            Invalid (Printf.sprintf "The terms %s and %s should have operator or labeled operator types." (term2str t1) (term2str t2))
+        )
+  (* | _ -> raise (Failure "Not implemented yet") *)
+
+(* Check whether the proposition is proved in the context by directly search through the proofs and hypotheses *)
+and prop_proved (f : frame) (prop: props) : bool =
+  match f.env with
+  | [] -> false
+  | hd :: tl -> 
+      match hd with
+      | Proof {name = _; prop = p} when p = prop -> true
+      | Hypothesis {name = _; prop = p} when p = prop -> true
+      | _ -> 
+          (* Check the rest of the environment *)
+          prop_proved {env = tl} prop
+  
+
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
-let rec calc_type (f : frame) (s : terms) : typing_result = 
+and calc_type (f : frame) (s : terms) : typing_result = 
   match s with
   | Var x -> 
       calc_type_var f x
@@ -32,17 +111,15 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
       calc_type_opt f o
   | LOptTerm lo ->
       calc_type_lopt f lo
-  | Assertion _ ->
-      raise (Failure "Unexpected assertion for type calculation.")
+  | MeasOpt _ ->
+      raise (Failure "Unimplemented")
   | Stmt ss -> 
       calc_type_program f ss
-  | Proof ->
-      raise (Failure "Unexpected proof term for type calculation.")
 
-and calc_type_var (f : frame) (v : id) : typing_result = 
+and calc_type_var (f : frame) (v : string) : typing_result = 
   match find_item f v with
-  | Some (Assumption {t; _}) -> Type t
-  | Some (Definition {t; _}) -> Type t
+  | Some (Assumption {t; _}) | Some (Definition {t; _}) -> Type t
+  | Some (Proof {prop; _}) | Some (Hypothesis {prop; _}) -> Proof prop
   | None -> TypeError (Printf.sprintf "Variable %s is not defined." v)
 
 and calc_type_qreg (f : frame) (qs : qreg) : typing_result = 
@@ -115,10 +192,8 @@ let empty_frame : frame =
   {env = []}
 
 (* Check whether a variable is defined in the frame. *)
-let is_defined (f: frame) (name: id) : bool =
-  List.exists (function
-    | Assumption {name = n; _} -> n = name
-    | Definition {name = n; _} -> n = name) f.env
+let is_defined (f: frame) (name: string) : bool =
+  find_item f name <> None
 
 
 (* The prover. Initially it has empty stack and the frame is described by empty_frame. *)
@@ -144,7 +219,11 @@ let envItem2str (item: envItem ): string =
   | Assumption {name; t} -> 
       Printf.sprintf "%s : %s" name (type2str t)
   | Definition {name; t; e} -> 
-    Printf.sprintf "%s := %s : %s" name (term2str e) (type2str t)
+      Printf.sprintf "%s := %s : %s" name (term2str e) (type2str t)
+  | Proof {name; prop} -> 
+      Printf.sprintf "%s := <proof> : %s" name (prop2str prop)
+  | Hypothesis {name; prop} -> 
+      Printf.sprintf "%s : %s" name (prop2str prop)
 
 
 let env2string (env: envItem list): string =
@@ -188,14 +267,16 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_undo p
     | Pause ->
         Pause
-    (* | _ -> raise (Failure "Not implemented yet") *)
+    | Assume {x = x; p = prop} ->
+      eval_assume p x prop
+    | _ -> raise (Failure "Command not implemented yet")
   in match res with
     | ProverError msg -> 
         ProverError (msg ^ "\n\nFor the command:\n" ^ (command2str cmd))
     | _ -> res
   
 
-and eval_def (p: prover) (name: id) (t: types) (e: terms) : eval_result =
+and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
   let frame = get_frame p in
     match find_item frame name with
     | Some _ -> 
@@ -209,10 +290,11 @@ and eval_def (p: prover) (name: id) (t: types) (e: terms) : eval_result =
           Success
       | Type t' -> 
           ProverError (Printf.sprintf "The variable %s is specified as type %s, but term %s has type %s." name (type2str t) (term2str e) (type2str t'))
+      | Proof _ -> ProverError (Printf.sprintf "The term %s is related to a proof." (term2str e))
       | TypeError msg -> 
           ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
 
-and eval_def_without_type (p: prover) (name: id) (e: terms) : eval_result =
+and eval_def_without_type (p: prover) (name: string) (e: terms) : eval_result =
   let frame = get_frame p in
     match find_item frame name with
     | Some _ -> 
@@ -224,23 +306,19 @@ and eval_def_without_type (p: prover) (name: id) (e: terms) : eval_result =
           (* Add the new definition to the frame. *)
           p.stack <- {env = Definition {name; t; e}::frame.env} :: p.stack;
           Success
+      | Proof _ -> ProverError (Printf.sprintf "The term %s is related to a proof." (term2str e))
       | TypeError msg ->
           ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
 
-and eval_var (p: prover) (name: id) (t: types) : eval_result =
+and eval_var (p: prover) (name: string) (t: types) : eval_result =
   let frame = get_frame p in
     match find_item frame name with
     | Some _ -> 
       ProverError (Printf.sprintf "Name %s is already declared." name)
     | None ->
-        (* Check the validity *)
-        match t with
-        | QVar | Opt _ | Assertion ->
-          (* Add the new variable to the frame. *)
-          p.stack <- {env = Assumption {name; t}::frame.env} :: p.stack;
-          Success
-        | _ -> 
-          ProverError (Printf.sprintf "Type %s is not allowed for assumptions." (type2str t))
+        (* Add the new variable to the frame. *)
+        p.stack <- {env = Assumption {name; t}::frame.env} :: p.stack;
+        Success
 
 and eval_check (p: prover) (e: terms) : eval_result =
   let frame = get_frame p in
@@ -249,10 +327,13 @@ and eval_check (p: prover) (e: terms) : eval_result =
     | Type t -> 
       Printf.printf "Check %s: %s.\n" (term2str e) (type2str t);
       Success
+    | Proof prop -> 
+      Printf.printf "Check %s: %s.\n" (term2str e) (prop2str prop);
+      Success
     | TypeError msg -> 
       ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
 
-and eval_show (p: prover) (x: id) : eval_result =
+and eval_show (p: prover) (x: string) : eval_result =
   let frame = get_frame p in
     let item = find_item frame x in
       match item with
@@ -260,8 +341,15 @@ and eval_show (p: prover) (x: id) : eval_result =
           Printf.printf "Show %s : %s.\n" name (type2str t);
           Success
       | Some (Definition {name; t; e}) -> 
-          Printf.printf "Show %s : %s := %s.\n" name (type2str t) (term2str e);
+          Printf.printf "Show %s := %s : %s.\n" name (term2str e) (type2str t);
           Success
+      | Some (Proof {name; prop}) -> 
+          Printf.printf "Show %s := <proof> %s.\n" name (prop2str prop);
+          Success
+      | Some (Hypothesis {name; prop}) ->
+          Printf.printf "Show %s : %s.\n" name (prop2str prop);
+          Success
+      (* | Some _ -> ProverError (Printf.sprintf "Name %s is not defined." x) *)
       | None -> 
           ProverError (Printf.sprintf "Name %s is not defined." x)
 
@@ -275,6 +363,21 @@ and eval_undo (p: prover) : eval_result =
   match p.stack with
   | [] -> ProverError "No frame to undo."
   | _ :: rest -> p.stack <- rest; Success
+
+and eval_assume (p: prover) (x : string) (prop: props) : eval_result =
+  let frame = get_frame p in
+    match find_item frame x with
+    | Some _ -> 
+      ProverError (Printf.sprintf "Name %s is already declared." x)
+    | None ->
+        (* Type check here *)
+        match valid_prop frame prop with
+        | Valid -> 
+            (* Add the new assumption to the frame. *)
+            p.stack <- {env = Hypothesis {name = x; prop}::frame.env} :: p.stack;
+            Success
+        | Invalid msg -> 
+            ProverError (Printf.sprintf "The proposition %s is not valid: %s" (prop2str prop) msg)
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2string p in

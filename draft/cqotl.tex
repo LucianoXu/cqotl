@@ -11,28 +11,28 @@ Extending Quantum Relational Hoare Logics from Optimal Transport Duality with Cl
 
 
 \section{Type System}
-This section introduces the typing system with indexed types of the prover.
+This section introduces the typing system of the prover, which includes the types, terms and propositions.
 
 \newcommand{\qvar}{\textsf{QVar}}
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
 \newcommand{\opt}[1]{\ensuremath{\textsf{Opt}(#1)}}
 \newcommand{\lopt}{\ensuremath{\textsf{LOpt}}}
+\newcommand{\measopt}{\ensuremath{\textsf{MeasOpt}}}
 \newcommand{\unitary}[1]{\ensuremath{\textsf{Unitary}({#1})}}
-\newcommand{\assn}{\ensuremath{\textsf{Assn}}}
+\newcommand{\assn}[1]{\ensuremath{\textsf{Assn}(#1)}}
+\newcommand{\meas}[1]{\ensuremath{\textsf{Meas}(#1)}}
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
+\newcommand{\prop}{\ensuremath{\textsf{Prop}}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
 \begin{definition}[type syntax]
     \label{def:type syntax}
     The syntax for types in the prover are defined as follows:
     \begin{align*}
-        T ::=\ & \qvar \mid \qreg{n} \mid \opt{n} \mid \lopt \\
-            & \mid \assn\\
-            & \mid \prog \mid \judge{P}{s_1}{s_2}{Q}
+        T ::=\ & \qvar \mid \qreg{n} \mid \opt{n} \mid \lopt \mid \measopt \mid \prog
     \end{align*}
 \end{definition}
-Here $n$ are positive integers. $P$ and $Q$ are assertion terms. $s_1$ and $s_2$ are program terms.
-Although the judgement type \judge{P}{s_1}{s_2}{Q} depends on four terms in its form, the aassertions $P, Q$ and programs $s_1, s_2$ will only have types $\assn$ and $\prog$ respectively, so it is not dependent type.
+Here $n$ are positive integers. 
 
 \newcommand{\assert}[1]{\ensuremath{\textsf{assert}(#1)}}
 \newcommand{\pf}{\textsf{proof}}
@@ -41,10 +41,21 @@ Although the judgement type \judge{P}{s_1}{s_2}{Q} depends on four terms in its 
     \label{def:term syntax}
     The syntax for terms is defined as follows:
     \begin{align*}
-        t ::= x \mid [t_1, t_2, ... t_n] \mid opt \mid lopt \mid \assert{t} \mid stmts \mid \pf
+        t ::= x \mid [x_1, x_2, ... x_n] \mid opt \mid lopt \mid \{lopt_1, lopt_2\} \mid stmts
     \end{align*}
 \end{definition}
-Here $x$ is a variable. $[t_1, t_2, ... t_n]$ is a quantum register. $opt$, $lopt$ and $stmts$ are operators, labeled operators and program statments, which are defined later on. \assert{t} represents the operator $t$ in the assertion type, and \pf is a constant denoting the opaque proof term.
+Here $x$ is a variable. $[x_1, x_2, ... x_n]$ is a quantum register. $opt$, $lopt$ and $stmts$ are operators, labeled operators and program statments, which are defined later on. $\{lopt_1, lopt_2\}$ represents the pair of measurement operators.
+
+\begin{definition}[proposition syntax]
+    \label{def:prop syntax}
+    \begin{align*}
+        \phi ::=\ & \unitary{t} \mid \assn{t} \mid \meas{t} \mid \judge{P}{s_1}{s_2}{Q} \\
+                & \mid t = t
+    \end{align*}
+\end{definition}
+Here $P$ and $Q$ are operators. $s_1$ and $s_2$ are program terms.
+
+\textbf{Remark:} Here the arguments in constructors like $\judge{P}{s_1}{s_2}{Q}$ are hinted to be particular types, but this is only for elaboration consideration. We adopt the general approach in the implementation, which allows the arguments to be any term in syntax, and validity is guaranteed by type checking.
 
 \subsection{Operators}
 
@@ -66,10 +77,10 @@ qwhile programs are encoded as terms in the prover.
     \begin{align*}
         & stmts ::= && stmt \mid stmts\ stmt & \text{(statement sequence)} \\
         & stmt ::= && \Skip & \text{(skip)} \\
-            & && \Init{t} & \text{(initialization)} \\
-            & && U\ t & \text{(unitary transformation)} \\
-            & && \If{P}{stmts_1}{stmts_2} & \text{(if statement)} \\
-            & && \While{P}{stmts} & \text{(while statement)}
+            & && \mid \Init{t} & \text{(initialization)} \\
+            & && \mid U\ t & \text{(unitary transformation)} \\
+            & && \mid \If{P}{stmts_1}{stmts_2} & \text{(if statement)} \\
+            & && \mid \While{P}{stmts} & \text{(while statement)}
     \end{align*}
 \end{definition}
 
@@ -78,16 +89,48 @@ qwhile programs are encoded as terms in the prover.
 
 \newcommand{\WF}[1]{\ensuremath{\mathcal{WF}(#1)}}
 
-We maintain a context $\Gamma$ for the typing of terms. A context $\Gamma$ consists of a list of definitions $x := t : T$ or assumptions $x : T$. 
-We use $[]$ to denote the empty context, and $x \in \Gamma$ to denote that variable $x$ appears in the context as a definition or assumption.
-We only work with well-formed contexts, denoted as \WF{\Gamma}. The typing judgement, denoted as $\Gamma \vdash t : T$, represents that the term $t$ has type $T$ in well-formed context $\Gamma$. The well-formed contexts can be constructed in the following ways:
+We maintain a context $\Gamma$ for the typing of terms and the proof of propositions. 
+A context $\Gamma$ consists of a list of declarations, which are definitions $x := t : T$, assumptions $x : T$, proofs $x := \pf : \phi$ or hypothesis $x : \phi$. 
+Here \pf\ is a symbol representing the opaque proof of propositions.
+We use $[]$ to denote the empty context, and $x \in \Gamma$ to denote that variable $x$ appears in the context as a declaration.
+We only work with well-formed contexts, denoted as \WF{\Gamma}. 
+The typing judgement, denoted as $\Gamma \vdash t : T$, represents that the term $t$ has type $T$ in well-formed context $\Gamma$. 
+The proof judgement, denoted as $\Gamma \vdash \phi$, represents that the proposition is proved in the context.
+
+We use $\Gamma \vdash \phi : \prop$ to denote that $\phi$ is a valid proposition in $\Gamma$. It can be proved using the following rules:
+\begin{gather*}
+    \frac{\Gamma \vdash o : \opt{n}}{\Gamma \vdash \unitary{o} : \prop}
+    \qquad
+    \frac{\Gamma \vdash lo : \lopt}{\Gamma \vdash \assn{lo} : \prop} \\
+    \\
+    \frac{\Gamma \vdash M : \measopt}{\Gamma \vdash \meas{M} : \prop}
+    \qquad
+    \frac{
+        \begin{aligned}
+            & \Gamma \vdash \assn{P} \qquad \Gamma \vdash \assn{Q} \\
+            & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
+        \end{aligned}}
+        {
+            \Gamma \vdash \judge{P}{s_1}{s_2}{Q} : \prop
+        } \\
+    \\
+    \frac{\Gamma \vdash o_1 : \opt{n} \qquad \Gamma \vdash o_2 : \opt{n}}{\Gamma \vdash o_1 = o_2 : \prop}
+    \qquad
+    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash lo_1 = lo_2 : \prop}
+\end{gather*}
+
+The well-formed contexts can be constructed in the following ways:
 
 \begin{gather*}
-    \frac{}{\WF{[]}} 
-    \qquad 
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad T \in \{\qvar, \opt{n}, \assn \}}{\WF{\Gamma;x:T}} \\
+    \frac{}{\WF{[]}} \\
     \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} 
+    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad T \in \{\qvar, \opt{n}, \prog \}}{\WF{\Gamma;x:T}} \\
+    \\
+    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} \\
+    \\
+    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop}{\WF{\Gamma;x:\phi}} \\
+    \\
+    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop \qquad \text{(proof provided)}}{\WF{\Gamma;x:=\pf:\phi}} \\
 \end{gather*}
 
 The rules for typing judgements are as follows.
@@ -103,32 +146,27 @@ The rules for typing judgements are as follows.
             & q_i \neq q_j \text{ for all } i \neq j
         \end{aligned}}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
     \\
-    \frac{\Gamma \vdash o : \lopt \qquad \text{$o$ is an assertion}}{\Gamma \vdash \assert{o} : \assn} \\
-    \\
-    \frac{
-        \begin{aligned}
-            & \Gamma \vdash P : \assn \qquad \Gamma \vdash Q : \assn  \\
-            & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog \\
-            & \judge{P}{s_1}{s_2}{Q} \text{ proved through tactics}
-        \end{aligned}}
-        {
-            \Gamma \vdash \pf : \judge{P}{s_1}{s_2}{Q}
-        }
+    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash \{lo_1, lo_2\} : \measopt}
 \end{gather*}
 
 The typing rules for program statements are:
 \begin{gather*}
     \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog}
     \qquad
-    \frac{\Gamma \vdash t : \qreg{n}}{\Gamma \vdash \Init{t} : \prog}
-    \qquad
-    \frac{\Gamma \vdash t : \qreg{n} \qquad \Gamma \vdash U : \opt{n}}{\Gamma \vdash U\ t : \prog} \\
+    \frac{\Gamma \vdash t : \qreg{n}}{\Gamma \vdash \Init{t} : \prog} \\
     \\
-    \frac{\Gamma \vdash P : \lopt \qquad \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog}
-    {\Gamma \vdash \If{P}{s_1}{s_2} : \prog} \\
+    \frac{\Gamma \vdash t : \qreg{n} \qquad \Gamma \vdash U : \opt{n} \qquad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
     \\
-    \frac{\Gamma \vdash P : \lopt \qquad \Gamma \vdash s : \prog}
-    {\Gamma \vdash \While{P}{s} : \prog}
+    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog}
+    {\Gamma \vdash \If{M}{s_1}{s_2} : \prog} \\
+    \\
+    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s : \prog}
+    {\Gamma \vdash \While{M}{s} : \prog}
 \end{gather*}
 
 \yx{About unitary and measurement operators: currently we directly assum that all operators involved are valid. We can add the unitary and measurement operator type to further charactorize it.}
+
+The propositions can be proved using the following rules:
+\begin{gather*}
+    ...
+\end{gather*}

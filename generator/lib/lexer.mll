@@ -35,14 +35,28 @@ rule token = parse
     | "ShowAll"                     { SHOWALL }
     | "Undo"                        { UNDO }
     | "Pause"                       { PAUSE }
+    | "Assume"                      { ASSUME }
+    | "Prove"                       { PROVE }
+    | "QED"                         { QED }
+
+    (* Tactics *)
+    | "sorry"                       { SORRY }
 
     (* Types *)
     | "QVar"                        { QVAR }
     | "QReg"                        { QREG }
     | "Opt"                         { OPT }
     | "LOpt"                        { LOPT }
-    | "Assertion"                   { ASSERTION }
+    | "MeasOpt"                     { MEASOPT }
     | "Program"                     { PROGRAM }
+
+    (* Propositions *)
+    | "Unitary"                     { UNITARY }
+    | "Assn"                        { ASSN }
+    | "Meas"                        { MEAS }
+    (* Judgement *)
+    (* eq = *)
+
 
     (* Terms *)
     | "skip"                        { SKIP }
