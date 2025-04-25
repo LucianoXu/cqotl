@@ -6,7 +6,8 @@
 let whitespace  = [' ' '\t' '\r' '\n']
 let digit       = ['0'-'9']
 let alpha       = ['a'-'z' 'A'-'Z']
-let id          = alpha (alpha | digit | '_')*
+(* let id          = alpha (alpha | digit | '_')* *)
+let id          = alpha (alpha | digit)*
 
 rule token = parse
     | whitespace                    { token lexbuf }
@@ -17,6 +18,7 @@ rule token = parse
     | ","                           { COMMA }
     | "."                           { PERIOD }
     | ":="                          { ASSIGN }
+    | "*="                          { STARASSIGN }
     | "|0>"                         { KET0 }
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
@@ -28,6 +30,10 @@ rule token = parse
     | "<"                           { LANGLE }
     | ">"                           { RANGLE }
     | "+"                           { PLUS }
+    | "("                           { LPAREN }
+    | ")"                           { RPAREN }
+    | "*"                           { STAR }
+    | "_"                           { UNDERSCORE }
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -37,17 +43,25 @@ rule token = parse
     | "ShowAll"                     { SHOWALL }
     | "Undo"                        { UNDO }
     | "Pause"                       { PAUSE }
-    | "Assume"                      { ASSUME }
     | "Prove"                       { PROVE }
     | "QED"                         { QED }
+    
+    (* Tactics *)
+    | "sorry"                       { SORRY }
+    | "r_skip"                      { R_SKIP }
 
     (* Types *)
-    | "QVar"                        { QVAR }
+    | "Type"                        { TYPE }
+    | "Prop"                        { PROP }
+    | "QVList"                      { QVLIST }
+    | "OptPair"                     { OPTPAIR }
+    | "CType"                       { CTYPE }
     | "QReg"                        { QREG }
-    | "Opt"                         { OPT }
-    | "LOpt"                        { LOPT }
-    | "MeasOpt"                     { MEASOPT }
-    | "Program"                     { PROGRAM }
+    | "Prog"                        { PROG }
+    | "SType"                       { STYPE }
+    | "OType"                       { OTYPE }
+    | "DType"                       { DTYPE }
+
 
     (* Propositions *)
     | "Unitary"                     { UNITARY }
@@ -59,16 +73,14 @@ rule token = parse
 
     (* Terms *)
     | "skip"                        { SKIP }
+    | "init"                        { INIT }
+    | "unitary"                     { UNITARY_PROG }
     | "if"                          { IF }
     | "then"                        { THEN }
     | "else"                        { ELSE }
     | "while"                       { WHILE }
     | "do"                          { DO }
     | "end"                         { END }
-
-    (* Tactics *)
-    | "sorry"                       { SORRY }
-    | "r_skip"                      { R_SKIP }
 
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)

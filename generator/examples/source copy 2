@@ -1,0 +1,69 @@
+(* Assumption. *)
+Var T : CType.
+Check (T).
+
+Var qs : QVList.
+Var x : OptPair.
+
+Undo.
+Check CType.
+Check QReg[T].
+
+Check Prog.
+Check SType.
+Check OType[T, T].
+
+Var q1 : QReg[T].
+Var q2 : QReg[T].
+Check [q1, q2].
+Check DType[[q1, q2], qs].
+
+Check T * T.
+Var T2 : CType.
+Var t1 : T.
+Var t2 : T2.
+
+Check (t1, t2).
+
+Var O : OType[T, T].
+
+Var O1 : OType[T, T].
+Var O2 : OType[T, T].
+
+Check O_q1,q2.
+
+Check O1 + O2.
+
+Check skip.
+Check skip skip.
+
+Check init q.
+Check unitary U [q1, q2, q3].
+Check if M then s1 else s2 end.
+Check while M do s end.
+
+Var U : OType[T, T].
+
+Check Unitary U.
+
+Check Assn U_q1,q2.
+(* Check Meas M. *)
+
+Def P := U_q1, q2.
+
+Var Ppf : Assn P.
+
+Check {P} skip ~ skip {P}.
+Check P = P.
+
+
+Show Ppf.
+ShowAll.
+
+Prove pf : {P} skip ~ skip {P}.
+
+r_skip.
+
+QED.
+
+Pause.

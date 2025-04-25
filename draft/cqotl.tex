@@ -13,11 +13,17 @@ Extending Quantum Relational Hoare Logics from Optimal Transport Duality with Cl
 \section{Type System}
 This section introduces the typing system of the prover, which includes the types, terms and propositions.
 
-\newcommand{\qvar}{\textsf{QVar}}
+\newcommand{\Type}{\textsf{Type}}
+\newcommand{\CType}{\textsf{CType}}
+\newcommand{\SType}{\ensuremath{\mathcal{S}}}
+
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
-\newcommand{\opt}[1]{\ensuremath{\textsf{Opt}(#1)}}
+\newcommand{\qvlist}{\textsf{QVList}}
+\newcommand{\opt}[2]{\ensuremath{\mathcal{O}(#1, #2)}}
+\newcommand{\ldirac}[2]{\ensuremath{\mathcal{D}(#1, #2)}}
+
 \newcommand{\lopt}{\ensuremath{\textsf{LOpt}}}
-\newcommand{\measopt}{\ensuremath{\textsf{MeasOpt}}}
+\newcommand{\optpair}{\ensuremath{\textsf{OptPair}}}
 \newcommand{\unitary}[1]{\ensuremath{\textsf{Unitary}({#1})}}
 \newcommand{\assn}[1]{\ensuremath{\textsf{Assn}(#1)}}
 \newcommand{\meas}[1]{\ensuremath{\textsf{Meas}(#1)}}
@@ -25,26 +31,19 @@ This section introduces the typing system of the prover, which includes the type
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
-\begin{definition}[type syntax]
-    \label{def:type syntax}
-    The syntax for types in the prover are defined as follows:
+\begin{definition}
     \begin{align*}
-        T ::=\ & \qvar \mid \qreg{n} \mid \opt{n} \mid \lopt \mid \measopt \mid \prog
+        t ::=\ & \Type \mid \qvlist \mid \optpair \\
+        & \mid \CType \mid \qreg{t} \mid \prog \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
+        & \mid t \times t  \\ 
+        & \mid (t, t) \mid \{t, t, \dots, t\} \mid t_{t;t} \\
+        & \mid opt \mid stmts \mid \phi
     \end{align*}
 \end{definition}
-Here $n$ are positive integers. 
 
 \newcommand{\assert}[1]{\ensuremath{\textsf{assert}(#1)}}
 \newcommand{\pf}{\textsf{proof}}
 
-\begin{definition}[term syntax]
-    \label{def:term syntax}
-    The syntax for terms is defined as follows:
-    \begin{align*}
-        t ::= x \mid [x_1, x_2, ... x_n] \mid opt \mid lopt \mid \{lopt_1, lopt_2\} \mid stmts
-    \end{align*}
-\end{definition}
-Here $x$ is a variable. $[x_1, x_2, ... x_n]$ is a quantum register. $opt$, $lopt$ and $stmts$ are operators, labeled operators and program statments, which are defined later on. $\{lopt_1, lopt_2\}$ represents the pair of measurement operators.
 
 \begin{definition}[proposition syntax]
     \label{def:prop syntax}
@@ -98,71 +97,71 @@ The typing judgement, denoted as $\Gamma \vdash t : T$, represents that the term
 The proof judgement, denoted as $\Gamma \vdash \phi$, represents that the proposition is proved in the context.
 
 We use $\Gamma \vdash \phi : \prop$ to denote that $\phi$ is a valid proposition in $\Gamma$. It can be proved using the following rules:
-\begin{gather*}
-    \frac{\Gamma \vdash o : \opt{n}}{\Gamma \vdash \unitary{o} : \prop}
-    \qquad
-    \frac{\Gamma \vdash lo : \lopt}{\Gamma \vdash \assn{lo} : \prop} \\
-    \\
-    \frac{\Gamma \vdash M : \measopt}{\Gamma \vdash \meas{M} : \prop}
-    \qquad
-    \frac{
-        \begin{aligned}
-            & \Gamma \vdash \assn{P} \qquad \Gamma \vdash \assn{Q} \\
-            & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
-        \end{aligned}}
-        {
-            \Gamma \vdash \judge{P}{s_1}{s_2}{Q} : \prop
-        } \\
-    \\
-    \frac{\Gamma \vdash o_1 : \opt{n} \qquad \Gamma \vdash o_2 : \opt{n}}{\Gamma \vdash o_1 = o_2 : \prop}
-    \qquad
-    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash lo_1 = lo_2 : \prop}
-\end{gather*}
+% \begin{gather*}
+%     \frac{\Gamma \vdash o : \opt{n}}{\Gamma \vdash \unitary{o} : \prop}
+%     \qquad
+%     \frac{\Gamma \vdash lo : \lopt}{\Gamma \vdash \assn{lo} : \prop} \\
+%     \\
+%     \frac{\Gamma \vdash M : \optpair}{\Gamma \vdash \meas{M} : \prop}
+%     \qquad
+%     \frac{
+%         \begin{aligned}
+%             & \Gamma \vdash \assn{P} \qquad \Gamma \vdash \assn{Q} \\
+%             & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
+%         \end{aligned}}
+%         {
+%             \Gamma \vdash \judge{P}{s_1}{s_2}{Q} : \prop
+%         } \\
+%     \\
+%     \frac{\Gamma \vdash o_1 : \opt{n} \qquad \Gamma \vdash o_2 : \opt{n}}{\Gamma \vdash o_1 = o_2 : \prop}
+%     \qquad
+%     \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash lo_1 = lo_2 : \prop}
+% \end{gather*}
 
-The well-formed contexts can be constructed in the following ways:
+% The well-formed contexts can be constructed in the following ways:
 
-\begin{gather*}
-    \frac{}{\WF{[]}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad T \in \{\qvar, \opt{n}, \prog \}}{\WF{\Gamma;x:T}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop}{\WF{\Gamma;x:\phi}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop \qquad \text{(proof provided)}}{\WF{\Gamma;x:=\pf:\phi}} \\
-\end{gather*}
+% \begin{gather*}
+%     \frac{}{\WF{[]}} \\
+%     \\
+%     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad T \in \{\qvar, \opt{n}, \prog \}}{\WF{\Gamma;x:T}} \\
+%     \\
+%     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} \\
+%     \\
+%     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop}{\WF{\Gamma;x:\phi}} \\
+%     \\
+%     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop \qquad \text{(proof provided)}}{\WF{\Gamma;x:=\pf:\phi}} \\
+% \end{gather*}
 
-The rules for typing judgements are as follows.
+% The rules for typing judgements are as follows.
 
-\begin{gather*}
-    \frac{\WF{\Gamma} \qquad x : T \in \Gamma}{\Gamma \vdash x : T}
-    \qquad
-    \frac{\WF{\Gamma} \qquad x := t : T \in \Gamma}{\Gamma \vdash x : T} \\
-    \\
-    \frac{
-        \begin{aligned}
-            & \Gamma \vdash q_i : \qvar \text{ for all } i = 1, 2, \dots, n\\
-            & q_i \neq q_j \text{ for all } i \neq j
-        \end{aligned}}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
-    \\
-    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash \{lo_1, lo_2\} : \measopt}
-\end{gather*}
+% \begin{gather*}
+%     \frac{\WF{\Gamma} \qquad x : T \in \Gamma}{\Gamma \vdash x : T}
+%     \qquad
+%     \frac{\WF{\Gamma} \qquad x := t : T \in \Gamma}{\Gamma \vdash x : T} \\
+%     \\
+%     \frac{
+%         \begin{aligned}
+%             & \Gamma \vdash q_i : \qvar \text{ for all } i = 1, 2, \dots, n\\
+%             & q_i \neq q_j \text{ for all } i \neq j
+%         \end{aligned}}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
+%     \\
+%     \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash \{lo_1, lo_2\} : \optpair}
+% \end{gather*}
 
-The typing rules for program statements are:
-\begin{gather*}
-    \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog}
-    \qquad
-    \frac{\Gamma \vdash t : \qreg{n}}{\Gamma \vdash \Init{t} : \prog} \\
-    \\
-    \frac{\Gamma \vdash t : \qreg{n} \qquad \Gamma \vdash U : \opt{n} \qquad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
-    \\
-    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog}
-    {\Gamma \vdash \If{M}{s_1}{s_2} : \prog} \\
-    \\
-    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s : \prog}
-    {\Gamma \vdash \While{M}{s} : \prog}
-\end{gather*}
+% The typing rules for program statements are:
+% \begin{gather*}
+%     \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog}
+%     \qquad
+%     \frac{\Gamma \vdash t : \qreg{n}}{\Gamma \vdash \Init{t} : \prog} \\
+%     \\
+%     \frac{\Gamma \vdash t : \qreg{n} \qquad \Gamma \vdash U : \opt{n} \qquad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
+%     \\
+%     \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog}
+%     {\Gamma \vdash \If{M}{s_1}{s_2} : \prog} \\
+%     \\
+%     \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s : \prog}
+%     {\Gamma \vdash \While{M}{s} : \prog}
+% \end{gather*}
 
 \yx{About unitary and measurement operators: currently we directly assum that all operators involved are valid. We can add the unitary and measurement operator type to further charactorize it.}
 

@@ -1,9 +1,5 @@
 open Ast
 
-let qreg2str (qs : qreg) : string =
-  "[" ^ (String.concat ", " qs) ^ "]"
-
-
 let rec command_list_2_str (cs: command list) : string =
   let format_command (c: command) : string = 
     command2str c in
@@ -13,11 +9,11 @@ let rec command_list_2_str (cs: command list) : string =
 and command2str (c: command) : string =
   match c with
   | Def {x; t; e} -> 
-      Printf.sprintf "Def %s : %s := %s." x (type2str t) (term2str e)
+      Printf.sprintf "Def %s : %s := %s." x (term2str t) (term2str e)
   | DefWithoutType {x; e} -> 
       Printf.sprintf "Def %s := %s." x (term2str e)
   | Var {x; t}    -> 
-      Printf.sprintf "Var %s : %s." x (type2str t) 
+      Printf.sprintf "Var %s : %s." x (term2str t) 
   | Check e      -> 
       Printf.sprintf "Check %s." (term2str e)
   | Show x       ->
@@ -28,10 +24,8 @@ and command2str (c: command) : string =
       Printf.sprintf "Undo."
   | Pause       ->
       Printf.sprintf "Pause."
-  | Assume {x; p} ->
-      Printf.sprintf "Assume %s : %s." x (prop2str p)
   | Prove {x; p}  ->
-      Printf.sprintf "Prove %s : %s." x (prop2str p)
+      Printf.sprintf "Prove %s : %s." x (term2str p)
   | Tactic t      ->
       (tactic2str t)
   | QED -> "QED."
@@ -44,16 +38,58 @@ and tactic2str (t: tactic) : string =
   | R_SKIP -> "r_skip."
   (* | _ -> "Unknown tactic" *)
 
-and type2str (t: types) : string =
-  match t with
-  | QVar        -> "QVar"
-  | QReg n      -> Printf.sprintf "QReg %d" n
-  | Opt n       -> Printf.sprintf "Opt %d" n
-  | LOpt        -> "LOpt"
-  | MeasOpt     -> "MeasOpt"
-  | Program     -> "Program"
-  (* | _ -> "Unknown type" *)
-      
+  and term2str (e: terms) : string =
+    match e with
+    | Var x -> 
+        Printf.sprintf "%s" x
+    | Type ->
+        Printf.sprintf "Type"
+    | Prop ->
+        Printf.sprintf "Prop"
+    | QVList ->
+        Printf.sprintf "QVList"
+    | OptPair ->
+        Printf.sprintf "OptPair"
+    | ProofTerm ->
+        Printf.sprintf "<proof>"
+    | CType ->
+        Printf.sprintf "CType"
+    | QReg qs ->
+        Printf.sprintf "QReg[%s]" (term2str qs)
+    | Prog -> 
+        Printf.sprintf "Prog"
+    | SType ->
+        Printf.sprintf "SType"
+    | OType (t1, t2) ->
+        Printf.sprintf "OType[%s, %s]" (term2str t1) (term2str t2)
+    | DType (t1, t2) ->
+        Printf.sprintf "DType[%s, %s]" (term2str t1) (term2str t2)
+
+    | Star (t1, t2) ->
+        Printf.sprintf "(%s * %s)" (term2str t1) (term2str t2)
+
+    | Pair (t1, t2) ->
+        Printf.sprintf "(%s, %s)" (term2str t1) (term2str t2)
+
+    | QVListTerm tls ->
+        qvlistterm2str tls
+
+    | Subscript (t1, t2, t3) ->
+        Printf.sprintf "%s_%s,%s" (term2str t1) (term2str t2) (term2str t3)
+
+    | OptTerm o -> (opt2str o)
+
+    | ProgTerm s -> (stmt_seq_2_str s)
+
+    | PropTerm p -> (prop2str p)
+    
+    (* | _ -> 
+        Printf.sprintf "<Term not implemented yet>" *)
+
+and qvlistterm2str (tls : string list) : string =
+    tls |> String.concat ", " |> Printf.sprintf "[%s]"
+    
+
 and prop2str (p: props) : string =
   match p with
   | Unitary e -> 
@@ -69,26 +105,10 @@ and prop2str (p: props) : string =
       Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
   (* | _ -> "Unknown proposition" *)
 
-and term2str (e: terms) : string =
-  match e with
-  | Var v       -> v
-  | QRegTerm qs -> qreg2str qs
-  | OptTerm o  -> opt2str o
-  | LOptTerm lo -> lopt2str lo
-  | MeasOpt {m1; m2} -> 
-      Printf.sprintf "<%s, %s>" (term2str m1) (term2str m2)
-  | Stmt s      -> stmt_seq_2_str s
-  (* | _ -> "Unknown term" *)
-
 and opt2str (o: opt) : string =
   match o with
   | Add {o1; o2} -> Printf.sprintf "(%s + %s)" (term2str o1) (term2str o2)
   (* | _ -> "Unknown operator" *)
-
-and lopt2str (lo: lopt) : string =
-  match lo with
-  | Pair {opt; qs} -> Printf.sprintf "%s%s" (term2str opt) (qreg2str qs)
-  (* | _ -> "Unknown labeled operator" *)
 
 and stmt_seq_2_str (s: stmt_seq) : string =
     match s with
@@ -102,10 +122,10 @@ and stmt2str (s: stmt) : string =
       "skip"
 
   | InitQubit q                 -> 
-      Printf.sprintf "%s := |0>" q
+      Printf.sprintf "init %s" (term2str q)
 
   | Unitary {u_opt; qs}       ->
-      Printf.sprintf "%s%s" (term2str u_opt) (qreg2str qs)
+      Printf.sprintf "unitary %s%s" (term2str u_opt) (term2str qs)
 
   | IfMeas {m_opt; s1; s2}  ->
       Printf.sprintf "if %s then %s else %s end" 

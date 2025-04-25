@@ -1,6 +1,4 @@
 
-type qreg = string list
-
 (* qWhile Grammar:
   Seq ::= S1 S2 ... Sn    (n >= 1)
   S ::= skip ;
@@ -11,18 +9,16 @@ type qreg = string list
 *)
 
 type command =
-  | Def of {x : string; t : types; e : terms}
+  | Def of {x : string; t : terms; e : terms}
   | DefWithoutType of {x : string; e : terms}
-  | Var of {x : string; t : types}
+  | Var of {x : string; t : terms}
   | Check of terms
   | Show of string
   | ShowAll
   | Undo
   | Pause
-  (* For defining hypotheses *)
-  | Assume of {x : string; p : props}
   (* for interactive proof *)
-  | Prove of {x : string; p : props}
+  | Prove of {x : string; p : terms}
   | Tactic of tactic
   | QED
 
@@ -32,13 +28,52 @@ and tactic =
   (* The two sided rules *)
   | R_SKIP
 
-and types =
-  | QVar
-  | QReg of int
-  | Opt of int
-  | LOpt
-  | MeasOpt
-  | Program
+and terms = 
+  | Var of string
+
+  (* Forbid variables for these three types. *)
+  | Type
+  | Prop
+  | QVList
+  | OptPair
+
+  | CType
+  | QReg of terms
+  | Prog
+  | SType
+  | OType of terms * terms
+  | DType of terms * terms
+
+  | Star of terms * terms
+
+  | Pair of terms * terms
+  | QVListTerm of string list     (* A set of (constant) quantum variable *)
+  | Subscript of terms * terms * terms
+
+  | OptTerm of opt
+  | ProgTerm of stmt_seq
+  | PropTerm of props
+
+  | ProofTerm         (* the constant opaque proof term *)
+
+
+and opt =
+  | Add of {o1: terms; o2: terms} (* It seems that use opt as the type is the best choice. It enables direct decomposition to operator arguments. *)
+  (* syntax for operators are omitted *)
+
+
+(* A Statement Sequence *)
+and stmt_seq =
+  | SingleCmd of stmt
+  | (::) of stmt * stmt_seq
+
+(* Single Statements *)
+and stmt =
+  | Skip
+  | InitQubit of      terms
+  | Unitary of        {u_opt: terms; qs: terms}
+  | IfMeas of         {m_opt: terms; s1: terms; s2: terms}
+  | WhileMeas of      {m_opt: terms; s: terms}
 
 
 and props =
@@ -53,37 +88,10 @@ and props =
   } 
   | Eq of {t1: terms; t2: terms}
 
-and terms =
-  | Var of string
 
-  | QRegTerm of qreg
-
-  | OptTerm of opt
-
-  | LOptTerm of lopt
-
-  | MeasOpt of {m1 : terms; m2 : terms}
-
-  | Stmt of stmt_seq
-
-and opt =
-  | Add of {o1: terms; o2: terms} (* It seems that use opt as the type is the best choice. It enables direct decomposition to operator arguments. *)
-  (* syntax for operators are omitted *)
-
-and lopt = 
-  | Pair of {opt: terms; qs: qreg}
-  (* other syntax are omitted *)
-
-
-(* A Statement Sequence *)
-and stmt_seq =
-  | SingleCmd of stmt
-  | (::) of stmt * stmt_seq
-
-(* Single Statements *)
-and stmt =
-  | Skip
-  | InitQubit of      string
-  | Unitary of   {u_opt: terms; qs: qreg}
-  | IfMeas of         {m_opt: terms; s1: terms; s2: terms}
-  | WhileMeas of      {m_opt: terms; s: terms}
+(* the function to calculate the qvlist from the qreg term *)
+let rec get_qvlist (qreg : terms) : string list =
+  match qreg with
+  | Var x -> [x]
+  | Pair (t1, t2) -> List.concat [(get_qvlist t1); (get_qvlist t2)]
+  | _ -> raise (Failure "Undefined get_qvlist")

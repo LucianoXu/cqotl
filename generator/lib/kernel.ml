@@ -2,10 +2,8 @@ open Ast
 open Pretty_printer
 
 type envItem =
-  | Assumption of {name: string; t: types}
-  | Definition of {name: string; t: types; e: terms}
-  | Proof of {name: string; prop: props}
-  | Hypothesis of {name: string; prop: props}
+  | Assumption of {name: string; t: terms}
+  | Definition of {name: string; t: terms; e: terms}
 
 type context = envItem list
 
@@ -44,7 +42,7 @@ let open_proof (f: normal_frame) (name: string) (prop: props) : frame =
   }
 
 let close_proof (f: proof_frame) : frame =
-  NormalFrame {env = (Proof {name = f.proof_name; prop=f.proof_prop}) :: f.env}
+  NormalFrame {env = (Definition {name = f.proof_name; t=PropTerm f.proof_prop; e=ProofTerm}) :: f.env}
 
 let discharge_first_goal (f: proof_frame) : frame =
   match f.goals with
@@ -65,132 +63,148 @@ let find_item (f: frame) (name: string) : envItem option =
     function
       | Assumption {name = n; _} -> n = name
       | Definition {name = n; _} -> n = name
-      | Proof {name = n; _} -> n = name
-      | Hypothesis {name = n; _} -> n = name
     ) 
   (get_ctx f)
 
 type typing_result =
-  | Type of types
-  | Proof of props
+  | Type of terms
   | TypeError of string
 
-type valid_prop_result =
-  | Valid
-  | Invalid of string
 
-(* decide whether the proposition is valid in the context *)
-let rec valid_prop (f : frame) (prop: props) : valid_prop_result =
-  match prop with
-  | Unitary e -> 
-      let t = calc_type f e in
-      (match t with
-      | Type (Opt _) -> Valid
-      | Type _ -> 
-          Invalid (Printf.sprintf "The term %s is not of operator type." (term2str e))
-      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str e))
-      )
-  | Assn lo ->
-      let t = calc_type f lo in
-      (match t with
-      | Type (LOpt) -> Valid
-      | Type _ -> 
-          Invalid (Printf.sprintf "The term %s is not of labeled operator type." (term2str lo))
-      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str lo))
-      )
-  | Meas m -> 
-      let t = calc_type f m in
-      (match t with
-      | Type (MeasOpt) -> Valid
-      | Type _ -> 
-          Invalid (Printf.sprintf "The term %s is not of measurement operator type." (term2str m))
-      | _ -> Invalid (Printf.sprintf "The term %s is not well typed." (term2str m))
-      )
-  | Judgement {pre; s1; s2; post} -> 
-      let t2 = calc_type f s1 in
-      let t3 = calc_type f s2 in
-      let pre_proved = prop_proved f (Assn pre) in
-      let post_proved = prop_proved f (Assn post) in
-        (match pre_proved, t2, t3, post_proved with
-        | true, Type (Program), Type (Program), true -> Valid
-        | false, _, _, _ -> 
-            Invalid (Printf.sprintf "The precondition %s is not proved to be a valid assertion in the context." (term2str pre))
-        | _, _, _, false -> 
-            Invalid (Printf.sprintf "The postcondition %s is not proved to be a valid assertion in the context." (term2str post))
-        | _, TypeError msg, _, _ -> 
-            Invalid (Printf.sprintf "The term %s is not well typed: %s" (term2str s1) msg)
-        | _, _, TypeError msg, _ ->
-            Invalid (Printf.sprintf "The term %s is not well typed: %s" (term2str s2) msg)
-        | _ -> Invalid (Printf.sprintf "Invalid judgement: %s." (prop2str prop))
-        )
-  | Eq {t1; t2} ->
-      let t1_type = calc_type f t1 in
-      let t2_type = calc_type f t2 in
-        (match t1_type, t2_type with
-        | Type (Opt n), Type (Opt m) when n = m -> Valid
-        | Type LOpt, Type LOpt -> Valid
-        | Type (Opt _), Type (Opt _) -> 
-            Invalid (Printf.sprintf "The terms %s and %s are not of the same operator type." (term2str t1) (term2str t2))
-        | _ -> 
-            Invalid (Printf.sprintf "The terms %s and %s should have operator or labeled operator types." (term2str t1) (term2str t2))
-        )
-  (* | _ -> raise (Failure "Not implemented yet") *)
-
-(* Check whether the proposition is proved in the context by directly search through the proofs and hypotheses *)
-and prop_proved (frame : frame) (prop: props) : bool =
-  let rec find_item_in_list (ctx: context) prop =
-    match ctx with
-    | [] -> false
-    | hd :: tl -> 
-        match hd with
-        | Proof {name = _; prop = p} when p = prop -> true
-        | Hypothesis {name = _; prop = p} when p = prop -> true
-        | _ -> 
-            (* Check the rest of the environment *)
-            find_item_in_list tl prop
-  in find_item_in_list (get_ctx frame) prop
-  
 
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
-and calc_type (f : frame) (s : terms) : typing_result = 
+let rec calc_type (f : frame) (s : terms) : typing_result = 
   match s with
   | Var x -> 
       calc_type_var f x
-  | QRegTerm qs -> 
-      calc_type_qreg f qs
+
+  | Type -> 
+    TypeError "Type cannot be typed."
+
+  | Prop ->
+    Type Type
+
+  | QVList ->
+    Type Type
+
+  | OptPair ->
+    Type Type
+
+  | CType ->
+    Type Type
+
+  | QReg t ->
+    calc_type_QReg f t
+  
+  | Prog ->
+    Type Type
+
+  | SType ->
+    Type Type
+
+  | OType (t1, t2) ->
+    calc_type_OType f t1 t2
+
+  | DType (t1, t2) ->
+    calc_type_DType f t1 t2
+
+  | Star (t1, t2) ->
+    calc_type_Star f t1 t2
+
+  | Pair (t1, t2) ->
+    calc_type_pair f t1 t2
+
+
+  | QVListTerm ls ->
+    calc_type_qvlist f ls
+
+  | Subscript (e, t1, t2) ->
+    calc_type_subscript f e t1 t2
+
   | OptTerm o ->
-      calc_type_opt f o
-  | LOptTerm lo ->
-      calc_type_lopt f lo
-  | MeasOpt _ ->
-      raise (Failure "Unimplemented")
-  | Stmt ss -> 
-      calc_type_program f ss
+    calc_type_opt f o
+
+  | ProgTerm ss -> 
+    calc_type_program f ss
+  
+  | PropTerm prop ->
+    calc_type_prop f prop
+
+  | ProofTerm ->
+    raise (Failure "<proof> should not be typed")
+
 
 and calc_type_var (f : frame) (v : string) : typing_result = 
   match find_item f v with
   | Some (Assumption {t; _}) | Some (Definition {t; _}) -> Type t
-  | Some (Proof {prop; _}) | Some (Hypothesis {prop; _}) -> Proof prop
   | None -> TypeError (Printf.sprintf "Variable %s is not defined." v)
 
-and calc_type_qreg (f : frame) (qs : qreg) : typing_result = 
-  if List.for_all (fun qv -> (calc_type_var f qv) = Type QVar) qs then
-    (* Check whether there are repeated variable in the register *)
-    let rec check_repeated lst = 
-      match lst with
-      | [] -> true
-      | x :: xs -> 
-          if List.exists (fun y -> x = y) xs then
-            false
-          else
-            check_repeated xs
-    in
-    if check_repeated qs then
-      Type (QReg (List.length qs))
-    else
-      TypeError (Printf.sprintf "The quantum register %s contains repeated variables." (qreg2str qs))
-  else
-    TypeError (Printf.sprintf "The quantum register %s is not well typed." (qreg2str qs))
+and calc_type_QReg (f : frame) (t : terms) =
+  let type_of_t = calc_type f t in
+  match type_of_t with
+  | Type CType -> 
+    Type Type
+  | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t))
+
+and calc_type_OType (f : frame) t1 t2 =
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_t1, type_of_t2 with
+  | Type CType, Type CType ->
+    Type Type
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (OType (t1, t2))))
+
+and calc_type_DType (f : frame) t1 t2 =
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_t1, type_of_t2 with
+  | Type QVList, Type QVList ->
+    Type Type
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (DType (t1, t2))))
+
+and calc_type_Star (f : frame) t1 t2 =
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_t1, type_of_t2 with
+  | Type CType, Type CType
+    -> Type CType
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
+
+
+and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result = 
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_t1, type_of_t2 with
+  | Type ct1, Type ct2 ->
+    let type_of_ct1 = calc_type f ct1 in
+    let type_of_ct2 = calc_type f ct2 in
+    (match type_of_ct1, type_of_ct2 with
+    | Type CType, Type CType ->
+      Type (Star (ct1, ct2))
+    | _ -> TypeError (Printf.sprintf "The pair %s is not well typed, because the arguments have types %s and %s, which do not belong to CType." (term2str (Star (t1, t2))) (term2str ct1) (term2str ct2))
+    )
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
+
+
+and calc_type_qvlist (f : frame) ls =
+  (* check whether all elements is typed as QReg *)
+  match ls with
+  | [] -> Type QVList
+  | hd :: tl ->
+    let type_hd = calc_type f (Var hd) in
+    match type_hd with
+    | Type (QReg _) -> calc_type_qvlist f tl
+    | _ -> TypeError (Printf.sprintf "The element %s is not typed as QReg." (term2str (Var hd)))
+
+and calc_type_subscript f e t1 t2 =
+  let type_of_e = calc_type f e in
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_e, type_of_t1, type_of_t2 with
+  | Type (OType (ot1, ot2)), Type (QReg rt1), Type (QReg rt2) when
+    ot1 = rt1 && ot2 = rt2 ->
+      Type (DType (QVListTerm (get_qvlist t1), QVListTerm (get_qvlist t2)))
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Subscript (e, t1, t2))))
 
 and calc_type_opt (f : frame) (o : opt) : typing_result = 
   match o with
@@ -201,21 +215,7 @@ and calc_type_opt (f : frame) (o : opt) : typing_result =
           t1
         else
           TypeError (Printf.sprintf "The operator %s is not well typed." (opt2str o))
-
-and calc_type_lopt (f : frame) (lo : lopt) : typing_result = 
-  match lo with
-  | Pair {opt; qs} -> 
-      let t = calc_type f opt in
-      let qs_t = calc_type_qreg f qs in
-      match t, qs_t with
-      | Type (Opt n), Type (QReg m) -> 
-          if n = m then
-            Type LOpt
-          else
-            TypeError (Printf.sprintf "The operator %s is not well typed, because the system number mismatch." (term2str opt))
-      | _ ->
-          TypeError (Printf.sprintf "The operator %s is not well typed." (term2str opt))
-
+  
 and calc_type_program (f : frame) (s : stmt_seq) : typing_result = 
   match s with
   | SingleCmd cmd -> 
@@ -223,20 +223,87 @@ and calc_type_program (f : frame) (s : stmt_seq) : typing_result =
   | cmd1 :: cmd2 -> 
       let t1 = calc_type_stmt f cmd1 in
       let t2 = calc_type_program f cmd2 in
-        if t1 = Type Program && t2 = Type Program then
-          Type Program
+        if t1 = Type Prog && t2 = Type Prog then
+          Type Prog
         else
           TypeError (Printf.sprintf "The program %s is not well typed." (stmt_seq_2_str s))
 
 and calc_type_stmt (f :frame) (s : stmt) : typing_result = 
   match s with
   | Skip -> 
-      Type Program
+      Type Prog
   | _ -> 
-      Type Program
-      (* Not implemented *)
+      Type Prog
 
 
+(* decide whether the proposition is valid in the context *)
+and calc_type_prop (f : frame) (prop: props) : typing_result =
+  match prop with
+  | Unitary e -> 
+      let t = calc_type f e in
+      (match t with
+      | Type (OType _) -> Type Prop
+      | Type _ -> 
+          TypeError (Printf.sprintf "The term %s is not of operator type." (term2str e))
+      | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str e))
+      )
+  | Assn lo ->
+      let t = calc_type f lo in
+      (match t with
+      | Type (DType _) -> Type Prop
+      | Type _ -> 
+          TypeError (Printf.sprintf "The term %s is not of labeled operator type." (term2str lo))
+      | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str lo))
+      )
+  | Meas m -> 
+      raise (Failure "calc_type_prop for Meas not implemented")
+      
+  | Judgement {pre; s1; s2; post} -> 
+      let t2 = calc_type f s1 in
+      let t3 = calc_type f s2 in
+      let pre_proved = prop_proved f (Assn pre) in
+      let post_proved = prop_proved f (Assn post) in
+        (match pre_proved, t2, t3, post_proved with
+        | true, Type Prog, Type Prog, true -> Type Prop
+        | false, _, _, _ -> 
+            TypeError (Printf.sprintf "The precondition %s is not proved to be a valid assertion in the context." (term2str pre))
+        | _, _, _, false -> 
+          TypeError (Printf.sprintf "The postcondition %s is not proved to be a valid assertion in the context." (term2str post))
+        | _, TypeError msg, _, _ -> 
+          TypeError (Printf.sprintf "The term %s is not well typed: %s" (term2str s1) msg)
+        | _, _, TypeError msg, _ ->
+          TypeError (Printf.sprintf "The term %s is not well typed: %s" (term2str s2) msg)
+        | _ -> TypeError (Printf.sprintf "Invalid judgement: %s." (prop2str prop))
+        )
+
+  | Eq {t1; t2} ->
+      let t1_type = calc_type f t1 in
+      let t2_type = calc_type f t2 in
+        (match t1_type, t2_type with
+        | Type (OType (t1, t2)), Type (OType (t1', t2')) when t1 = t1' && t2 = t2' -> Type Prop
+        | Type (DType _), Type (DType _) -> Type Prop
+        | Type (OType _), Type (OType _) -> 
+            TypeError (Printf.sprintf "The terms %s and %s are not of the same operator type." (term2str t1) (term2str t2))
+        | _ -> 
+            TypeError (Printf.sprintf "The terms %s and %s should have operator or labeled operator types." (term2str t1) (term2str t2))
+        )
+  (* | _ -> raise (Failure "Not implemented yet") *)
+
+
+(* Check whether the proposition is proved in the context by directly search through the proofs and hypotheses *)
+and prop_proved (frame : frame) (prop: props) : bool =
+  let rec find_item_in_list (ctx: context) prop =
+    match ctx with
+    | [] -> false
+    | hd :: tl -> 
+        match hd with
+        | Assumption {name = _; t = p} when p = prop -> true
+        | Definition {name = _; t = p; e = _} when p = prop -> true
+        | _ -> 
+            (* Check the rest of the environment *)
+            find_item_in_list tl prop
+  in find_item_in_list (get_ctx frame) (PropTerm prop)
+  
 
 (* The empty frame. *)
 let empty_frame : frame = 
@@ -268,13 +335,9 @@ let init_prover () : prover =
 let envItem2str (item: envItem ): string = 
   match item with
   | Assumption {name; t} -> 
-      Printf.sprintf "%s : %s" name (type2str t)
+      Printf.sprintf "%s : %s" name (term2str t)
   | Definition {name; t; e} -> 
-      Printf.sprintf "%s := %s : %s" name (term2str e) (type2str t)
-  | Proof {name; prop} -> 
-      Printf.sprintf "%s := <proof> : %s" name (prop2str prop)
-  | Hypothesis {name; prop} -> 
-      Printf.sprintf "%s : %s" name (prop2str prop)
+      Printf.sprintf "%s := %s : %s" name (term2str e) (term2str t)
 
 
 let env2str (env: envItem list): string =
@@ -342,22 +405,20 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_undo p
     | Pause ->
         Pause
-    | Assume {x = x; p = prop} ->
-        eval_assume p x prop
     | Prove { x = x; p = prop} ->
         eval_prove p x prop
     | Tactic t ->
         eval_tactic p t
     | QED ->
         eval_QED p
+
     (* | _ -> raise (Failure "Command not implemented yet") *)
   in match res with
     | ProverError msg -> 
         ProverError (msg ^ "\n\nFor the command:\n" ^ (command2str cmd))
     | _ -> res
-  
 
-and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
+and eval_def (p: prover) (name: string) (t: terms) (e: terms) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
     match frame with
@@ -376,8 +437,7 @@ and eval_def (p: prover) (name: string) (t: types) (e: terms) : eval_result =
             p.stack <- (add_envItem normal_f (Definition {name; t; e})) :: p.stack;
             Success
         | Type t' -> 
-            ProverError (Printf.sprintf "The variable %s is specified as type %s, but term %s has type %s." name (type2str t) (term2str e) (type2str t'))
-        | Proof _ -> ProverError (Printf.sprintf "The term %s is related to a proof." (term2str e))
+            ProverError (Printf.sprintf "The variable %s is specified as type %s, but term %s has type %s." name (term2str t) (term2str e) (term2str t'))
         | TypeError msg -> 
             ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
 
@@ -392,18 +452,17 @@ and eval_def_without_type (p: prover) (name: string) (e: terms) : eval_result =
       match find_item frame name with
       | Some _ -> 
         ProverError (Printf.sprintf "Name %s is already declared." name)
-      | None -> 
+      | None ->
         (* Type check here *)
         match calc_type frame e with
         | Type t ->   
             (* Add the new definition to the frame. *)
             p.stack <- (add_envItem normal_f (Definition {name; t; e})):: p.stack;
             Success
-        | Proof _ -> ProverError (Printf.sprintf "The term %s is related to a proof." (term2str e))
         | TypeError msg ->
             ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
 
-and eval_var (p: prover) (name: string) (t: types) : eval_result =
+and eval_var (p: prover) (name: string) (t: terms) : eval_result =
   let frame = get_frame p in
     (* check whether it is in proof mode *)
     match frame with
@@ -415,19 +474,22 @@ and eval_var (p: prover) (name: string) (t: types) : eval_result =
       | Some _ -> 
         ProverError (Printf.sprintf "Name %s is already declared." name)
       | None ->
+          (* Type check needed here *)
           (* Add the new variable to the frame. *)
-          p.stack <- (add_envItem normal_f (Assumption {name; t})) :: p.stack;
-          Success
+          let type_of_t = calc_type frame t in
+          match type_of_t with
+          | Type Type | Type Prop | Type CType -> 
+            p.stack <- (add_envItem normal_f (Assumption {name; t})) :: p.stack;
+            Success
+          | _ -> ProverError (Printf.sprintf "The type %s is not typed as Type, Prop or CType." (term2str t))
 
 and eval_check (p: prover) (e: terms) : eval_result =
   let frame = get_frame p in
+    (* check whether it is in proof mode *)
     (* Type check here *)
     match calc_type frame e with
     | Type t -> 
-      Printf.printf "Check %s: %s.\n" (term2str e) (type2str t);
-      Success
-    | Proof prop -> 
-      Printf.printf "Check %s: %s.\n" (term2str e) (prop2str prop);
+      Printf.printf "Check %s: %s.\n" (term2str e) (term2str t);
       Success
     | TypeError msg -> 
       ProverError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
@@ -437,18 +499,11 @@ and eval_show (p: prover) (x: string) : eval_result =
     let item = find_item frame x in
       match item with
       | Some (Assumption {name; t}) -> 
-          Printf.printf "Show %s : %s.\n" name (type2str t);
+          Printf.printf "Show %s : %s.\n" name (term2str t);
           Success
       | Some (Definition {name; t; e}) -> 
-          Printf.printf "Show %s := %s : %s.\n" name (term2str e) (type2str t);
+          Printf.printf "Show %s := %s : %s.\n" name (term2str e) (term2str t);
           Success
-      | Some (Proof {name; prop}) -> 
-          Printf.printf "Show %s := <proof> %s.\n" name (prop2str prop);
-          Success
-      | Some (Hypothesis {name; prop}) ->
-          Printf.printf "Show %s : %s.\n" name (prop2str prop);
-          Success
-      (* | Some _ -> ProverError (Printf.sprintf "Name %s is not defined." x) *)
       | None -> 
           ProverError (Printf.sprintf "Name %s is not defined." x)
 
@@ -463,28 +518,7 @@ and eval_undo (p: prover) : eval_result =
   | [] -> ProverError "No frame to undo."
   | _ :: rest -> p.stack <- rest; Success
 
-and eval_assume (p: prover) (x : string) (prop: props) : eval_result =
-  let frame = get_frame p in
-    (* check whether it is in proof mode *)
-    match frame with
-    | ProofFrame _ -> 
-      ProverError "The prover is in proof mode."
-    | NormalFrame normal_f ->
-      (* check whether the name is already defined *)
-      match find_item frame x with
-      | Some _ -> 
-        ProverError (Printf.sprintf "Name %s is already declared." x)
-      | None ->
-          (* Type check here *)
-          match valid_prop frame prop with
-          | Valid -> 
-              (* Add the new assumption to the frame. *)
-              p.stack <- (add_envItem normal_f (Hypothesis {name = x; prop})) :: p.stack;
-              Success
-          | Invalid msg -> 
-              ProverError (Printf.sprintf "The proposition %s is not valid: %s" (prop2str prop) msg)
-
-and eval_prove (p: prover) (x : string) (prop: props) : eval_result =
+and eval_prove (p: prover) (x : string) (prop: terms) : eval_result =
   let frame = get_frame p in
   (* check whether it is in proof mode *)
   match frame with
@@ -496,14 +530,21 @@ and eval_prove (p: prover) (x : string) (prop: props) : eval_result =
     | Some _ -> 
       ProverError (Printf.sprintf "Name %s is already declared." x)
     | None ->
+      (* check whether prop is proposition *)
+      match prop with
+      | PropTerm prop ->
         (* Type check here *)
-        match valid_prop frame prop with
-        | Valid -> 
+        (match calc_type_prop frame prop with
+        | Type Prop -> 
             (* Open the proof mode *)
             p.stack <- (open_proof normal_f x prop) :: p.stack;
             Success
-        | Invalid msg -> 
+        | Type _ ->
+            ProverError (Printf.sprintf "The term %s is not typed as a proposition." (prop2str prop))
+        | TypeError msg -> 
             ProverError (Printf.sprintf "The proposition %s is not valid: %s" (prop2str prop) msg)
+        )
+      | _ -> ProverError (Printf.sprintf "Only propositions can be proved.")
 
 and eval_tactic (p: prover) (tac : tactic) : eval_result =
   let frame = get_frame p in
@@ -546,8 +587,8 @@ and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
       | Judgement {pre; s1; s2; post} when 
         (
           pre = post 
-        && s1 = Stmt (SingleCmd Skip)
-        && s2 = Stmt (SingleCmd Skip)
+        && s1 = ProgTerm (SingleCmd Skip)
+        && s2 = ProgTerm (SingleCmd Skip)
           ) ->       
         let new_frame = discharge_first_goal f in
         (* Add the proof to the frame. *)
