@@ -15,7 +15,7 @@
 %token SORRY
 %token R_SKIP
 
-%token TYPE PROP QVLIST OPTPAIR CTYPE QREG PROG STYPE OTYPE DTYPE
+%token TYPE PROP QVLIST OPTPAIR CTYPE QREG PROG CTERM STYPE OTYPE DTYPE
 
 (* token for propositions *)
 %token UNITARY ASSN MEAS
@@ -65,6 +65,8 @@ terms:
   | CTYPE { CType }
   | QREG LBRACK t = terms RBRACK { QReg t }
   | PROG { Prog }
+
+  | CTERM LBRACK t = terms RBRACK { CTerm t }
   | STYPE { SType }
   | OTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { OType (t1, t2) }
   | DTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { DType (t1, t2) }

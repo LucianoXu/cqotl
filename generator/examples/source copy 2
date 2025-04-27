@@ -20,8 +20,8 @@ Check DType[[q1, q2], qs].
 
 Check T * T.
 Var T2 : CType.
-Var t1 : T.
-Var t2 : T2.
+Var t1 : CTerm[T].
+Var t2 : CTerm[T2].
 
 Check (t1, t2).
 
@@ -37,12 +37,27 @@ Check O1 + O2.
 Check skip.
 Check skip skip.
 
+Var q : QReg[T].
+Var q3 : QReg[T].
+Var U : OType[T, T].
+Var Upf : Unitary U.
+
+Var M1 : OType[T, T].
+Var M2 : OType[T, T].
+Def M := ((M1_q1,q1), (M2_q1,q1)).
+Var Mpf : Meas M.
+
+Var s1 : Prog.
+Var s2 : Prog.
+
 Check init q.
-Check unitary U [q1, q2, q3].
+Check unitary U (q1).
 Check if M then s1 else s2 end.
+
+Var s : Prog.
+
 Check while M do s end.
 
-Var U : OType[T, T].
 
 Check Unitary U.
 
@@ -54,8 +69,7 @@ Def P := U_q1, q2.
 Var Ppf : Assn P.
 
 Check {P} skip ~ skip {P}.
-Check P = P.
-
+Check U = U.
 
 Show Ppf.
 ShowAll.

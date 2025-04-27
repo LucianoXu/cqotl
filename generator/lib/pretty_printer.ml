@@ -58,6 +58,9 @@ and tactic2str (t: tactic) : string =
         Printf.sprintf "QReg[%s]" (term2str qs)
     | Prog -> 
         Printf.sprintf "Prog"
+
+    | CTerm t ->
+        Printf.sprintf "CTerm[%s]" (term2str t)
     | SType ->
         Printf.sprintf "SType"
     | OType (t1, t2) ->

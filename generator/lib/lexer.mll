@@ -58,6 +58,8 @@ rule token = parse
     | "CType"                       { CTYPE }
     | "QReg"                        { QREG }
     | "Prog"                        { PROG }
+
+    | "CTerm"                       { CTERM }
     | "SType"                       { STYPE }
     | "OType"                       { OTYPE }
     | "DType"                       { DTYPE }

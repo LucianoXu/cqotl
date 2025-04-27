@@ -40,6 +40,8 @@ and terms =
   | CType
   | QReg of terms
   | Prog
+  
+  | CTerm of terms
   | SType
   | OType of terms * terms
   | DType of terms * terms

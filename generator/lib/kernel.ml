@@ -99,6 +99,13 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
   | Prog ->
     Type Type
 
+  | CTerm t ->
+    let type_of_t = calc_type f t in
+    (match type_of_t with
+    | Type CType -> 
+      Type Type
+    | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t)))
+
   | SType ->
     Type Type
 
@@ -175,14 +182,16 @@ and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
   let type_of_t1 = calc_type f t1 in
   let type_of_t2 = calc_type f t2 in
   match type_of_t1, type_of_t2 with
-  | Type ct1, Type ct2 ->
-    let type_of_ct1 = calc_type f ct1 in
-    let type_of_ct2 = calc_type f ct2 in
-    (match type_of_ct1, type_of_ct2 with
-    | Type CType, Type CType ->
-      Type (Star (ct1, ct2))
-    | _ -> TypeError (Printf.sprintf "The pair %s is not well typed, because the arguments have types %s and %s, which do not belong to CType." (term2str (Star (t1, t2))) (term2str ct1) (term2str ct2))
-    )
+  (* a pair of basis *)
+  | Type (CTerm ctype1), Type (CTerm ctype2) ->
+    Type (CTerm (Star (ctype1, ctype2)))
+  (* a pair of operators *)
+  | Type (DType _), Type (DType _) ->
+    Type OptPair
+
+  (* a pair of qreg *)
+  | Type (QReg qregt1), Type (QReg qregt2) ->
+    Type (QReg (Star (qregt1, qregt2)))
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
 
 
@@ -191,10 +200,14 @@ and calc_type_qvlist (f : frame) ls =
   match ls with
   | [] -> Type QVList
   | hd :: tl ->
-    let type_hd = calc_type f (Var hd) in
-    match type_hd with
-    | Type (QReg _) -> calc_type_qvlist f tl
-    | _ -> TypeError (Printf.sprintf "The element %s is not typed as QReg." (term2str (Var hd)))
+    (* check whether hd appears in the tl*)
+    if List.mem hd tl then
+      TypeError (Printf.sprintf "The variable %s appears more than once in the QVList." hd)
+    else
+      let type_hd = calc_type f (Var hd) in
+      match type_hd with
+      | Type (QReg _) -> calc_type_qvlist f tl
+      | _ -> TypeError (Printf.sprintf "The element %s is not typed as QReg." (term2str (Var hd)))
 
 and calc_type_subscript f e t1 t2 =
   let type_of_e = calc_type f e in
@@ -211,9 +224,12 @@ and calc_type_opt (f : frame) (o : opt) : typing_result =
   | Add {o1; o2} -> 
       let t1 = calc_type f o1 in
       let t2 = calc_type f o2 in
-        if t1 = t2 then
-          t1
-        else
+      match t1, t2 with
+      | Type (OType (index11, index12)), Type (OType (index21, index22)) when index11 = index21 && index21 = index22 ->
+        Type (OType (index11, index12))
+      | Type (OType _), Type (OType _) ->
+        TypeError (Printf.sprintf "The operator %s and %s do not have the same operator type." (term2str o1) (term2str o2))
+      | _ ->
           TypeError (Printf.sprintf "The operator %s is not well typed." (opt2str o))
   
 and calc_type_program (f : frame) (s : stmt_seq) : typing_result = 
@@ -232,8 +248,59 @@ and calc_type_stmt (f :frame) (s : stmt) : typing_result =
   match s with
   | Skip -> 
       Type Prog
-  | _ -> 
-      Type Prog
+  | InitQubit t ->
+      let type_of_t = calc_type f t in
+        (match type_of_t with
+        | Type (QReg _) -> Type Prog
+        | _ -> 
+            TypeError (Printf.sprintf "The term %s does not have quantum register type." (term2str t))
+        )
+  | Unitary {u_opt; qs} ->
+      let type_of_u_opt = calc_type f u_opt in
+      let type_of_qs = calc_type f qs in
+        (match type_of_u_opt, type_of_qs with
+        | Type (OType (t1, t2)), Type (QReg t3) -> 
+          (* Check unitary proof *)
+          if prop_proved f (Unitary u_opt) then
+            if t1 <> t2 then
+              TypeError (Printf.sprintf "The operator %s is not an endomorphism" (term2str u_opt))
+            else
+              if t1 <> t3 then
+                TypeError (Printf.sprintf "The operator %s and quantum register %s are not compatible." (term2str u_opt) (term2str qs))
+              else
+                Type Prog
+          else
+            TypeError (Printf.sprintf "The operator %s is not proved to be unitary." (term2str u_opt))
+        | _ -> 
+            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+        )
+  | IfMeas {m_opt; s1; s2} ->
+      let type_of_m_opt = calc_type f m_opt in
+      let type_of_s1 = calc_type f s1 in
+      let type_of_s2 = calc_type f s2 in
+        (match type_of_m_opt, type_of_s1, type_of_s2 with
+        | Type OptPair, Type Prog, Type Prog -> 
+            if prop_proved f (Meas m_opt) then
+              Type Prog
+            else
+              TypeError (Printf.sprintf "The operator %s is not proved to be a measurement." (term2str m_opt))
+        | _ -> 
+            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+        )
+
+  | WhileMeas {m_opt=m_opt; s=s1} ->
+      let type_of_m_opt = calc_type f m_opt in
+      let type_of_s = calc_type f s1 in
+        (match type_of_m_opt, type_of_s with
+        | Type OptPair, Type Prog -> 
+            if prop_proved f (Meas m_opt) then
+              Type Prog
+            else
+              TypeError (Printf.sprintf "The operator %s is not proved to be a measurement." (term2str m_opt))
+        | _ -> 
+            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+        )
+  (* | _ -> raise (Failure "Not implemented yet") *)
 
 
 (* decide whether the proposition is valid in the context *)
@@ -256,7 +323,13 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
       | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str lo))
       )
   | Meas m -> 
-      raise (Failure "calc_type_prop for Meas not implemented")
+      let t = calc_type f m in
+      (match t with
+      | Type OptPair -> Type Prop
+      | Type _ ->
+          TypeError (Printf.sprintf "The term %s is not of operator pair type." (term2str m))
+      | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str m))
+      )
       
   | Judgement {pre; s1; s2; post} -> 
       let t2 = calc_type f s1 in
@@ -281,11 +354,10 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
       let t2_type = calc_type f t2 in
         (match t1_type, t2_type with
         | Type (OType (t1, t2)), Type (OType (t1', t2')) when t1 = t1' && t2 = t2' -> Type Prop
-        | Type (DType _), Type (DType _) -> Type Prop
         | Type (OType _), Type (OType _) -> 
             TypeError (Printf.sprintf "The terms %s and %s are not of the same operator type." (term2str t1) (term2str t2))
         | _ -> 
-            TypeError (Printf.sprintf "The terms %s and %s should have operator or labeled operator types." (term2str t1) (term2str t2))
+            TypeError (Printf.sprintf "The terms %s and %s should have operator." (term2str t1) (term2str t2))
         )
   (* | _ -> raise (Failure "Not implemented yet") *)
 
@@ -478,7 +550,7 @@ and eval_var (p: prover) (name: string) (t: terms) : eval_result =
           (* Add the new variable to the frame. *)
           let type_of_t = calc_type frame t in
           match type_of_t with
-          | Type Type | Type Prop | Type CType -> 
+          | Type Type | Type Prop -> 
             p.stack <- (add_envItem normal_f (Assumption {name; t})) :: p.stack;
             Success
           | _ -> ProverError (Printf.sprintf "The type %s is not typed as Type, Prop or CType." (term2str t))
