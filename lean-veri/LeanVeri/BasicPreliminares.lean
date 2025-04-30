@@ -3,8 +3,10 @@ Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
 import Mathlib.Analysis.InnerProductSpace.Positive
+import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.TensorProduct.Basic
 import Mathlib.LinearAlgebra.Trace
+import Mathlib.Topology.Algebra.Support
 open scoped ComplexOrder
 
 /-!
@@ -54,6 +56,24 @@ def LoewnerOrder (T N : E →ₗ[𝕜] E) : Prop :=
 noncomputable def isPureState (T : E →ₗ[𝕜] E) : Prop :=
   T.isDensityOperator ∧ T.rank = 1
 
+-- Definition A.1
+def supp (P : E →ₗ[𝕜] E) : Submodule 𝕜 E := (LinearMap.ker P)ᗮ
+
+def isProjection.toSubmodule {T : E →ₗ[𝕜] E} (_ : T.isProjection) : Submodule 𝕜 E := T.supp
+
+def extend (X : Submodule 𝕜 E) (T : E →ₗ[𝕜] X) : E →ₗ[𝕜] E where
+  toFun := fun x ↦ (T x).1
+  map_add' := by simp
+  map_smul' := by simp
+
+--def _root_.Submodule.toProjection (X : Submodule 𝕜 E) : E →ₗ[𝕜] E := Submodule.linearProjOfIsCompl X (Xᗮ) sorry
+
+def complement (T : E →ₗ[𝕜]E) : E →ₗ[𝕜]E := 1 - T
+
+omit [CompleteSpace E] in
+lemma IsSelfAdjoint_complement_of_IsSelfAdjoint (T : E →ₗ[𝕜]E) (hT : IsSelfAdjoint T) : IsSelfAdjoint T.complement := by
+  simp only [IsSelfAdjoint, complement, star_sub, star_one, sub_right_inj]
+  exact hT
 end LinearMap
 
 namespace InnerProductSpace
@@ -80,6 +100,28 @@ def outerProduct (φ : E) (ψ : E) : E →ₗ[𝕜] E where
     exact IsScalarTower.smul_assoc m (inner ψ χ) φ
 
 end InnerProductSpace
+
+namespace Submodule
+
+-- Definition A.2
+def join (X Y : Submodule 𝕜 E) : Submodule 𝕜 E := X ⊔ Y
+
+def meet (X Y : Submodule 𝕜 E) : Submodule 𝕜 E := X ⊓ Y
+
+def orthogonalComplement (X : Submodule 𝕜 E) : Submodule 𝕜 E := Xᗮ
+
+def areOrthogonal (X Y : Submodule 𝕜 E) : Prop :=
+  X ⊓ Y = ⊥
+
+end Submodule
+
+structure infiniteValuesPredicates (𝕜 E : Type*) [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E] [FiniteDimensional 𝕜 E] where
+  P : E →ₗ[𝕜] E
+  PisPos : P.isPositive
+  PisDens : P.isDensityOperator
+  X : E →ₗ[𝕜] E
+  XisProj : X.isProjection
+  compZero : XisProj.toSubmodule ≤ LinearMap.ker P
 
 namespace LinearMap
 omit [CompleteSpace E] [FiniteDimensional 𝕜 E]
