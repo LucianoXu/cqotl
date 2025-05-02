@@ -3,6 +3,7 @@ Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
 import Mathlib.Analysis.InnerProductSpace.Positive
+import Mathlib.Analysis.InnerProductSpace.Projection
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.TensorProduct.Basic
 import Mathlib.LinearAlgebra.Trace
@@ -74,7 +75,29 @@ omit [CompleteSpace E] in
 lemma IsSelfAdjoint_complement_of_IsSelfAdjoint (T : E →ₗ[𝕜]E) (hT : IsSelfAdjoint T) : IsSelfAdjoint T.complement := by
   simp only [IsSelfAdjoint, complement, star_sub, star_one, sub_right_inj]
   exact hT
+
+def isProjection.orthogonalComplement {T : E →ₗ[𝕜]E} (_ : T.isProjection) : E →ₗ[𝕜]E := 1 - T
+
 end LinearMap
+
+noncomputable def Submodule.toProjection (K : Submodule 𝕜 E) : E →ₗ[𝕜] E where
+  toFun := fun x ↦ orthogonalProjectionFn K x
+  map_add' := by
+    intro x y
+    have hm : orthogonalProjectionFn K x + orthogonalProjectionFn K y ∈ K :=
+        Submodule.add_mem K (orthogonalProjectionFn_mem x) (orthogonalProjectionFn_mem y)
+    refine eq_orthogonalProjectionFn_of_mem_of_inner_eq_zero hm ?_
+    intro w hw
+    rw [add_sub_add_comm, inner_add_left, orthogonalProjectionFn_inner_eq_zero _ w hw,
+            orthogonalProjectionFn_inner_eq_zero _ w hw, add_zero]
+  map_smul' := by
+    intro c x
+    have hm : c • orthogonalProjectionFn K x ∈ K :=
+          Submodule.smul_mem K _ (orthogonalProjectionFn_mem x)
+    refine eq_orthogonalProjectionFn_of_mem_of_inner_eq_zero hm ?_
+    intro w hw
+    simp only [RingHom.id_apply]
+    rw [← smul_sub, inner_smul_left, orthogonalProjectionFn_inner_eq_zero _ w hw, mul_zero]
 
 namespace InnerProductSpace
 
@@ -100,6 +123,12 @@ def outerProduct (φ : E) (ψ : E) : E →ₗ[𝕜] E where
     exact IsScalarTower.smul_assoc m (inner ψ χ) φ
 
 end InnerProductSpace
+
+namespace LinearMap
+
+
+
+end LinearMap
 
 namespace Submodule
 
