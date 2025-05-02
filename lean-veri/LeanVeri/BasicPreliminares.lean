@@ -26,8 +26,12 @@ variable [FiniteDimensional 𝕜 E]
 namespace LinearMap
 
 /-- Positive semidefinite operators. -/
-def isPositive (T : E →ₗ[𝕜] E) : Prop :=
+def isPositiveSemiDefinite (T : E →ₗ[𝕜] E) : Prop :=
   IsSelfAdjoint T ∧ ∀ x, 0 ≤ RCLike.re (inner (T x) x : 𝕜)
+
+/-- Positive definite operators. -/
+def isPositive (T : E →ₗ[𝕜] E) : Prop :=
+  IsSelfAdjoint T ∧ ∀ x, 0 < RCLike.re (inner (T x) x : 𝕜)
 
 /-- Partial density operators. -/
 noncomputable def isPartialDensityOperator (T : E →ₗ[𝕜] E) : Prop :=
@@ -144,6 +148,15 @@ def areOrthogonal (X Y : Submodule 𝕜 E) : Prop :=
 
 end Submodule
 
+-- Proposition A.3 (Properties of the Support)
+namespace SupportProp
+
+lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q) :
+  LinearMap.supp (P + Q) = LinearMap.supp (P) ⊔ LinearMap.supp (Q)  := by
+    sorry
+
+end SupportProp
+
 structure infiniteValuesPredicates (𝕜 E : Type*) [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E] [FiniteDimensional 𝕜 E] where
   P : E →ₗ[𝕜] E
   PisPos : P.isPositive
@@ -207,4 +220,3 @@ lemma adjoint_dist_adjoint [FiniteDimensional 𝕜 E] (T0 T1 N : E →ₗ[𝕜] 
   rw [add_comp, comp_add, ← comp_assoc, comp_smul, smul_comp, comp_assoc]
 
 end LinearMap
-
