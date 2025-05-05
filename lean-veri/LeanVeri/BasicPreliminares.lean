@@ -8,6 +8,8 @@ import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.TensorProduct.Basic
 import Mathlib.LinearAlgebra.Trace
 import Mathlib.Topology.Algebra.Support
+import Mathlib.Data.Real.Basic
+
 open scoped ComplexOrder
 
 /-!
@@ -151,9 +153,54 @@ end Submodule
 -- Proposition A.3 (Properties of the Support)
 namespace SupportProp
 
+lemma supp_add1 (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
+  (LinearMap.ker (P + Q)) = (LinearMap.ker P) ⊓ (LinearMap.ker Q)               := by
+    ext x
+    constructor
+    · -- Forward direction
+      intro hx
+      rw [@LinearMap.mem_ker] at hx
+      rw [@LinearMap.isPositiveSemiDefinite] at hP
+      rw [@LinearMap.isPositiveSemiDefinite] at hQ
+      rw [@LinearMap.add_apply] at hx
+      have hPQx : RCLike.re (inner ((P + Q) x) x : 𝕜 ) = 0 := by
+        rw [@LinearMap.add_apply, hx]
+        rw [@inner_re_zero_left]
+      have hPx : RCLike.re (inner (P x) x : 𝕜) = 0 := by
+        have hP_cases := (hP.2 x).eq_or_gt
+        cases hP_cases with
+        | inl hP_zero =>
+          apply hP_zero
+        | inr hP_pos  =>
+          have hQ_cases := (hQ.2 x).eq_or_gt
+          cases hQ_cases with
+          | inl hQ_zero =>
+            sorry
+          | inr hQ_pos  =>
+            sorry
+      rw [@Submodule.mem_inf]
+      rw [@LinearMap.mem_ker]
+      constructor
+      · rw [LinearMap.congr_fun rfl x] at hPx
+        sorry
+      · sorry
+    · intro hx
+      sorry
+
+lemma supp_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
+  (LinearMap.ker P ⊓ LinearMap.ker Q)ᗮ = (LinearMap.ker P)ᗮ ⊔ (LinearMap.ker Q)ᗮ := by sorry
+
 lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q) :
   LinearMap.supp (P + Q) = LinearMap.supp (P) ⊔ LinearMap.supp (Q)  := by
-    sorry
+    rw [LinearMap.supp]
+    rw [LinearMap.supp]
+    rw [LinearMap.supp]
+    rw [supp_add1]
+    rw [supp_union]
+    · apply hP
+    · apply hQ
+    · apply hP
+    · apply hQ
 
 end SupportProp
 
