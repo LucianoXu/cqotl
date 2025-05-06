@@ -17,6 +17,7 @@ rule token = parse
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
+    | "<-$"                         { RNDARROW }
     | ":="                          { ASSIGN }
     | "*="                          { STARASSIGN }
     | "|0>"                         { KET0 }
@@ -56,8 +57,10 @@ rule token = parse
     | "QVList"                      { QVLIST }
     | "OptPair"                     { OPTPAIR }
     | "CType"                       { CTYPE }
+    | "CVar"                        { CVAR }
     | "QReg"                        { QREG }
     | "Prog"                        { PROG }
+    | "Bit"                         { BIT }
 
     | "CTerm"                       { CTERM }
     | "SType"                       { STYPE }
@@ -66,9 +69,9 @@ rule token = parse
 
 
     (* Propositions *)
-    | "Unitary"                     { UNITARY }
-    | "Assn"                        { ASSN }
-    | "Meas"                        { MEAS }
+    | "Unitary"                     { PROP_UNITARY }
+    | "Assn"                        { PROP_ASSN }
+    | "Meas"                        { PROP_MEAS }
     (* Judgement *)
     (* eq = *)
 
@@ -77,6 +80,7 @@ rule token = parse
     | "skip"                        { SKIP }
     | "init"                        { INIT }
     | "unitary"                     { UNITARY_PROG }
+    | "meas"                        { MEAS }
     | "if"                          { IF }
     | "then"                        { THEN }
     | "else"                        { ELSE }

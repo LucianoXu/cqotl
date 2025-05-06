@@ -93,18 +93,20 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
   | CType ->
     Type Type
 
+  | CVar t ->
+    calc_type_CVar f t
+
   | QReg t ->
     calc_type_QReg f t
   
   | Prog ->
     Type Type
 
+  | Bit ->
+    Type CType
+
   | CTerm t ->
-    let type_of_t = calc_type f t in
-    (match type_of_t with
-    | Type CType -> 
-      Type Type
-    | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t)))
+    calc_type_CTerm f t
 
   | SType ->
     Type Type
@@ -140,11 +142,26 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
   | ProofTerm ->
     raise (Failure "<proof> should not be typed")
 
-
+(* Check whether the term is CTerm[..] *)
+and is_CTerm (f: frame) (e: terms) : typing_result =
+  let t = calc_type f e in
+  match t with
+  | Type (CTerm _) -> t
+  | Type (CVar a) -> Type (CTerm a)
+  | _ ->
+    TypeError (Printf.sprintf "The term %s cannot be typed as CTerm[...]." (term2str e))
+    
 and calc_type_var (f : frame) (v : string) : typing_result = 
   match find_item f v with
   | Some (Assumption {t; _}) | Some (Definition {t; _}) -> Type t
   | None -> TypeError (Printf.sprintf "Variable %s is not defined." v)
+
+and calc_type_CVar (f : frame) (t : terms) =
+  let type_of_t = calc_type f t in
+  match type_of_t with
+  | Type CType -> 
+    Type Type
+  | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t))
 
 and calc_type_QReg (f : frame) (t : terms) =
   let type_of_t = calc_type f t in
@@ -152,6 +169,13 @@ and calc_type_QReg (f : frame) (t : terms) =
   | Type CType -> 
     Type Type
   | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t))
+
+and calc_type_CTerm (f : frame) (t : terms) =
+  let type_of_t = calc_type f t in
+    match type_of_t with
+    | Type CType -> 
+      Type Type
+    | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t))
 
 and calc_type_OType (f : frame) t1 t2 =
   let type_of_t1 = calc_type f t1 in
@@ -248,6 +272,27 @@ and calc_type_stmt (f :frame) (s : stmt) : typing_result =
   match s with
   | Skip -> 
       Type Prog
+  | Assign {x; t} ->
+      let type_of_x = calc_type f (Var x) in
+        (match type_of_x with
+        | Type (CVar a) ->
+          (match is_CTerm f t with
+          | Type (CTerm b) when a = b -> 
+            Type Prog
+          | _ -> 
+            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+          )
+        | _ -> 
+            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+        )
+  | PAssign {x; t} -> 
+      let type_of_x = calc_type f (Var x) in
+        (match type_of_x with
+        | Type (CVar t') when t' = t ->
+          Type Prog
+        | _ ->
+          TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+        )
   | InitQubit t ->
       let type_of_t = calc_type f t in
         (match type_of_t with
@@ -274,32 +319,47 @@ and calc_type_stmt (f :frame) (s : stmt) : typing_result =
         | _ -> 
             TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
         )
-  | IfMeas {m_opt; s1; s2} ->
-      let type_of_m_opt = calc_type f m_opt in
-      let type_of_s1 = calc_type f s1 in
-      let type_of_s2 = calc_type f s2 in
-        (match type_of_m_opt, type_of_s1, type_of_s2 with
-        | Type OptPair, Type Prog, Type Prog -> 
-            if prop_proved f (Meas m_opt) then
-              Type Prog
-            else
-              TypeError (Printf.sprintf "The operator %s is not proved to be a measurement." (term2str m_opt))
-        | _ -> 
-            TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
-        )
+  | Meas {x; m_opt} ->
+    let type_of_x = calc_type f (Var x) in
+    let type_of_m_opt = calc_type f m_opt in
+      (match type_of_x, type_of_m_opt with
+      | Type (CVar Bit), Type OptPair -> 
+        (* Check measurement proof *)
+        if prop_proved f (Meas m_opt) then
+          Type Prog
+        else
+          TypeError (Printf.sprintf "The operator %s is not proved to be a measurement." (term2str m_opt))
+      | _ -> 
+          TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+      )
+  | IfMeas {b; s1; s2} ->
+      (match is_CTerm f b with
+      | Type (CTerm Bit) ->
+        let type_of_s1 = calc_type f s1 in
+        let type_of_s2 = calc_type f s2 in
+          (match type_of_s1, type_of_s2 with
+          | Type Prog, Type Prog -> 
+                Type Prog
+          | _ -> 
+              TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
+          )
+      | _ -> 
+          TypeError (Printf.sprintf "The term %s is not well typed, because %s is not of CTerm[Bit] type." (stmt2str s) (term2str b))
+      )
 
-  | WhileMeas {m_opt=m_opt; s=s1} ->
-      let type_of_m_opt = calc_type f m_opt in
+  | WhileMeas {b=b; s=s1} ->
+      (match is_CTerm f b with
+      | Type (CTerm Bit) -> 
       let type_of_s = calc_type f s1 in
-        (match type_of_m_opt, type_of_s with
-        | Type OptPair, Type Prog -> 
-            if prop_proved f (Meas m_opt) then
-              Type Prog
-            else
-              TypeError (Printf.sprintf "The operator %s is not proved to be a measurement." (term2str m_opt))
+        (match type_of_s with
+        | Type Prog -> 
+            Type Prog
         | _ -> 
             TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
         )
+      | _ -> 
+          TypeError (Printf.sprintf "The term %s is not well typed, because %s is not of CTerm[Bit] type." (stmt2str s) (term2str b))
+      )
   (* | _ -> raise (Failure "Not implemented yet") *)
 
 

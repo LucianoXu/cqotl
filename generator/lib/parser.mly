@@ -6,7 +6,7 @@
 %token <int> INT
 
 (* character symbols *)
-%token COLON COMMA PERIOD ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
+%token COLON COMMA PERIOD RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
@@ -15,13 +15,13 @@
 %token SORRY
 %token R_SKIP
 
-%token TYPE PROP QVLIST OPTPAIR CTYPE QREG PROG CTERM STYPE OTYPE DTYPE
+%token TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG BIT CTERM STYPE OTYPE DTYPE
 
 (* token for propositions *)
-%token UNITARY ASSN MEAS
+%token PROP_UNITARY PROP_ASSN PROP_MEAS
 
 (* token for terms *)
-%token SKIP INIT UNITARY_PROG IF THEN ELSE WHILE DO END
+%token SKIP INIT UNITARY_PROG MEAS IF THEN ELSE WHILE DO END
 %token EOF
 
 %start top
@@ -63,8 +63,10 @@ terms:
   | QVLIST { QVList }
   | OPTPAIR { OptPair }
   | CTYPE { CType }
+  | CVAR LBRACK t = terms RBRACK { CVar t }
   | QREG LBRACK t = terms RBRACK { QReg t }
   | PROG { Prog }
+  | BIT { Bit }
 
   | CTERM LBRACK t = terms RBRACK { CTerm t }
   | STYPE { SType }
@@ -93,15 +95,18 @@ stmt_seq:
 
 stmt:
   | SKIP                                                                     { Skip }
-  | INIT q           = terms { InitQubit q }
+  | id = ID ASSIGN t = terms                                          { Assign {x=id; t=t} }
+  | id = ID RNDARROW t = terms                                     { PAssign {x=id; t=t} }
+  | INIT q           = terms                                              { InitQubit q }
   | UNITARY_PROG u_opt = terms qs = terms                            { Unitary {u_opt; qs} }
-  | IF m_opt = terms THEN s1 = terms ELSE s2 = terms END          { IfMeas {m_opt; s1; s2} }
-  | WHILE m_opt    = terms DO s = terms END              { WhileMeas {m_opt; s} }
+  | id = ID ASSIGN MEAS m_opt = terms                    { Meas {x=id; m_opt=m_opt} }
+  | IF b = terms THEN s1 = terms ELSE s2 = terms END          { IfMeas {b; s1; s2} }
+  | WHILE b    = terms DO s = terms END                          { WhileMeas {b; s} }
 
 
 props:
-  | UNITARY t = terms { Unitary t }
-  | ASSN t = terms { Assn t }
-  | MEAS t = terms { Meas t }
+  | PROP_UNITARY t = terms { Unitary t }
+  | PROP_ASSN t = terms { Assn t }
+  | PROP_MEAS t = terms { Meas t }
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE { Judgement {pre; s1; s2; post} }
   | t1 = terms EQ t2 = terms { Eq {t1; t2} }

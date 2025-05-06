@@ -38,8 +38,10 @@ and terms =
   | OptPair
 
   | CType
+  | CVar of terms
   | QReg of terms
   | Prog
+  | Bit
   
   | CTerm of terms
   | SType
@@ -72,10 +74,13 @@ and stmt_seq =
 (* Single Statements *)
 and stmt =
   | Skip
+  | Assign of {x: string; t: terms}
+  | PAssign of {x: string; t: terms}
   | InitQubit of      terms
   | Unitary of        {u_opt: terms; qs: terms}
-  | IfMeas of         {m_opt: terms; s1: terms; s2: terms}
-  | WhileMeas of      {m_opt: terms; s: terms}
+  | Meas of           {x: string; m_opt: terms}
+  | IfMeas of         {b: terms; s1: terms; s2: terms}
+  | WhileMeas of      {b: terms; s: terms}
 
 
 and props =

@@ -18,6 +18,7 @@ This section introduces the typing system of the prover, which includes the type
 \newcommand{\CTerm}[1]{\ensuremath{\textsf{CTerm}(#1)}}
 \newcommand{\SType}{\ensuremath{\mathcal{S}}}
 
+\newcommand{\cvar}[1]{\ensuremath{\textsf{CVar}(#1)}}
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
 \newcommand{\qvlist}{\textsf{QVList}}
 \newcommand{\opt}[2]{\ensuremath{\mathcal{O}(#1, #2)}}
@@ -29,6 +30,7 @@ This section introduces the typing system of the prover, which includes the type
 \newcommand{\meas}[1]{\ensuremath{\textsf{Meas}(#1)}}
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
+\newcommand{\bit}{\textsf{Bit}}
 \newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
@@ -36,7 +38,8 @@ This section introduces the typing system of the prover, which includes the type
     \begin{align*}
         t ::=\ & x \\
         & \mid \Type \mid \prop \mid \qvlist \mid \optpair \\
-        & \mid \CType \mid \qreg{t} \mid \prog \\
+        & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \\
+        & \mid \bit \\
         & \mid \CTerm{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
         & \mid t \times t  \\ 
         & \mid (t, t) \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
@@ -56,8 +59,15 @@ This section introduces the typing system of the prover, which includes the type
 \subsection{Program statements}
 qwhile programs are encoded as terms in the prover.
 
+\newcommand{\rndarrow}{%
+  \stackrel{\raisebox{-.25ex}[.25ex]%
+   {\tiny $\mathdollar$}}{\raisebox{-.25ex}[.25ex]{$\leftarrow$}}}
+
 \newcommand{\Skip}{\textbf{skip}}
+\newcommand{\Assign}[2]{\ensuremath{#1:=#2}}
+\newcommand{\pAssign}[2]{\ensuremath{#1 \rndarrow #2}}
 \newcommand{\Init}[1]{\ensuremath{#1:=\ket{0}}}
+\newcommand{\MeaAssign}[2]{\ensuremath{#1 := \textbf{meas}\ #2}}
 \newcommand{\If}[3]{\ensuremath{
     \textbf{if}\ #1\ \textbf{then}\ #2\ \textbf{else}\ #3\ \textbf{end}
 }}
@@ -71,10 +81,13 @@ qwhile programs are encoded as terms in the prover.
     \begin{align*}
         & stmts ::= && stmt \mid stmts\ stmt & \text{(statement sequence)} \\
         & stmt ::= && \Skip & \text{(skip)} \\
+            & && \mid \Assign{x}{t} & \text{(deterministic assignment)} \\
+            & && \mid \pAssign{x}{T} & \text{(probabilistic assignment)} \\
             & && \mid \Init{t} & \text{(initialization)} \\
             & && \mid U\ t & \text{(unitary transformation)} \\
-            & && \mid \If{P}{stmts_1}{stmts_2} & \text{(if statement)} \\
-            & && \mid \While{P}{stmts} & \text{(while statement)}
+            & && \mid \MeaAssign{x}{t} & \text{(quantum measurement)} \\
+            & && \mid \If{t}{stmts_1}{stmts_2} & \text{(if statement)} \\
+            & && \mid \While{t}{stmts} & \text{(while statement)}
     \end{align*}
 \end{definition}
 
@@ -113,6 +126,11 @@ The well-formed contexts can be constructed in the following ways:
     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} \\
 \end{gather*}
 
+These are subtyping rules:
+\begin{gather*}
+    \frac{\Gamma \vdash t : \cvar{t}}{\Gamma \vdash t : \CTerm{t}}
+\end{gather*}
+
 
 The typing rules for type terms are as follows.
 \begin{gather*}
@@ -124,9 +142,13 @@ The typing rules for type terms are as follows.
     \qquad
     \frac{\WF{\Gamma}}{\Gamma \vdash \CType : \Type} \\
     \\
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \cvar{T} : \Type}
+    \qquad
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \qreg{T} : \Type}
     \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type} \\
+    \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
     \qquad
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
     \qquad
@@ -161,17 +183,23 @@ The typing rules for Dirac notations are
 
 The typing rules for program statements are:
 \begin{gather*}
-    \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog}
-    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog} \\
+    \\
+    \frac{\Gamma \vdash x : \cvar{T} \quad \Gamma \vdash t : \CTerm{T}}{\Gamma \vdash \Assign{x}{t} : \prog} \\
+    \\
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash \pAssign{x}{T} : \prog} \\
+    \\
     \frac{\Gamma \vdash t : \qreg{T}}{\Gamma \vdash \Init{t} : \prog} \\
     \\
     \frac{\Gamma \vdash U : \opt{T}{T} \quad \Gamma \vdash t : \qreg{T} \quad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
     \\
-    \frac{\Gamma \vdash M : \optpair \quad \Gamma \vdash \meas{M} \quad \Gamma \vdash s_1 : \prog \quad \Gamma \vdash s_2 : \prog}
-    {\Gamma \vdash \If{M}{s_1}{s_2} : \prog} \\
+    \frac{\Gamma \vdash x : \cvar{\bit} \quad \Gamma \vdash M : \optpair \quad \Gamma \vdash \meas{M}}{\Gamma \vdash \MeaAssign{x}{M} : \prog} \\
     \\
-    \frac{\Gamma \vdash M : \optpair \quad \Gamma \vdash \meas{M} \quad \Gamma \vdash s : \prog}
-    {\Gamma \vdash \While{M}{s} : \prog}
+    \frac{\Gamma \vdash t : \CTerm{\bit} \quad \Gamma \vdash s_1 : \prog \quad \Gamma \vdash s_2 : \prog}
+    {\Gamma \vdash \If{t}{s_1}{s_2} : \prog} \\
+    \\
+    \frac{\Gamma \vdash t : \CTerm{\bit} \quad \Gamma \vdash s : \prog}
+    {\Gamma \vdash \While{t}{s} : \prog}
 \end{gather*}
 
 

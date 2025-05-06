@@ -54,10 +54,14 @@ and tactic2str (t: tactic) : string =
         Printf.sprintf "<proof>"
     | CType ->
         Printf.sprintf "CType"
+    | CVar t ->
+        Printf.sprintf "CVar[%s]" (term2str t)
     | QReg qs ->
         Printf.sprintf "QReg[%s]" (term2str qs)
     | Prog -> 
         Printf.sprintf "Prog"
+    | Bit ->
+        Printf.sprintf "Bit"
 
     | CTerm t ->
         Printf.sprintf "CTerm[%s]" (term2str t)
@@ -124,17 +128,26 @@ and stmt2str (s: stmt) : string =
   | Skip                        -> 
       "skip"
 
+  | Assign {x; t}               ->
+    Printf.sprintf "%s := %s" x (term2str t)
+
+  | PAssign {x; t}              ->
+    Printf.sprintf "%s <-$ %s" x (term2str t)
+
   | InitQubit q                 -> 
       Printf.sprintf "init %s" (term2str q)
 
   | Unitary {u_opt; qs}       ->
       Printf.sprintf "unitary %s%s" (term2str u_opt) (term2str qs)
 
-  | IfMeas {m_opt; s1; s2}  ->
+  | Meas {x; m_opt}             ->
+      Printf.sprintf "%s := meas %s" x (term2str m_opt)
+
+  | IfMeas {b; s1; s2}  ->
       Printf.sprintf "if %s then %s else %s end" 
-        (term2str m_opt) (term2str s1) (term2str s2)
+        (term2str b) (term2str s1) (term2str s2)
         
-  | WhileMeas {m_opt; s}   ->
+  | WhileMeas {b; s}   ->
       Printf.sprintf "while %s do %s end" 
-        (term2str m_opt) (term2str s)
+        (term2str b) (term2str s)
   (* | _ -> "Unknown labeled operator" *)
