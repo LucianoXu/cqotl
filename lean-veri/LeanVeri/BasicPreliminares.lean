@@ -189,7 +189,7 @@ lemma ker_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite 
     refine (Submodule.mem_orthogonal' (LinearMap.ker Q) x).mpr ?_
     sorry
   · intro H
-    
+
     sorry
 
 lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q) :
@@ -216,14 +216,6 @@ structure infiniteValuesPredicates (𝕜 E : Type*) [RCLike 𝕜] [NormedAddComm
   XisProj   : X.isProjection
   compZero  : XisProj.toSubmodule ≤ LinearMap.ker P
 
-
--- Lemma A.7
-namespace InfiniteValuePredProperties
-
-lemma scalarProduct (A A₁ A₂ : E →ₗ[𝕜] E) (c : ENNReal) (ψ : E) :
-  inner ψ (c • A ψ) = c * inner ψ (A ψ) :=
-
-end InfiniteValuePredProperties
 
 namespace LinearMap
 
