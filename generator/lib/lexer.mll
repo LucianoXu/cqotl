@@ -17,6 +17,8 @@ rule token = parse
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
+    | "|->"                         { MAPSTO }
+    | "+cq"                         { PLUSCQ }
     | "<-$"                         { RNDARROW }
     | ":="                          { ASSIGN }
     | "*="                          { STARASSIGN }
@@ -60,6 +62,10 @@ rule token = parse
     | "CVar"                        { CVAR }
     | "QReg"                        { QREG }
     | "Prog"                        { PROG }
+    | "CAssn"                       { CASSN }
+    | "QAssn"                       { QASSN }
+    | "CQAssn"                      { CQASSN }
+
     | "Bit"                         { BIT }
 
     | "CTerm"                       { CTERM }
@@ -68,9 +74,15 @@ rule token = parse
     | "DType"                       { DTYPE }
 
 
+    (* Assertions *)
+    | "true"                        { TRUE }
+    | "false"                       { FALSE }
+
+
     (* Propositions *)
     | "Unitary"                     { PROP_UNITARY }
-    | "Assn"                        { PROP_ASSN }
+    | "Pos"                         { PROP_POS }
+    | "Proj"                        { PROP_PROJ }
     | "Meas"                        { PROP_MEAS }
     (* Judgement *)
     (* eq = *)

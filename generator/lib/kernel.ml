@@ -75,72 +75,62 @@ type typing_result =
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
 let rec calc_type (f : frame) (s : terms) : typing_result = 
   match s with
-  | Var x -> 
-      calc_type_var f x
+  | Var x -> calc_type_var f x
 
-  | Type -> 
-    TypeError "Type cannot be typed."
+  | Type -> TypeError "Type cannot be typed."
 
-  | Prop ->
-    Type Type
+  | Prop -> Type Type
 
-  | QVList ->
-    Type Type
+  | QVList -> Type Type
 
-  | OptPair ->
-    Type Type
+  | OptPair -> Type Type
 
-  | CType ->
-    Type Type
+  | CType -> Type Type
 
-  | CVar t ->
-    calc_type_CVar f t
+  | CVar t -> calc_type_CVar f t
 
-  | QReg t ->
-    calc_type_QReg f t
+  | QReg t -> calc_type_QReg f t
   
-  | Prog ->
-    Type Type
+  | Prog -> Type Type
 
-  | Bit ->
-    Type CType
+  | CAssn -> Type Type
 
-  | CTerm t ->
-    calc_type_CTerm f t
+  | QAssn -> Type Type
 
-  | SType ->
-    Type Type
+  | CQAssn -> Type Type
 
-  | OType (t1, t2) ->
-    calc_type_OType f t1 t2
+  | Bit -> Type CType
 
-  | DType (t1, t2) ->
-    calc_type_DType f t1 t2
+  | CTerm t -> calc_type_CTerm f t
 
-  | Star (t1, t2) ->
-    calc_type_Star f t1 t2
+  | SType -> Type Type
 
-  | Pair (t1, t2) ->
-    calc_type_pair f t1 t2
+  | OType (t1, t2) -> calc_type_OType f t1 t2
+
+  | DType (t1, t2) -> calc_type_DType f t1 t2
+
+  | Star (t1, t2) -> calc_type_Star f t1 t2
+
+  | Pair (t1, t2) -> calc_type_pair f t1 t2
+
+  | AnglePair (t1, t2) -> calc_type_angle_pair f t1 t2
 
 
-  | QVListTerm ls ->
-    calc_type_qvlist f ls
+  | QVListTerm ls -> calc_type_qvlist f ls
 
-  | Subscript (e, t1, t2) ->
-    calc_type_subscript f e t1 t2
+  | Subscript (e, t1, t2) -> calc_type_subscript f e t1 t2
 
-  | OptTerm o ->
-    calc_type_opt f o
+  | CAssnTerm c -> calc_type_cassn f c
 
-  | ProgTerm ss -> 
-    calc_type_program f ss
+  | OptTerm o -> calc_type_opt f o
+
+  | CQAssnTerm cq -> calc_type_cqassn f cq
+
+  | ProgTerm ss ->  calc_type_program f ss
   
-  | PropTerm prop ->
-    calc_type_prop f prop
+  | PropTerm prop -> calc_type_prop f prop
 
-  | ProofTerm ->
-    raise (Failure "<proof> should not be typed")
+  | ProofTerm -> raise (Failure "<proof> should not be typed")
 
 (* Check whether the term is CTerm[..] *)
 and is_CTerm (f: frame) (e: terms) : typing_result =
@@ -209,6 +199,7 @@ and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
   (* a pair of basis *)
   | Type (CTerm ctype1), Type (CTerm ctype2) ->
     Type (CTerm (Star (ctype1, ctype2)))
+
   (* a pair of operators *)
   | Type (DType _), Type (DType _) ->
     Type OptPair
@@ -216,8 +207,24 @@ and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
   (* a pair of qreg *)
   | Type (QReg qregt1), Type (QReg qregt2) ->
     Type (QReg (Star (qregt1, qregt2)))
+
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
 
+and calc_type_angle_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
+  let type_of_t1 = calc_type f t1 in
+  let type_of_t2 = calc_type f t2 in
+  match type_of_t1, type_of_t2 with
+  (* a pair of operators *)
+  | Type (DType _), Type (DType _) ->
+    (* check the proofs *)
+    if not (prop_proved f (Proj t1)) then
+      TypeError (Printf.sprintf "The term %s is not proved to be a projection." (term2str t1))
+    else if not (prop_proved f (Pos t2)) then
+      TypeError (Printf.sprintf "The term %s is not proved to be a positive operator." (term2str t2))
+    else  
+      Type QAssn
+
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
 
 and calc_type_qvlist (f : frame) ls =
   (* check whether all elements is typed as QReg *)
@@ -243,6 +250,11 @@ and calc_type_subscript f e t1 t2 =
       Type (DType (QVListTerm (get_qvlist t1), QVListTerm (get_qvlist t2)))
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Subscript (e, t1, t2))))
 
+and calc_type_cassn f c =
+  match c with
+  | True -> Type CAssn
+  | False -> Type CAssn
+
 and calc_type_opt (f : frame) (o : opt) : typing_result = 
   match o with
   | Add {o1; o2} -> 
@@ -255,6 +267,24 @@ and calc_type_opt (f : frame) (o : opt) : typing_result =
         TypeError (Printf.sprintf "The operator %s and %s do not have the same operator type." (term2str o1) (term2str o2))
       | _ ->
           TypeError (Printf.sprintf "The operator %s is not well typed." (opt2str o))
+
+and calc_type_cqassn f cq =
+  match cq with
+  | Fiber {psi; p} -> 
+    let type_psi = calc_type f psi in
+    let type_p = calc_type f p in
+    (match type_psi, type_p with
+    | Type CAssn, Type QAssn -> Type CQAssn
+    | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (cqassn2str cq))
+    )
+  | Add {cq1; cq2} -> 
+    let type_cq1 = calc_type f cq1 in 
+    let type_cq2 = calc_type f cq2 in
+    (match type_cq1, type_cq2 with
+    | Type CQAssn, Type CQAssn -> Type CQAssn
+    | _ -> TypeError (Printf.sprintf "The two terms %s and %s for +cq should have type CQAssn." (term2str cq1) (term2str cq2))
+    )
+
   
 and calc_type_program (f : frame) (s : stmt_seq) : typing_result = 
   match s with
@@ -374,7 +404,15 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
           TypeError (Printf.sprintf "The term %s is not of operator type." (term2str e))
       | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str e))
       )
-  | Assn lo ->
+  | Pos lo ->
+      let t = calc_type f lo in
+      (match t with
+      | Type (DType _) -> Type Prop
+      | Type _ -> 
+          TypeError (Printf.sprintf "The term %s is not of labeled operator type." (term2str lo))
+      | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str lo))
+      )
+  | Proj lo ->
       let t = calc_type f lo in
       (match t with
       | Type (DType _) -> Type Prop
@@ -394,14 +432,10 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
   | Judgement {pre; s1; s2; post} -> 
       let t2 = calc_type f s1 in
       let t3 = calc_type f s2 in
-      let pre_proved = prop_proved f (Assn pre) in
-      let post_proved = prop_proved f (Assn post) in
-        (match pre_proved, t2, t3, post_proved with
-        | true, Type Prog, Type Prog, true -> Type Prop
-        | false, _, _, _ -> 
-            TypeError (Printf.sprintf "The precondition %s is not proved to be a valid assertion in the context." (term2str pre))
-        | _, _, _, false -> 
-          TypeError (Printf.sprintf "The postcondition %s is not proved to be a valid assertion in the context." (term2str post))
+      let t_pre = calc_type f pre in
+      let t_post = calc_type f post in
+        (match t_pre, t2, t3, t_post with
+        | Type CQAssn, Type Prog, Type Prog, Type CQAssn -> Type Prop
         | _, TypeError msg, _, _ -> 
           TypeError (Printf.sprintf "The term %s is not well typed: %s" (term2str s1) msg)
         | _, _, TypeError msg, _ ->

@@ -1,83 +1,105 @@
 (* Assumption. *)
-Var T : CType.
-Check (T).
-
-Var qs : QVList.
-Var x : OptPair.
-
-Undo.
-Check CType.
-Check QReg[T].
-
-Check Prog.
-Check SType.
-Check OType[T, T].
-
-Var q1 : QReg[T].
-Var q2 : QReg[T].
-Check [q1, q2].
-Check DType[[q1, q2], qs].
-
-Check T * T.
-Var T2 : CType.
-Var t1 : CTerm[T].
-Var t2 : CTerm[T2].
-
-Check (t1, t2).
-
-Var O : OType[T, T].
-
-Var O1 : OType[T, T].
-Var O2 : OType[T, T].
-
-Check O_q1,q2.
-
-Check O1 + O2.
-
-Check skip.
-Check skip skip.
-
-Var q : QReg[T].
-Var q3 : QReg[T].
-Var U : OType[T, T].
-Var Upf : Unitary U.
-
-Var M1 : OType[T, T].
-Var M2 : OType[T, T].
-Def M := ((M1_q1,q1), (M2_q1,q1)).
-Var Mpf : Meas M.
-
-Var s1 : Prog.
-Var s2 : Prog.
-
-Check init q.
-Check unitary U (q1).
-Check if M then s1 else s2 end.
-
-Var s : Prog.
-
-Check while M do s end.
-
-
-Check Unitary U.
-
-Check Assn U_q1,q2.
-(* Check Meas M. *)
-
-Def P := U_q1, q2.
-
-Var Ppf : Assn P.
-
-Check {P} skip ~ skip {P}.
-Check U = U.
-
-Show Ppf.
-ShowAll.
-
-Prove pf : {P} skip ~ skip {P}.
-
-r_skip.
-
-QED.
-
-Pause.
+    Var T : CType.
+    Check (T).
+    
+    Var qs : QVList.
+    Var x : OptPair.
+    
+    Undo.
+    Check CType.
+    Check QReg[T].
+    
+    Check Prog.
+    Check SType.
+    Check OType[T, T].
+    
+    Var q1 : QReg[T].
+    Var q2 : QReg[T].
+    Check (q1, q2).
+    Check [q1, q2].
+    Check DType[[q1, q2], qs].
+  
+  
+    Check T * T.
+    Var T2 : CType.
+    Var t1 : CTerm[T].
+    Var t2 : CTerm[T2].
+    
+    Check (t1, t2).
+    
+    Var O : OType[T, T].
+    
+    Var O1 : OType[T, T].
+    Var O2 : OType[T, T].
+  
+  
+    Check O_q1,q2.
+      
+    Check O1 + O2.
+    
+    Check skip.
+    Check skip skip.
+    
+    
+    Var x : CVar[Bit].
+    Check x := x.
+    Check x <-$ Bit.
+    
+    Var q : QReg[T].
+    Var q3 : QReg[T].
+    Var U : OType[T, T].
+    Var Upf : Unitary U.
+  
+  
+    Var M1 : OType[T, T].
+    Var M2 : OType[T, T].
+    Def M := ((M1_q1,q1), (M2_q1,q1)).
+    Var Mpf : Meas M.
+    
+    Var s1 : Prog.
+    Var s2 : Prog.
+    
+    Check init q.
+    Check unitary U (q1).
+    Check x := meas M.
+    Check if x then s1 else s2 end.
+  
+  
+    Var s : Prog.
+      
+    Check while x do s end.
+    
+    Check Unitary U.
+  
+    Def P := U_q1, q2.
+    Def Q := U_q1, q2.
+  
+    Prove Ppf : Proj P.
+      sorry.
+    QED.
+  
+    Var pfQ : Pos Q.
+  
+    Check <P, Q>.
+  
+    Check (true |-> <P, Q>) +cq (true |-> <P, Q>).
+  
+    Pause.
+  
+    Var cqAs1 : CQAssn.
+    Var cqAs2 : CQAssn.
+  
+    Check {cqAs1} skip ~ skip {cqAs2}.
+    Check U = U.
+  
+    Show Ppf.
+    ShowAll.
+  
+    Prove pf : {cqAs1} skip ~ skip {cqAs1}.
+  
+    r_skip.
+  
+    QED.
+  
+    Pause.
+  

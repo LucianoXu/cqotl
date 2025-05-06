@@ -20,39 +20,61 @@ This section introduces the typing system of the prover, which includes the type
 
 \newcommand{\cvar}[1]{\ensuremath{\textsf{CVar}(#1)}}
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
+\newcommand{\cAssn}{\ensuremath{\textsf{CAssn}}}
+\newcommand{\qAssn}{\ensuremath{\textsf{QAssn}}}
+\newcommand{\cqAssn}{\ensuremath{\textsf{CQAssn}}}
 \newcommand{\qvlist}{\textsf{QVList}}
 \newcommand{\opt}[2]{\ensuremath{\mathcal{O}(#1, #2)}}
 \newcommand{\ldirac}[2]{\ensuremath{\mathcal{D}(#1, #2)}}
+\newcommand{\abracket}[1]{\ensuremath{\langle #1 \rangle}}
 
 \newcommand{\optpair}{\ensuremath{\textsf{OptPair}}}
 \newcommand{\unitary}[1]{\ensuremath{\textsf{Unitary}({#1})}}
-\newcommand{\assn}[1]{\ensuremath{\textsf{Assn}(#1)}}
+\newcommand{\proppos}[1]{\ensuremath{\textsf{Pos}({#1})}}
+\newcommand{\propproj}[1]{\ensuremath{\textsf{Proj}({#1})}}
 \newcommand{\meas}[1]{\ensuremath{\textsf{Meas}(#1)}}
+
+
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
 \newcommand{\bit}{\textsf{Bit}}
 \newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
+\newcommand{\true}{\textsf{true}}
+\newcommand{\false}{\textsf{false}}
+
 \begin{definition}
     \begin{align*}
-        t ::=\ & x \\
+        t ::=\ & \mid x \\
         & \mid \Type \mid \prop \mid \qvlist \mid \optpair \\
-        & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \\
+        & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \mid \cAssn \mid \qAssn \mid \cqAssn \\
         & \mid \bit \\
         & \mid \CTerm{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
         & \mid t \times t  \\ 
-        & \mid (t, t) \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
-        & \mid opt \mid stmts \mid \phi \\
+        & \mid (t, t) \mid \abracket{t, t} \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
+        & \mid cassn \mid opt \mid cqassn \mid stmts \mid \phi \\
         & \mid \pf
     \end{align*}
 \end{definition}
 
-\subsection{Operators}
+\subsection{Operators and Assertions}
+
+\begin{definition}
+    \begin{align*}
+        cassn ::= \true \mid \false
+    \end{align*}
+\end{definition}
 
 \begin{definition}
     \begin{align*}
         opt ::= & \ t + t
+    \end{align*}
+\end{definition}
+
+\begin{definition}
+    \begin{align*}
+        cqassn ::= t\mapsto t \mid t +_{cq} t
     \end{align*}
 \end{definition}
 
@@ -96,7 +118,7 @@ qwhile programs are encoded as terms in the prover.
 \begin{definition}[proposition syntax]
     \label{def:prop syntax}
     \begin{align*}
-        \phi ::=\ & \unitary{t} \mid \assn{t} \mid \meas{t} \mid \judge{P}{s_1}{s_2}{Q} \\
+        \phi ::=\ & \unitary{t} \mid \proppos{t} \mid \propproj{t} \mid \meas{t} \mid \judge{P}{s_1}{s_2}{Q} \\
                 & \mid t = t
     \end{align*}
 \end{definition}
@@ -148,6 +170,12 @@ The typing rules for type terms are as follows.
     \qquad
     \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type} \\
     \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \cAssn : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \qAssn : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \cqAssn : \Type} \\
+    \\
     \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
     \qquad
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
@@ -167,6 +195,13 @@ The typing rules for type terms are as follows.
     \qquad
     \frac{\Gamma \vdash o_1 : \ldirac{r_1}{r_2} \quad \Gamma \vdash o_2 : \ldirac{r_1'}{r_2'}}{\Gamma \vdash (o_1, o_2) : \optpair} \\
     \\
+    \frac{
+        \begin{aligned}
+            & \Gamma \vdash P : \ldirac{r_1}{r_2} \qquad \Gamma \vdash \propproj{P} \\
+            & \Gamma \vdash A : \ldirac{r_1'}{r_2'} \qquad \Gamma \vdash \proppos{P}
+        \end{aligned}
+    }{\Gamma \vdash \abracket{P, A} : \qAssn} \\
+    \\
     \frac{\Gamma \vdash r_1 : \qreg{T_1} \quad \Gamma \vdash r_2 : \qreg{T_2}}{\Gamma \vdash (r_1, r_2) : \qreg{T_1 \times T_2}}
     \\
     \\
@@ -175,9 +210,23 @@ The typing rules for type terms are as follows.
     \frac{\Gamma \vdash o : \opt{T_1}{T_2} \quad \Gamma \vdash r_1 : \qreg{T_1} \quad \Gamma \vdash r_2 : \qreg{T_2}}{\Gamma \vdash o_{r_1,r_2} : \ldirac{\textsf{qvars}\ r_1}{\textsf{qvars}\ r_2}}
 \end{gather*}
 
+The typing rules for classical assertions are
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \true: \cAssn}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \false: \cAssn}
+\end{gather*}
+
 The typing rules for Dirac notations are
 \begin{gather*}
     \frac{\Gamma \vdash o_1 : \opt{T_1}{T_2} \quad \Gamma \vdash o_2 : \opt{T_1}{T_2}}{\Gamma \vdash o_1 + o_2 : \opt{T_1}{T_2}}
+\end{gather*}
+
+The typing rules for cq-assertions are
+\begin{gather*}
+    \frac{\Gamma \vdash \psi : \cAssn \quad \Gamma \vdash P : \qAssn}{\Gamma \vdash \psi \mapsto P : \cqAssn}
+    \qquad
+    \frac{\Gamma \vdash f : \cqAssn \quad \Gamma \vdash g : \cqAssn}{\Gamma \vdash f +_{cq} g : \cqAssn}
 \end{gather*}
 
 
@@ -208,13 +257,15 @@ The typing rules for propositions are
 \begin{gather*}
     \frac{\Gamma \vdash o : \opt{\sigma}{\sigma}}{\Gamma \vdash \unitary{o} : \prop}
     \qquad
-    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \assn{lo} : \prop} \\
+    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \proppos{lo} : \prop} 
+    \qquad
+    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \propproj{lo} : \prop} \\
     \\
     \frac{\Gamma \vdash M : \optpair}{\Gamma \vdash \meas{M} : \prop}
     \qquad
     \frac{
         \begin{aligned}
-            & \Gamma \vdash \assn{P} \qquad \Gamma \vdash \assn{Q} \\
+            & \Gamma \vdash P : \cqAssn \qquad \Gamma \vdash Q : \cqAssn \\
             & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
         \end{aligned}}
         {

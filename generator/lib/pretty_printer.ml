@@ -60,6 +60,13 @@ and tactic2str (t: tactic) : string =
         Printf.sprintf "QReg[%s]" (term2str qs)
     | Prog -> 
         Printf.sprintf "Prog"
+    | CAssn ->
+        Printf.sprintf "CAssn"
+    | QAssn ->
+        Printf.sprintf "QAssn"
+    | CQAssn ->
+        Printf.sprintf "CQAssn"
+
     | Bit ->
         Printf.sprintf "Bit"
 
@@ -77,6 +84,9 @@ and tactic2str (t: tactic) : string =
 
     | Pair (t1, t2) ->
         Printf.sprintf "(%s, %s)" (term2str t1) (term2str t2)
+    | AnglePair (t1, t2) ->
+        Printf.sprintf "<%s, %s>" (term2str t1) (term2str t2)
+
 
     | QVListTerm tls ->
         qvlistterm2str tls
@@ -84,7 +94,11 @@ and tactic2str (t: tactic) : string =
     | Subscript (t1, t2, t3) ->
         Printf.sprintf "%s_%s,%s" (term2str t1) (term2str t2) (term2str t3)
 
+    | CAssnTerm c -> (cassn2str c)
+
     | OptTerm o -> (opt2str o)
+
+    | CQAssnTerm cq -> (cqassn2str cq)
 
     | ProgTerm s -> (stmt_seq_2_str s)
 
@@ -101,8 +115,10 @@ and prop2str (p: props) : string =
   match p with
   | Unitary e -> 
       Printf.sprintf "Unitary %s" (term2str e)
-  | Assn e ->
-      Printf.sprintf "Assn %s" (term2str e)
+  | Pos e ->
+      Printf.sprintf "Pos %s" (term2str e)
+  | Proj e ->
+      Printf.sprintf "Proj %s" (term2str e)
   | Meas e ->
       Printf.sprintf "Meas %s" (term2str e)
   | Judgement {pre; s1; s2; post} -> 
@@ -112,10 +128,26 @@ and prop2str (p: props) : string =
       Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
   (* | _ -> "Unknown proposition" *)
 
+and cassn2str (c: cassn) : string =
+  match c with
+    | True -> 
+        Printf.sprintf "True"
+    | False -> 
+        Printf.sprintf "False"
+    (* | _ -> "Unknown assertion" *)
+
 and opt2str (o: opt) : string =
   match o with
   | Add {o1; o2} -> Printf.sprintf "(%s + %s)" (term2str o1) (term2str o2)
   (* | _ -> "Unknown operator" *)
+
+and cqassn2str (c: cqassn) : string =
+  match c with
+  | Fiber {psi; p} -> 
+      Printf.sprintf "(%s |-> %s)" (term2str psi) (term2str p)
+  | Add {cq1; cq2} -> 
+      Printf.sprintf "(%s +cq %s)" (term2str cq1) (term2str cq2)
+  (* | _ -> "Unknown assertion" *) 
 
 and stmt_seq_2_str (s: stmt_seq) : string =
     match s with

@@ -41,6 +41,10 @@ and terms =
   | CVar of terms
   | QReg of terms
   | Prog
+  | CAssn
+  | QAssn
+  | CQAssn
+
   | Bit
   
   | CTerm of terms
@@ -51,20 +55,29 @@ and terms =
   | Star of terms * terms
 
   | Pair of terms * terms
+  | AnglePair of terms * terms
   | QVListTerm of string list     (* A set of (constant) quantum variable *)
   | Subscript of terms * terms * terms
 
+  | CAssnTerm of cassn
   | OptTerm of opt
+  | CQAssnTerm of cqassn
   | ProgTerm of stmt_seq
   | PropTerm of props
 
   | ProofTerm         (* the constant opaque proof term *)
 
+and cassn =
+  | True
+  | False
 
 and opt =
   | Add of {o1: terms; o2: terms} (* It seems that use opt as the type is the best choice. It enables direct decomposition to operator arguments. *)
   (* syntax for operators are omitted *)
 
+and cqassn =
+  | Fiber of {psi: terms; p: terms}
+  | Add of {cq1: terms; cq2: terms}
 
 (* A Statement Sequence *)
 and stmt_seq =
@@ -85,7 +98,8 @@ and stmt =
 
 and props =
   | Unitary of terms
-  | Assn of terms
+  | Pos of terms
+  | Proj of terms
   | Meas of terms
   | Judgement of {
     pre: terms;

@@ -6,7 +6,7 @@
 %token <int> INT
 
 (* character symbols *)
-%token COLON COMMA PERIOD RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
+%token COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
@@ -15,10 +15,13 @@
 %token SORRY
 %token R_SKIP
 
-%token TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG BIT CTERM STYPE OTYPE DTYPE
+%token TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
+
+(* assertions and operators *)
+%token TRUE FALSE
 
 (* token for propositions *)
-%token PROP_UNITARY PROP_ASSN PROP_MEAS
+%token PROP_UNITARY PROP_POS PROP_PROJ PROP_MEAS
 
 (* token for terms *)
 %token SKIP INIT UNITARY_PROG MEAS IF THEN ELSE WHILE DO END
@@ -66,6 +69,10 @@ terms:
   | CVAR LBRACK t = terms RBRACK { CVar t }
   | QREG LBRACK t = terms RBRACK { QReg t }
   | PROG { Prog }
+  | CASSN { CAssn }
+  | QASSN { QAssn }
+  | CQASSN { CQAssn }
+
   | BIT { Bit }
 
   | CTERM LBRACK t = terms RBRACK { CTerm t }
@@ -74,10 +81,13 @@ terms:
   | DTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { DType (t1, t2) }
   | t1 = terms STAR t2 = terms { Star (t1, t2) }
   | LPAREN t1 = terms COMMA t2 = terms RPAREN { Pair (t1, t2) }
+  | LANGLE t1 = terms COMMA t2 = terms RANGLE { AnglePair (t1, t2) }
   | LBRACK idls = id_list RBRACK { QVListTerm idls }
   | t1 = terms UNDERSCORE t2 = terms COMMA t3 = terms { Subscript (t1, t2, t3) }
 
+  | c = cassn { CAssnTerm c }
   | op = opt { OptTerm op }
+  | cq = cqassn { CQAssnTerm cq }
   | s = stmt_seq { ProgTerm s }
   | p = props { PropTerm p }
 
@@ -86,8 +96,16 @@ id_list:
   | t = ID COMMA tls = id_list { t :: tls }
   | t = ID { [t] }
 
+cassn:
+  | TRUE { True }
+  | FALSE { False }
+
 opt:
   | o1 = terms PLUS o2 = terms { Add {o1; o2} }
+
+cqassn:
+  | psi = terms MAPSTO p = terms { Fiber {psi; p} }
+  | cq1 = terms PLUSCQ cq2 = terms { Add {cq1; cq2} }
 
 stmt_seq:
   | s = stmt ss = stmt_seq { s :: ss }
@@ -106,7 +124,8 @@ stmt:
 
 props:
   | PROP_UNITARY t = terms { Unitary t }
-  | PROP_ASSN t = terms { Assn t }
+  | PROP_POS t = terms { Pos t }
+  | PROP_PROJ t = terms { Proj t }
   | PROP_MEAS t = terms { Meas t }
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE { Judgement {pre; s1; s2; post} }
   | t1 = terms EQ t2 = terms { Eq {t1; t2} }
