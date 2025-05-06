@@ -2,3 +2,4 @@ import LeanVeri.Basic
 import LeanVeri.LinearMapPropositions
 import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
+import LeanVeri.LinearMapSupp

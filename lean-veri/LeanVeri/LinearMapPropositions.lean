@@ -34,11 +34,11 @@ def isPositiveDefinite (T : E →ₗ[𝕜] E) : Prop :=
   IsSelfAdjoint T ∧ ∀ x, 0 < RCLike.re (inner 𝕜 (T x) x)
 
 /-- Partial density operators. -/
-def isPartialDensityOperator (T : E →ₗ[𝕜] E) : Prop :=
+noncomputable def isPartialDensityOperator (T : E →ₗ[𝕜] E) : Prop :=
   T.isPositiveSemiDefinite ∧ trace 𝕜 E T ≤ 1
 
 /-- Density operators. -/
-def isDensityOperator (T : E →ₗ[𝕜] E) : Prop :=
+noncomputable def isDensityOperator (T : E →ₗ[𝕜] E) : Prop :=
   T.isPositiveSemiDefinite ∧ trace 𝕜 E T = 1
 
 /-- Quantum predicate. -/
@@ -63,7 +63,7 @@ def LoewnerOrder (T N : E →ₗ[𝕜] E) : Prop :=
   (T - N).isPositiveSemiDefinite
 
 /-- Pure state operators. -/
-def isPureState (T : E →ₗ[𝕜] E) : Prop :=
+noncomputable def isPureState (T : E →ₗ[𝕜] E) : Prop :=
   T.isDensityOperator ∧ T.rank = 1
 
 end LinearMap
