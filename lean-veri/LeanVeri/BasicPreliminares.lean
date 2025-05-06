@@ -4,12 +4,15 @@ Authors: Iván Renison
 -/
 import Mathlib.Analysis.InnerProductSpace.Positive
 import Mathlib.Analysis.InnerProductSpace.Projection
+import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.LinearAlgebra.TensorProduct.Basic
 import Mathlib.LinearAlgebra.Trace
 import Mathlib.Topology.Algebra.Support
 import Mathlib.Data.Real.Basic
-
+import Mathlib.Data.ENNReal.Basic
+import Mathlib.Order.Filter.Ker
+-- import Mathlib
 open scoped ComplexOrder
 
 /-!
@@ -130,12 +133,6 @@ def outerProduct (φ : E) (ψ : E) : E →ₗ[𝕜] E where
 
 end InnerProductSpace
 
-namespace LinearMap
-
-
-
-end LinearMap
-
 namespace Submodule
 
 -- Definition A.2
@@ -153,50 +150,46 @@ end Submodule
 -- Proposition A.3 (Properties of the Support)
 namespace SupportProp
 
-lemma supp_add1 (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
+lemma ker_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
   (LinearMap.ker (P + Q)) = (LinearMap.ker P) ⊓ (LinearMap.ker Q)               := by
-    ext x
-    constructor
-    · -- Forward direction
-      intro hx
-      rw [@LinearMap.mem_ker] at hx
-      rw [@LinearMap.isPositiveSemiDefinite] at hP
-      rw [@LinearMap.isPositiveSemiDefinite] at hQ
-      rw [@LinearMap.add_apply] at hx
-      have hPQx : RCLike.re (inner ((P + Q) x) x : 𝕜 ) = 0 := by
-        rw [@LinearMap.add_apply, hx]
-        rw [@inner_re_zero_left]
-      have hPx : RCLike.re (inner (P x) x : 𝕜) = 0 := by
-        have hP_cases := (hP.2 x).eq_or_gt
-        cases hP_cases with
-        | inl hP_zero =>
-          apply hP_zero
-        | inr hP_pos  =>
-          have hQ_cases := (hQ.2 x).eq_or_gt
-          cases hQ_cases with
-          | inl hQ_zero =>
-            sorry
-          | inr hQ_pos  =>
-            sorry
-      rw [@Submodule.mem_inf]
-      rw [@LinearMap.mem_ker]
-      constructor
-      · rw [LinearMap.congr_fun rfl x] at hPx
-        sorry
-      · sorry
-    · intro hx
-      sorry
+  rcases hP with ⟨hP_self, hP_re⟩
+  rcases hQ with ⟨hQ_self, hQ_re⟩
+  ext x
+  have : RCLike.re ((inner (P x) x) : 𝕜) + RCLike.re ((inner (Q x) x): 𝕜) = RCLike.re ((inner ((P + Q) x) x) : 𝕜) := by
+    rw [@LinearMap.add_apply, @inner_add_left, @AddMonoidHom.map_add]
+  simp only [LinearMap.mem_ker, LinearMap.add_apply, Submodule.mem_inf]
+  constructor
+  · intro h
+    rw [@LinearMap.add_apply, h, @inner_re_zero_left] at this
+    have hPx : RCLike.re ((inner (P x) x) : 𝕜) = 0 := by
+      apply le_antisymm
+      · have hsum_zero := this
+        have hQ_nonneg := hQ_re x
+        linarith
+      · exact hP_re x
+    have hQx : RCLike.re ((inner (Q x) x) : 𝕜) = 0 := by
+      apply le_antisymm
+      · have hsum_zero := this
+        have hQ_nonneg := hP_re x
+        linarith
+      · exact hQ_re x
+    
+    sorry
+  · intro h
+    simp_all only [inner_zero_left, map_zero, add_zero, LinearMap.add_apply]
 
-lemma supp_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
-  (LinearMap.ker P ⊓ LinearMap.ker Q)ᗮ = (LinearMap.ker P)ᗮ ⊔ (LinearMap.ker Q)ᗮ := by sorry
+
+lemma ker_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
+  (LinearMap.ker P ⊓ LinearMap.ker Q)ᗮ = (LinearMap.ker P)ᗮ ⊔ (LinearMap.ker Q)ᗮ := by
+  sorry
 
 lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q) :
   LinearMap.supp (P + Q) = LinearMap.supp (P) ⊔ LinearMap.supp (Q)  := by
     rw [LinearMap.supp]
     rw [LinearMap.supp]
     rw [LinearMap.supp]
-    rw [supp_add1]
-    rw [supp_union]
+    rw [ker_add]
+    rw [ker_union]
     · apply hP
     · apply hQ
     · apply hP
@@ -204,18 +197,33 @@ lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P
 
 end SupportProp
 
+
+-- Definition A.5 (Taken from lemma A.5)
 structure infiniteValuesPredicates (𝕜 E : Type*) [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E] [FiniteDimensional 𝕜 E] where
-  P : E →ₗ[𝕜] E
-  PisPos : P.isPositive
-  PisDens : P.isDensityOperator
-  X : E →ₗ[𝕜] E
-  XisProj : X.isProjection
-  compZero : XisProj.toSubmodule ≤ LinearMap.ker P
+  P         : E →ₗ[𝕜] E
+  PisPos    : P.isPositive
+  PisDens   : P.isDensityOperator
+  X         : E →ₗ[𝕜] E
+  XisProj   : X.isProjection
+  compZero  : XisProj.toSubmodule ≤ LinearMap.ker P
+
+
+-- Lemma A.7
+namespace InfiniteValuePredProperties
+
+lemma scalarProduct (A A₁ A₂ : E →ₗ[𝕜] E) (c : ENNReal) (ψ : E) :
+  inner ψ (c • A ψ) = c * inner ψ (A ψ) :=
+
+end InfiniteValuePredProperties
 
 namespace LinearMap
+
 omit [CompleteSpace E] [FiniteDimensional 𝕜 E]
 
 open scoped TensorProduct
+
+
+
 
 notation:100 T "⊗ₗ" N:100 => TensorProduct.map T N
 
