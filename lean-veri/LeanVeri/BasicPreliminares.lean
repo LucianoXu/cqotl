@@ -173,7 +173,6 @@ lemma ker_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P)
         have hQ_nonneg := hP_re x
         linarith
       · exact hQ_re x
-    
     sorry
   · intro h
     simp_all only [inner_zero_left, map_zero, add_zero, LinearMap.add_apply]
@@ -181,7 +180,17 @@ lemma ker_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P)
 
 lemma ker_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q):
   (LinearMap.ker P ⊓ LinearMap.ker Q)ᗮ = (LinearMap.ker P)ᗮ ⊔ (LinearMap.ker Q)ᗮ := by
-  sorry
+  ext x
+  constructor
+  · intro H
+    rw [@Submodule.mem_orthogonal'] at H
+    simp_all only [Submodule.mem_inf, LinearMap.mem_ker, and_imp]
+    refine Submodule.mem_sup_right ?_
+    refine (Submodule.mem_orthogonal' (LinearMap.ker Q) x).mpr ?_
+    sorry
+  · intro H
+    
+    sorry
 
 lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P) (hQ : LinearMap.isPositiveSemiDefinite Q) :
   LinearMap.supp (P + Q) = LinearMap.supp (P) ⊔ LinearMap.supp (Q)  := by
