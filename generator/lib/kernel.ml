@@ -83,7 +83,7 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
 
   | QVList -> Type Type
 
-  | OptPair -> Type Type
+  | OptPair t -> calc_type_OptPair f t
 
   | CType -> Type Type
 
@@ -109,7 +109,13 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
 
   | DType (t1, t2) -> calc_type_DType f t1 t2
 
+
   | Star (t1, t2) -> calc_type_Star f t1 t2
+
+  | At1 t1 -> calc_type_At1 f t1
+
+  | At2 t2 -> calc_type_At2 f t2
+
 
   | Pair (t1, t2) -> calc_type_pair f t1 t2
 
@@ -120,7 +126,9 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
 
   | Subscript (e, t1, t2) -> calc_type_subscript f e t1 t2
 
-  | CAssnTerm c -> calc_type_cassn f c
+  | BitTerm b -> calc_type_bitterm f b
+
+  (* | CAssnTerm c -> calc_type_cassn f c *)
 
   | OptTerm o -> calc_type_opt f o
 
@@ -140,11 +148,25 @@ and is_CTerm (f: frame) (e: terms) : typing_result =
   | Type (CVar a) -> Type (CTerm a)
   | _ ->
     TypeError (Printf.sprintf "The term %s cannot be typed as CTerm[...]." (term2str e))
+
+and is_CAssn (f: frame) (e: terms) : typing_result = 
+  let t = calc_type f e in
+  match t with
+  | Type CAssn -> Type CAssn
+  | Type (CTerm Bit) -> Type CAssn
+  | _ ->
+    TypeError (Printf.sprintf "The term %s cannot be typed as CAssn." (term2str e))
     
 and calc_type_var (f : frame) (v : string) : typing_result = 
   match find_item f v with
   | Some (Assumption {t; _}) | Some (Definition {t; _}) -> Type t
   | None -> TypeError (Printf.sprintf "Variable %s is not defined." v)
+
+and calc_type_OptPair f t =
+  let type_of_t = calc_type f t in
+  match type_of_t with
+  | Type CType -> Type Type
+  | _ -> TypeError (Printf.sprintf "The term %s is not typed as CType." (term2str t))
 
 and calc_type_CVar (f : frame) (t : terms) =
   let type_of_t = calc_type f t in
@@ -191,6 +213,19 @@ and calc_type_Star (f : frame) t1 t2 =
     -> Type CType
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
 
+and calc_type_At1 (f : frame) t =
+  let type_of_t = calc_type f (Var t) in
+  match type_of_t with
+  | Type (QReg _) -> type_of_t
+  | Type (CVar _) -> type_of_t
+  | _ -> TypeError (Printf.sprintf "Only quantum registers can be annotated by @1")
+
+and calc_type_At2 (f : frame) t =
+  let type_of_t = calc_type f (Var t) in
+  match type_of_t with
+  | Type (QReg _) -> type_of_t
+  | Type (CVar _) -> type_of_t
+  | _ -> TypeError (Printf.sprintf "Only quantum registers can be annotated by @1")
 
 and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result = 
   let type_of_t1 = calc_type f t1 in
@@ -201,14 +236,14 @@ and calc_type_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
     Type (CTerm (Star (ctype1, ctype2)))
 
   (* a pair of operators *)
-  | Type (DType _), Type (DType _) ->
-    Type OptPair
+  | Type (OType (d1, d2)), Type (OType (d1', d2')) when (d1 = d2 && d2 = d1' && d1' = d2') ->
+    Type (OptPair d1)
 
   (* a pair of qreg *)
   | Type (QReg qregt1), Type (QReg qregt2) ->
     Type (QReg (Star (qregt1, qregt2)))
 
-  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Star (t1, t2))))
+  | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Pair (t1, t2))))
 
 and calc_type_angle_pair (f : frame) (t1 : terms) (t2 : terms): typing_result =
   let type_of_t1 = calc_type f t1 in
@@ -233,12 +268,12 @@ and calc_type_qvlist (f : frame) ls =
   | hd :: tl ->
     (* check whether hd appears in the tl*)
     if List.mem hd tl then
-      TypeError (Printf.sprintf "The variable %s appears more than once in the QVList." hd)
+      TypeError (Printf.sprintf "The variable %s appears more than once in the QVList." (term2str hd))
     else
-      let type_hd = calc_type f (Var hd) in
+      let type_hd = calc_type f hd in
       match type_hd with
       | Type (QReg _) -> calc_type_qvlist f tl
-      | _ -> TypeError (Printf.sprintf "The element %s is not typed as QReg." (term2str (Var hd)))
+      | _ -> TypeError (Printf.sprintf "The element %s is not typed as QReg." (term2str hd))
 
 and calc_type_subscript f e t1 t2 =
   let type_of_e = calc_type f e in
@@ -250,13 +285,39 @@ and calc_type_subscript f e t1 t2 =
       Type (DType (QVListTerm (get_qvlist t1), QVListTerm (get_qvlist t2)))
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Subscript (e, t1, t2))))
 
+and calc_type_bitterm f e =
+  match e with
+  | True -> Type (CTerm Bit)
+  | False -> Type (CTerm Bit)
+  | Eq {t1; t2} ->
+    let type_of_t1 = is_CTerm f t1 in
+    let type_of_t2 = is_CTerm f t2 in
+      (match type_of_t1, type_of_t2 with
+      | Type (CTerm a), Type (CTerm b) when a = b ->
+        Type (CTerm Bit)
+      | _ -> TypeError (Printf.sprintf "The term %s is not well typed, because the two sides are not terms of the same classical type." (bitterm2str e))
+      )
+(* 
 and calc_type_cassn f c =
   match c with
   | True -> Type CAssn
-  | False -> Type CAssn
+  | False -> Type CAssn *)
 
 and calc_type_opt (f : frame) (o : opt) : typing_result = 
   match o with
+  | OneO t ->
+      let type_of_t = calc_type f t in
+      (match type_of_t with
+      | Type CType -> Type (OType (t, t))
+      | _ -> TypeError (Printf.sprintf "%s should be typed as CType in %s." (term2str t) (opt2str o))
+      )
+  | ZeroO {t1; t2} ->
+      let type_of_t1 = calc_type f t1 in
+      let type_of_t2 = calc_type f t2 in
+      (match type_of_t1, type_of_t2 with
+      | Type CType, Type CType -> Type (OType (t1, t2))
+      | _ -> TypeError (Printf.sprintf "%s and %s should be typed as CType in %s." (term2str t1) (term2str t2) (opt2str o))
+      )
   | Add {o1; o2} -> 
       let t1 = calc_type f o1 in
       let t2 = calc_type f o2 in
@@ -271,7 +332,7 @@ and calc_type_opt (f : frame) (o : opt) : typing_result =
 and calc_type_cqassn f cq =
   match cq with
   | Fiber {psi; p} -> 
-    let type_psi = calc_type f psi in
+    let type_psi = is_CAssn f psi in
     let type_p = calc_type f p in
     (match type_psi, type_p with
     | Type CAssn, Type QAssn -> Type CQAssn
@@ -349,11 +410,12 @@ and calc_type_stmt (f :frame) (s : stmt) : typing_result =
         | _ -> 
             TypeError (Printf.sprintf "The term %s is not well typed." (stmt2str s))
         )
-  | Meas {x; m_opt} ->
+  | Meas {x; m_opt; qs} ->
     let type_of_x = calc_type f (Var x) in
     let type_of_m_opt = calc_type f m_opt in
-      (match type_of_x, type_of_m_opt with
-      | Type (CVar Bit), Type OptPair -> 
+    let type_of_qs = calc_type f qs in
+      (match type_of_x, type_of_m_opt, type_of_qs with
+      | Type (CVar Bit), Type (OptPair d1), Type (QReg d2) when d1 = d2 -> 
         (* Check measurement proof *)
         if prop_proved f (Meas m_opt) then
           Type Prog
@@ -423,7 +485,7 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
   | Meas m -> 
       let t = calc_type f m in
       (match t with
-      | Type OptPair -> Type Prop
+      | Type (OptPair _) -> Type Prop
       | Type _ ->
           TypeError (Printf.sprintf "The term %s is not of operator pair type." (term2str m))
       | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str m))

@@ -1,0 +1,110 @@
+
+(* Assumption. *)
+Var T : CType.
+Check (T).
+
+Var qs : QVList.
+Var x : OptPair[Bit].
+
+Undo.
+Check CType.
+Check QReg[T].
+
+Check Prog.
+Check SType.
+Check OType[T, T].
+
+
+Var q1 : QReg[T].
+Var q2 : QReg[T].
+Check (q1, q2).
+Check [q1@1, q2].
+Check DType[[q1, q2], qs].
+
+
+Check T * T.
+Var T2 : CType.
+Var t1 : CTerm[T].
+Var t2 : CTerm[T2].
+
+Check (t1, t2).
+
+Var O : OType[T, T].
+
+Var O1 : OType[T, T].
+Var O2 : OType[T, T].
+
+Check 1O[Bit*Bit].
+
+Check O_q1,q2.
+  
+Check O1 + O2.
+
+Check skip.
+Check skip skip.
+
+
+Var x : CVar[Bit].
+Check x := x.
+Check x <-$ Bit.
+
+Var q : QReg[T].
+Var q3 : QReg[T].
+Var U : OType[T, T].
+Var Upf : Unitary U.
+
+
+Var M1 : OType[T, T].
+Var M2 : OType[T, T].
+Def M := (M1, M2).
+Var Mpf : Meas M.
+
+Var s1 : Prog.
+Var s2 : Prog.
+
+Check init q.
+Check unitary U (q1).
+Check x := meas M q.
+Check if x then s1 else s2 end.
+
+
+Var s : Prog.
+  
+Check while x do s end.
+
+Check Unitary U.
+
+Def P := U_q1, q2.
+Def Q := U_q1, q2.
+
+Prove Ppf : Proj P.
+  sorry.
+QED.
+
+Var pfQ : Pos Q.
+
+Check <P, Q>.
+
+Var a : CTerm[Bit].
+Var b : CTerm[Bit].
+
+Check (true |-> <P, Q>) +cq (a == b |-> <P, Q>).
+
+Pause.
+
+Var cqAs1 : CQAssn.
+Var cqAs2 : CQAssn.
+
+Check {cqAs1} skip ~ skip {cqAs2}.
+Check U = U.
+
+Show Ppf.
+ShowAll.
+
+Prove pf : {cqAs1} skip ~ skip {cqAs1}.
+
+r_skip.
+
+QED.
+
+Pause.

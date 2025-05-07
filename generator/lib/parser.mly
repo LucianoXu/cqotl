@@ -6,7 +6,7 @@
 %token <int> INT
 
 (* character symbols *)
-%token COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
+%token AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQEQ EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
@@ -23,9 +23,20 @@
 (* token for propositions *)
 %token PROP_UNITARY PROP_POS PROP_PROJ PROP_MEAS
 
-(* token for terms *)
+(* token for Dirac notation *)
+%token ONEO ZEROO
+
+(* token for programs *)
 %token SKIP INIT UNITARY_PROG MEAS IF THEN ELSE WHILE DO END
 %token EOF
+
+
+/* -- precedence table -- */
+%left PLUS
+%left STAR
+%nonassoc MAPSTO
+%nonassoc EQEQ EQ
+/**************************/
 
 %start top
 %type <Ast.command list> top
@@ -33,6 +44,7 @@
 %%
 
 top:
+  | EOF { [] }
   | cl = command_list EOF { cl }
 
 command_list:
@@ -64,7 +76,7 @@ terms:
   | TYPE { Type }
   | PROP { Prop }
   | QVLIST { QVList }
-  | OPTPAIR { OptPair }
+  | OPTPAIR LBRACK t = terms RBRACK { OptPair t }
   | CTYPE { CType }
   | CVAR LBRACK t = terms RBRACK { CVar t }
   | QREG LBRACK t = terms RBRACK { QReg t }
@@ -79,28 +91,44 @@ terms:
   | STYPE { SType }
   | OTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { OType (t1, t2) }
   | DTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { DType (t1, t2) }
+
   | t1 = terms STAR t2 = terms { Star (t1, t2) }
+  | v = ID AT1 { At1 v }
+  | v = ID AT2 { At2 v }
+
   | LPAREN t1 = terms COMMA t2 = terms RPAREN { Pair (t1, t2) }
   | LANGLE t1 = terms COMMA t2 = terms RANGLE { AnglePair (t1, t2) }
-  | LBRACK idls = id_list RBRACK { QVListTerm idls }
+  | LBRACK qrls = qreg_list RBRACK { QVListTerm qrls }
   | t1 = terms UNDERSCORE t2 = terms COMMA t3 = terms { Subscript (t1, t2, t3) }
 
-  | c = cassn { CAssnTerm c }
+  | t = bitterm { BitTerm t }
+  // | c = cassn { CAssnTerm c }
   | op = opt { OptTerm op }
   | cq = cqassn { CQAssnTerm cq }
   | s = stmt_seq { ProgTerm s }
   | p = props { PropTerm p }
 
+qreg:
+  | v = ID { Var v }
+  | v = ID AT1 { At1 v }
+  | v = ID AT2 { At2 v }
 
-id_list:
-  | t = ID COMMA tls = id_list { t :: tls }
-  | t = ID { [t] }
+qreg_list:
+  | qr = qreg COMMA tls = qreg_list { qr :: tls }
+  | qr = qreg { [qr] }
 
-cassn:
+bitterm:
   | TRUE { True }
   | FALSE { False }
+  | t1 = terms EQEQ t2 = terms { Eq {t1; t2} }
+
+// cassn:
+//   | TRUE { True }
+//   | FALSE { False }
 
 opt:
+  | ONEO LBRACK t = terms RBRACK { OneO t }
+  | ZEROO LBRACK t1 = terms COMMA t2 = terms RBRACK { ZeroO {t1; t2} }
   | o1 = terms PLUS o2 = terms { Add {o1; o2} }
 
 cqassn:
@@ -117,7 +145,7 @@ stmt:
   | id = ID RNDARROW t = terms                                     { PAssign {x=id; t=t} }
   | INIT q           = terms                                              { InitQubit q }
   | UNITARY_PROG u_opt = terms qs = terms                            { Unitary {u_opt; qs} }
-  | id = ID ASSIGN MEAS m_opt = terms                    { Meas {x=id; m_opt=m_opt} }
+  | id = ID ASSIGN MEAS m_opt = terms qs = terms                   { Meas {x=id; m_opt=m_opt; qs=qs} }
   | IF b = terms THEN s1 = terms ELSE s2 = terms END          { IfMeas {b; s1; s2} }
   | WHILE b    = terms DO s = terms END                          { WhileMeas {b; s} }
 

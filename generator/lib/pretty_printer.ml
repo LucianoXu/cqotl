@@ -48,8 +48,8 @@ and tactic2str (t: tactic) : string =
         Printf.sprintf "Prop"
     | QVList ->
         Printf.sprintf "QVList"
-    | OptPair ->
-        Printf.sprintf "OptPair"
+    | OptPair t ->
+        Printf.sprintf "OptPair[%s]" (term2str t)
     | ProofTerm ->
         Printf.sprintf "<proof>"
     | CType ->
@@ -81,6 +81,10 @@ and tactic2str (t: tactic) : string =
 
     | Star (t1, t2) ->
         Printf.sprintf "(%s * %s)" (term2str t1) (term2str t2)
+    | At1 v ->
+        Printf.sprintf "%s@1" v
+    | At2 v ->
+        Printf.sprintf "%s@2" v
 
     | Pair (t1, t2) ->
         Printf.sprintf "(%s, %s)" (term2str t1) (term2str t2)
@@ -94,7 +98,9 @@ and tactic2str (t: tactic) : string =
     | Subscript (t1, t2, t3) ->
         Printf.sprintf "%s_%s,%s" (term2str t1) (term2str t2) (term2str t3)
 
-    | CAssnTerm c -> (cassn2str c)
+    | BitTerm b -> (bitterm2str b)
+
+    (* | CAssnTerm c -> (cassn2str c) *)
 
     | OptTerm o -> (opt2str o)
 
@@ -107,8 +113,8 @@ and tactic2str (t: tactic) : string =
     (* | _ -> 
         Printf.sprintf "<Term not implemented yet>" *)
 
-and qvlistterm2str (tls : string list) : string =
-    tls |> String.concat ", " |> Printf.sprintf "[%s]"
+and qvlistterm2str (tls : terms list) : string =
+    List.map term2str tls |> String.concat ", " |> Printf.sprintf "[%s]"
     
 
 and prop2str (p: props) : string =
@@ -128,16 +134,25 @@ and prop2str (p: props) : string =
       Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
   (* | _ -> "Unknown proposition" *)
 
+and bitterm2str (b: bitterm) : string =
+  match b with
+  | True -> 
+      Printf.sprintf "true"
+  | False -> 
+      Printf.sprintf "false"
+  | Eq {t1; t2} -> 
+      Printf.sprintf "%s == %s" (term2str t1) (term2str t2)
+  (* | _ -> "Unknown bit term" *)
+(* 
 and cassn2str (c: cassn) : string =
   match c with
-    | True -> 
-        Printf.sprintf "True"
-    | False -> 
-        Printf.sprintf "False"
-    (* | _ -> "Unknown assertion" *)
+    | _ -> raise (Failure "Unknown assertion")
+    | _ -> "Unknown assertion" *)
 
 and opt2str (o: opt) : string =
   match o with
+  | OneO t -> Printf.sprintf "1O[%s]" (term2str t)
+  | ZeroO {t1; t2} -> Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
   | Add {o1; o2} -> Printf.sprintf "(%s + %s)" (term2str o1) (term2str o2)
   (* | _ -> "Unknown operator" *)
 
@@ -172,8 +187,8 @@ and stmt2str (s: stmt) : string =
   | Unitary {u_opt; qs}       ->
       Printf.sprintf "unitary %s%s" (term2str u_opt) (term2str qs)
 
-  | Meas {x; m_opt}             ->
-      Printf.sprintf "%s := meas %s" x (term2str m_opt)
+  | Meas {x; m_opt; qs}             ->
+      Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)
 
   | IfMeas {b; s1; s2}  ->
       Printf.sprintf "if %s then %s else %s end" 

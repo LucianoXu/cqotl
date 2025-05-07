@@ -35,7 +35,7 @@ and terms =
   | Type
   | Prop
   | QVList
-  | OptPair
+  | OptPair of terms
 
   | CType
   | CVar of terms
@@ -53,13 +53,16 @@ and terms =
   | DType of terms * terms
 
   | Star of terms * terms
+  | At1 of string
+  | At2 of string
 
   | Pair of terms * terms
   | AnglePair of terms * terms
-  | QVListTerm of string list     (* A set of (constant) quantum variable *)
+  | QVListTerm of terms list     (* A set of (constant) quantum variable *)
   | Subscript of terms * terms * terms
 
-  | CAssnTerm of cassn
+  | BitTerm of bitterm
+
   | OptTerm of opt
   | CQAssnTerm of cqassn
   | ProgTerm of stmt_seq
@@ -67,12 +70,15 @@ and terms =
 
   | ProofTerm         (* the constant opaque proof term *)
 
-and cassn =
-  | True
+and bitterm =
+  | True 
   | False
+  | Eq of {t1: terms; t2: terms}
 
 and opt =
-  | Add of {o1: terms; o2: terms} (* It seems that use opt as the type is the best choice. It enables direct decomposition to operator arguments. *)
+  | OneO of terms
+  | ZeroO of {t1: terms; t2: terms}
+  | Add of {o1: terms; o2: terms}
   (* syntax for operators are omitted *)
 
 and cqassn =
@@ -91,7 +97,7 @@ and stmt =
   | PAssign of {x: string; t: terms}
   | InitQubit of      terms
   | Unitary of        {u_opt: terms; qs: terms}
-  | Meas of           {x: string; m_opt: terms}
+  | Meas of           {x: string; m_opt: terms; qs: terms}
   | IfMeas of         {b: terms; s1: terms; s2: terms}
   | WhileMeas of      {b: terms; s: terms}
 
@@ -111,8 +117,8 @@ and props =
 
 
 (* the function to calculate the qvlist from the qreg term *)
-let rec get_qvlist (qreg : terms) : string list =
+let rec get_qvlist (qreg : terms) : terms list =
   match qreg with
-  | Var x -> [x]
+  | Var _ | At1 _ | At2 _ -> [qreg]
   | Pair (t1, t2) -> List.concat [(get_qvlist t1); (get_qvlist t2)]
   | _ -> raise (Failure "Undefined get_qvlist")

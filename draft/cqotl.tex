@@ -28,7 +28,7 @@ This section introduces the typing system of the prover, which includes the type
 \newcommand{\ldirac}[2]{\ensuremath{\mathcal{D}(#1, #2)}}
 \newcommand{\abracket}[1]{\ensuremath{\langle #1 \rangle}}
 
-\newcommand{\optpair}{\ensuremath{\textsf{OptPair}}}
+\newcommand{\optpair}[1]{\ensuremath{\textsf{OptPair}(#1)}}
 \newcommand{\unitary}[1]{\ensuremath{\textsf{Unitary}({#1})}}
 \newcommand{\proppos}[1]{\ensuremath{\textsf{Pos}({#1})}}
 \newcommand{\propproj}[1]{\ensuremath{\textsf{Proj}({#1})}}
@@ -41,34 +41,37 @@ This section introduces the typing system of the prover, which includes the type
 \newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
+\newcommand{\ONEO}{\ensuremath{\mathbf{1}_\mathcal{O}}}
+\newcommand{\ZEROO}{\ensuremath{\mathbf{0}_\mathcal{O}}}
+
 \newcommand{\true}{\textsf{true}}
 \newcommand{\false}{\textsf{false}}
 
 \begin{definition}
     \begin{align*}
         t ::=\ & \mid x \\
-        & \mid \Type \mid \prop \mid \qvlist \mid \optpair \\
+        & \mid \Type \mid \prop \mid \qvlist \mid \optpair{t} \\
         & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \mid \cAssn \mid \qAssn \mid \cqAssn \\
         & \mid \bit \\
         & \mid \CTerm{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
-        & \mid t \times t  \\ 
+        & \mid t \times t \mid  x@1 \mid x@2 \\ 
         & \mid (t, t) \mid \abracket{t, t} \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
-        & \mid cassn \mid opt \mid cqassn \mid stmts \mid \phi \\
+        & \mid bitterm \mid opt \mid cqassn \mid stmts \mid \phi \\
         & \mid \pf
     \end{align*}
 \end{definition}
 
-\subsection{Operators and Assertions}
+\subsection{Classical terms, operators and assertions}
 
 \begin{definition}
     \begin{align*}
-        cassn ::= \true \mid \false
+        bitterm ::= \true \mid \false \mid t == t
     \end{align*}
 \end{definition}
 
 \begin{definition}
     \begin{align*}
-        opt ::= & \ t + t
+        opt ::= & \ONEO(t) \mid \ZEROO(t,t) \mid t + t
     \end{align*}
 \end{definition}
 
@@ -89,7 +92,7 @@ qwhile programs are encoded as terms in the prover.
 \newcommand{\Assign}[2]{\ensuremath{#1:=#2}}
 \newcommand{\pAssign}[2]{\ensuremath{#1 \rndarrow #2}}
 \newcommand{\Init}[1]{\ensuremath{#1:=\ket{0}}}
-\newcommand{\MeaAssign}[2]{\ensuremath{#1 := \textbf{meas}\ #2}}
+\newcommand{\MeaAssign}[3]{\ensuremath{#1 := \textbf{meas}\ #2\ #3}}
 \newcommand{\If}[3]{\ensuremath{
     \textbf{if}\ #1\ \textbf{then}\ #2\ \textbf{else}\ #3\ \textbf{end}
 }}
@@ -107,7 +110,7 @@ qwhile programs are encoded as terms in the prover.
             & && \mid \pAssign{x}{T} & \text{(probabilistic assignment)} \\
             & && \mid \Init{t} & \text{(initialization)} \\
             & && \mid U\ t & \text{(unitary transformation)} \\
-            & && \mid \MeaAssign{x}{t} & \text{(quantum measurement)} \\
+            & && \mid \MeaAssign{x}{M}{t} & \text{(quantum measurement)} \\
             & && \mid \If{t}{stmts_1}{stmts_2} & \text{(if statement)} \\
             & && \mid \While{t}{stmts} & \text{(while statement)}
     \end{align*}
@@ -151,6 +154,8 @@ The well-formed contexts can be constructed in the following ways:
 These are subtyping rules:
 \begin{gather*}
     \frac{\Gamma \vdash t : \cvar{t}}{\Gamma \vdash t : \CTerm{t}}
+    \quad
+    \frac{\Gamma \vdash t : \CTerm{\bit}}{\Gamma \vdash t : \cAssn}
 \end{gather*}
 
 
@@ -160,7 +165,7 @@ The typing rules for type terms are as follows.
     \qquad
     \frac{\WF{\Gamma}}{\Gamma \vdash \qvlist : \Type}
     \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \optpair : \Type}
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \optpair{T} : \Type}
     \qquad
     \frac{\WF{\Gamma}}{\Gamma \vdash \CType : \Type} \\
     \\
@@ -188,12 +193,21 @@ The typing rules for type terms are as follows.
     \\
     \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash T_1 \times T_2 : \CType} \\
     \\
+    \frac{\Gamma \vdash x : \qreg{T}}{\Gamma \vdash x@1 : \qreg{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \qreg{T}}{\Gamma \vdash x@2 : \qreg{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash x@1 : \cvar{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash x@2 : \cvar{T}}
+    \\
+    \\
     \frac{
     \Gamma \vdash t_1 : \CTerm{T_1} \quad \Gamma \vdash t_2 : \CTerm{T_2}
     }
     {\Gamma \vdash (t_1, t_2) : \CTerm{T_1 \times T_2}}
     \qquad
-    \frac{\Gamma \vdash o_1 : \ldirac{r_1}{r_2} \quad \Gamma \vdash o_2 : \ldirac{r_1'}{r_2'}}{\Gamma \vdash (o_1, o_2) : \optpair} \\
+    \frac{\Gamma \vdash o_1 : \opt{t}{t} \quad \Gamma \vdash o_2 : \opt{t}{t}}{\Gamma \vdash (o_1, o_2) : \optpair{t}} \\
     \\
     \frac{
         \begin{aligned}
@@ -210,15 +224,26 @@ The typing rules for type terms are as follows.
     \frac{\Gamma \vdash o : \opt{T_1}{T_2} \quad \Gamma \vdash r_1 : \qreg{T_1} \quad \Gamma \vdash r_2 : \qreg{T_2}}{\Gamma \vdash o_{r_1,r_2} : \ldirac{\textsf{qvars}\ r_1}{\textsf{qvars}\ r_2}}
 \end{gather*}
 
+The typing rules for bit terms are
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \true: \CTerm{\bit}}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \false: \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t_1 : \CTerm{T} \quad \Gamma \vdash t_2 : \CTerm{T}}{\Gamma \vdash t_1 == t_2 : \CTerm{\bit}}
+\end{gather*}
+
 The typing rules for classical assertions are
 \begin{gather*}
-    \frac{\WF{\Gamma}}{\Gamma \vdash \true: \cAssn}
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \false: \cAssn}
+    \cdots
 \end{gather*}
 
 The typing rules for Dirac notations are
 \begin{gather*}
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \ONEO(T) : \opt{T}{T}}
+    \qquad
+    \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash \ZEROO(T_1, T_2) : \opt{T_1}{T_2}} \\
+    \\
     \frac{\Gamma \vdash o_1 : \opt{T_1}{T_2} \quad \Gamma \vdash o_2 : \opt{T_1}{T_2}}{\Gamma \vdash o_1 + o_2 : \opt{T_1}{T_2}}
 \end{gather*}
 
@@ -242,7 +267,7 @@ The typing rules for program statements are:
     \\
     \frac{\Gamma \vdash U : \opt{T}{T} \quad \Gamma \vdash t : \qreg{T} \quad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
     \\
-    \frac{\Gamma \vdash x : \cvar{\bit} \quad \Gamma \vdash M : \optpair \quad \Gamma \vdash \meas{M}}{\Gamma \vdash \MeaAssign{x}{M} : \prog} \\
+    \frac{\Gamma \vdash x : \cvar{\bit} \quad \Gamma \vdash M : \optpair{t} \quad \Gamma \vdash \meas{M} \quad \Gamma \vdash t : \qreg{T} }{\Gamma \vdash \MeaAssign{x}{M}{t} : \prog} \\
     \\
     \frac{\Gamma \vdash t : \CTerm{\bit} \quad \Gamma \vdash s_1 : \prog \quad \Gamma \vdash s_2 : \prog}
     {\Gamma \vdash \If{t}{s_1}{s_2} : \prog} \\
@@ -261,7 +286,7 @@ The typing rules for propositions are
     \qquad
     \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \propproj{lo} : \prop} \\
     \\
-    \frac{\Gamma \vdash M : \optpair}{\Gamma \vdash \meas{M} : \prop}
+    \frac{\Gamma \vdash M : \optpair{t}}{\Gamma \vdash \meas{M} : \prop}
     \qquad
     \frac{
         \begin{aligned}

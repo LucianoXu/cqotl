@@ -1,0 +1,33 @@
+
+Var x : CVar[Bit].
+Var q : QReg[Bit].
+Var H : OType[Bit, Bit].
+Var Hpf : Unitary H.
+
+Prove oneopf : Proj (1O[Bit * Bit]_(q@1, q@2),(q@1, q@2)).
+  sorry.
+QED.
+
+Prove zeroopf : Pos (0O[Bit * Bit, Bit * Bit]_(q@1, q@2),(q@1, q@2)).
+  sorry.
+QED.
+
+Def OneObs := <1O[Bit*Bit]_(q@1, q@2),(q@1, q@2) , 0O[Bit*Bit, Bit*Bit]_(q@1, q@2),(q@1, q@2)>.
+
+Var P0 : OType[Bit, Bit].
+Var P1 : OType[Bit, Bit].
+Def M := (P0, P1).
+
+Prove Mpf : Meas M.
+  sorry.
+QED.
+
+Check 
+  {true |-> OneObs}
+    x <-$ Bit
+      ~
+    init q 
+    unitary H q
+    x := meas M q
+  {x@1 == x@2 |-> OneObs}.
+

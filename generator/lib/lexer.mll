@@ -14,6 +14,8 @@ rule token = parse
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
+    | "@1"                          { AT1 }
+    | "@2"                          { AT2 }
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
@@ -26,6 +28,7 @@ rule token = parse
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
+    | "=="                          { EQEQ }
     | "="                           { EQ }
     | "~"                           { TILDE }
     | "{"                           { LBRACE }
@@ -87,6 +90,9 @@ rule token = parse
     (* Judgement *)
     (* eq = *)
 
+    (* Dirac notation *)
+    | "1O"                          { ONEO }
+    | "0O"                          { ZEROO }
 
     (* Terms *)
     | "skip"                        { SKIP }
