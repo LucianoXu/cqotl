@@ -9,6 +9,7 @@
 (library
  (name cqotl_vgc)
  (modules
+  utils
   ast                  
   pretty_printer       
   parser               

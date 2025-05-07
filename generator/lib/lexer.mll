@@ -5,6 +5,7 @@
 
 let whitespace  = [' ' '\t' '\r' '\n']
 let digit       = ['0'-'9']
+let number      = ['1'-'9'] (digit*)
 let alpha       = ['a'-'z' 'A'-'Z']
 (* let id          = alpha (alpha | digit | '_')* *)
 let id          = alpha (alpha | digit)*
@@ -54,7 +55,10 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "choose"                      { CHOOSE }
     | "r_skip"                      { R_SKIP }
+    | "seq_front"                   { SEQ_FRONT }
+    | "seq_back"                    { SEQ_BACK }
 
     (* Types *)
     | "Type"                        { TYPE }
@@ -108,7 +112,7 @@ rule token = parse
 
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)
-    | digit as d                    { INT (int_of_char d - 48) }
+    | number as n                    { NUM (int_of_string n) }
     | eof                           { EOF }
 
     | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}

@@ -1,5 +1,6 @@
 open Ast
 open Pretty_printer
+open Utils
 
 type envItem =
   | Assumption of {name: string; t: terms}
@@ -44,9 +45,9 @@ let open_proof (f: normal_frame) (name: string) (prop: props) : frame =
 let close_proof (f: proof_frame) : frame =
   NormalFrame {env = (Definition {name = f.proof_name; t=PropTerm f.proof_prop; e=ProofTerm}) :: f.env}
 
-let discharge_first_goal (f: proof_frame) : frame =
+let discharge_first_goal (f: proof_frame) : proof_frame =
   match f.goals with
-  | [] -> ProofFrame f
+  | [] -> f
   | _ :: tl ->
       let new_frame = {
         env = f.env;
@@ -54,7 +55,16 @@ let discharge_first_goal (f: proof_frame) : frame =
         proof_prop = f.proof_prop;
         goals = tl
       } in
-      ProofFrame new_frame
+      new_frame
+
+let add_goal (f: proof_frame) (goal: props) : proof_frame =
+  let new_frame = {
+        env = f.env;
+        proof_name = f.proof_name;
+        proof_prop = f.proof_prop;
+        goals = goal::f.goals
+      } in
+  new_frame
 
 (* Find the item in the environment. *)
 
@@ -583,8 +593,8 @@ let goals2str (f: proof_frame): string =
       (fun i p -> Printf.sprintf "(%d/%d) %s" (i + 1) total (prop2str p))
       f.goals
     in
-    String.concat "\n" goals_str
-    |> Printf.sprintf "Goals\n%s\n"
+    String.concat "\n\n" goals_str
+    |> Printf.sprintf "[Goals]\n\n%s\n"
 
 (* The whole information about the frame *)
 let frame2str (f: frame): string =
@@ -786,7 +796,10 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         begin
           match tac with
           | Sorry -> eval_tac_sorry proof_f
+          | Choose i -> eval_tac_choose proof_f i
           | R_SKIP -> eval_tac_R_SKIP proof_f
+          | SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
+          | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
           (* | _ -> raise (Failure "Tactic not implemented yet") *)
         end
         in 
@@ -804,7 +817,18 @@ and eval_tac_sorry (f: proof_frame) : tactic_result =
   | _ :: _ ->
       (* Add the proof to the frame. *)
       let new_frame = discharge_first_goal f in
-      Success new_frame
+      Success (ProofFrame new_frame)
+
+and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
+  if i < 1 || i > List.length f.goals then
+    TacticError (Printf.sprintf "The index %d is out of range." i)
+  else
+    Success (ProofFrame {
+      env = f.env;
+      proof_name = f.proof_name;
+      proof_prop = f.proof_prop;
+      goals = move_to_front f.goals i;
+    })
 
 and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
   match f.goals with
@@ -820,9 +844,57 @@ and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
           ) ->       
         let new_frame = discharge_first_goal f in
         (* Add the proof to the frame. *)
-        Success new_frame
+        Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
               
+and eval_tac_SEQ_FRONT (f: proof_frame) (t: terms): tactic_result =
+  (* Check the application condition *)
+  let type_of_t = calc_type (ProofFrame f) t in
+  if type_of_t <> Type CQAssn then
+    TacticError (Printf.sprintf "The term %s is not typed as CQAssn." (term2str t))
+
+  else match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | hd :: _ ->
+      (* Check the application condition *)
+      match hd with
+      | Judgement {pre=pre; s1 = ProgTerm s1; s2 = ProgTerm s2; post=post} ->
+        let s1_front, s1_remain = get_front_stmt s1 in
+        let s2_front, s2_reamin = get_front_stmt s2 in
+        let removed_frame = discharge_first_goal f in
+        let new_goal_1 = 
+          Judgement {pre; s1 = ProgTerm (SingleCmd s1_front); s2 = ProgTerm (SingleCmd s2_front); post = t} in
+        let new_goal_2 = 
+          Judgement {pre = t; s1 = ProgTerm s1_remain; s2 = ProgTerm s2_reamin; post} in
+        let new_frame =  add_goal (add_goal removed_frame new_goal_2) new_goal_1 in
+        Success (ProofFrame new_frame)
+
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+
+and eval_tac_SEQ_BACK (f: proof_frame) (t: terms): tactic_result =
+  (* Check the application condition *)
+  let type_of_t = calc_type (ProofFrame f) t in
+  if type_of_t <> Type CQAssn then
+    TacticError (Printf.sprintf "The term %s is not typed as CQAssn." (term2str t))
+
+  else match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | hd :: _ ->
+      (* Check the application condition *)
+      match hd with
+      | Judgement {pre=pre; s1 = ProgTerm s1; s2 = ProgTerm s2; post=post} ->
+        let s1_back, s1_remain = get_back_stmt s1 in
+        let s2_back, s2_reamin = get_back_stmt s2 in
+        let removed_frame = discharge_first_goal f in
+        let new_goal_1 = 
+          Judgement {pre = t; s1 = ProgTerm (SingleCmd s1_back); s2 = ProgTerm (SingleCmd s2_back); post} in
+        let new_goal_2 = 
+          Judgement {pre; s1 = ProgTerm s1_remain; s2 = ProgTerm s2_reamin; post=t} in
+        let new_frame =  add_goal (add_goal removed_frame new_goal_2) new_goal_1 in
+        Success (ProofFrame new_frame)
+
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
 and eval_QED (p: prover) : eval_result =
   let frame = get_frame p in

@@ -22,7 +22,7 @@ Prove Mpf : Meas M.
   sorry.
 QED.
 
-Check 
+Prove mainpf :
   {true |-> OneObs}
     x <-$ Bit
       ~
@@ -30,4 +30,13 @@ Check
     unitary H q
     x := meas M q
   {x@1 == x@2 |-> OneObs}.
+
+  seq_front (true |-> OneObs).
+  choose 2.
+
+  Pause.
+
+  sorry.
+
+QED.
 

@@ -35,7 +35,11 @@ and command2str (c: command) : string =
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | Choose i -> Printf.sprintf "choose %d." i
+
   | R_SKIP -> "r_skip."
+  | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
+  | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
   (* | _ -> "Unknown tactic" *)
 
   and term2str (e: terms) : string =
@@ -128,7 +132,7 @@ and prop2str (p: props) : string =
   | Meas e ->
       Printf.sprintf "Meas %s" (term2str e)
   | Judgement {pre; s1; s2; post} -> 
-    Printf.sprintf "{%s} %s ~ %s {%s}" 
+    Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
       (term2str pre) (term2str s1) (term2str s2) (term2str post)
   | Eq {t1; t2} ->
       Printf.sprintf "%s = %s" (term2str t1) (term2str t2)

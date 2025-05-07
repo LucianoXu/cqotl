@@ -24,9 +24,12 @@ type command =
 
 and tactic =
   | Sorry
+  | Choose of int
 
   (* The two sided rules *)
   | R_SKIP
+  | SEQ_FRONT of terms
+  | SEQ_BACK of terms
 
 and terms = 
   | Var of string
@@ -122,3 +125,21 @@ let rec get_qvlist (qreg : terms) : terms list =
   | Var _ | At1 _ | At2 _ -> [qreg]
   | Pair (t1, t2) -> List.concat [(get_qvlist t1); (get_qvlist t2)]
   | _ -> raise (Failure "Undefined get_qvlist")
+
+let get_front_stmt (s: stmt_seq) : (stmt * stmt_seq) =
+  match s with
+  | SingleCmd s -> (s, SingleCmd Skip)
+  | (s1 :: s2) -> (s1, s2)
+
+let rec stmt_seq_concat (s1: stmt_seq) (s2: stmt_seq) : stmt_seq =
+  match s1 with
+  | SingleCmd s -> s :: s2
+  | (::) (hd, tl) -> hd :: (stmt_seq_concat tl s2)
+
+let rec get_back_stmt (s: stmt_seq) : (stmt * stmt_seq) =
+  match s with
+  | SingleCmd s -> (s, SingleCmd Skip)
+  | (s1 :: SingleCmd s2) -> (s2, SingleCmd s1)      
+  | (s1 :: s2) -> 
+      let (end_stmt, remain) = get_back_stmt s2 in
+      (end_stmt, s1 :: remain)

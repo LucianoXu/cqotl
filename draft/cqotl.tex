@@ -305,3 +305,30 @@ The propositions can be proved using the following rules:
 \begin{gather*}
     ...
 \end{gather*}
+
+\section{Reasoning rules and tactics}
+
+\begin{itemize}
+    \item \texttt{sorry} discharge the first goal directly.
+    \item \texttt{choose i} choose the i-th goal as the first one.
+\end{itemize}
+
+The tactics for program logic rules are:
+
+\begin{gather*}
+  \inferrule[\texttt{r\_skip}]
+    {\ }
+    {\judge{P}{\Skip}{\Skip}{P}}
+  \qquad
+  \inferrule[\texttt{seq\_front}]
+    {   \judge{P}{c_1}{c_1'}{R} \\
+        \judge{R}{c_2; \cdots c_n}{c_2'; \cdots c_n'}{Q}
+    }
+    {\judge{P}{c_1; c_2; \cdots; c_n}{c_1'; c_2'; \cdots; c_n'}{Q}} \\
+    \\
+  \inferrule[\texttt{seq\_back}]
+    {   \judge{P}{c_1; \cdots c_{n-1}}{c_2'; \cdots c_{n-1}'}{R} \\
+        \judge{R}{c_n}{c_n'}{Q}
+    }
+    {\judge{P}{c_1; \cdots; c_{n-1}; c_n}{c_1'; \cdots; c_{n-1}; c_n'}{Q}}
+\end{gather*}

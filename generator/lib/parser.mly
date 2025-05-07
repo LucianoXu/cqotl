@@ -3,7 +3,7 @@
 %}
 
 %token <string> ID
-%token <int> INT
+%token <int> NUM
 
 (* character symbols *)
 %token AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQEQ EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
@@ -12,8 +12,8 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY
-%token R_SKIP
+%token SORRY CHOOSE
+%token R_SKIP SEQ_FRONT SEQ_BACK
 
 %token TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
 
@@ -66,7 +66,10 @@ command:
 
 tactic:
   | SORRY PERIOD { Sorry }
+  | CHOOSE n = NUM PERIOD { Choose n }
   | R_SKIP PERIOD { R_SKIP }
+  | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
+  | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
 
 terms:
   | v = ID { Var v }
