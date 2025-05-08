@@ -12,7 +12,10 @@ Prove zeroopf : Pos (0O[Bit * Bit, Bit * Bit]_(q@1, q@2),(q@1, q@2)).
   sorry.
 QED.
 
-Def OneObs := <1O[Bit*Bit]_(q@1, q@2),(q@1, q@2) , 0O[Bit*Bit, Bit*Bit]_(q@1, q@2),(q@1, q@2)>.
+Def OneObs := <
+  1O[Bit*Bit]_(q@1, q@2),(q@1, q@2), 
+  0O[Bit*Bit, Bit*Bit]_(q@1, q@2),(q@1, q@2)
+>.
 
 Var P0 : OType[Bit, Bit].
 Var P1 : OType[Bit, Bit].
@@ -30,9 +33,10 @@ Prove mainpf :
     unitary H q
     x := meas M q
   {x@1 == x@2 |-> OneObs}.
+  
+  
 
-  seq_front (true |-> OneObs).
-  choose 2.
+  seq_back (true |-> OneObs).
 
   Pause.
 

@@ -29,6 +29,7 @@ rule token = parse
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
+    | "<="                          { LEQ }
     | "=="                          { EQEQ }
     | "="                           { EQ }
     | "~"                           { TILDE }
@@ -40,6 +41,7 @@ rule token = parse
     | "("                           { LPAREN }
     | ")"                           { RPAREN }
     | "*"                           { STAR }
+    | "@"                           { AT }
     | "_"                           { UNDERSCORE }
 
     (* Commands *)
@@ -59,6 +61,7 @@ rule token = parse
     | "r_skip"                      { R_SKIP }
     | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
+    | "r_unitary1"                  { R_UNITARY1 }
 
     (* Types *)
     | "Type"                        { TYPE }

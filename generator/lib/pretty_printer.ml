@@ -40,6 +40,7 @@ and tactic2str (t: tactic) : string =
   | R_SKIP -> "r_skip."
   | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
   | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
+  | R_UNITARY1 -> "r_unitary1."
   (* | _ -> "Unknown tactic" *)
 
   and term2str (e: terms) : string =
@@ -136,6 +137,8 @@ and prop2str (p: props) : string =
       (term2str pre) (term2str s1) (term2str s2) (term2str post)
   | Eq {t1; t2} ->
       Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
+  | Leq {t1; t2} ->
+      Printf.sprintf "%s <= %s" (term2str t1) (term2str t2)
   (* | _ -> "Unknown proposition" *)
 
 and bitterm2str (b: bitterm) : string =
@@ -166,6 +169,8 @@ and cqassn2str (c: cqassn) : string =
       Printf.sprintf "(%s |-> %s)" (term2str psi) (term2str p)
   | Add {cq1; cq2} -> 
       Printf.sprintf "(%s +cq %s)" (term2str cq1) (term2str cq2)
+  | UApply {u; cq} ->
+      Printf.sprintf "(%s @ %s)" (term2str u) (term2str cq)
   (* | _ -> "Unknown assertion" *) 
 
 and stmt_seq_2_str (s: stmt_seq) : string =
@@ -189,7 +194,7 @@ and stmt2str (s: stmt) : string =
       Printf.sprintf "init %s" (term2str q)
 
   | Unitary {u_opt; qs}       ->
-      Printf.sprintf "unitary %s%s" (term2str u_opt) (term2str qs)
+      Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
 
   | Meas {x; m_opt; qs}             ->
       Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)

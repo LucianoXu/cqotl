@@ -6,14 +6,14 @@
 %token <int> NUM
 
 (* character symbols *)
-%token AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK EQEQ EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR UNDERSCORE
+%token AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR AT UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
 %token SORRY CHOOSE
-%token R_SKIP SEQ_FRONT SEQ_BACK
+%token R_SKIP SEQ_FRONT SEQ_BACK R_UNITARY1
 
 %token TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
 
@@ -33,9 +33,10 @@
 
 /* -- precedence table -- */
 %left PLUS
-%left STAR
 %nonassoc MAPSTO
-%nonassoc EQEQ EQ
+%left STAR
+%nonassoc EQEQ EQ LEQ
+%right AT
 /**************************/
 
 %start top
@@ -70,6 +71,7 @@ tactic:
   | R_SKIP PERIOD { R_SKIP }
   | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
+  | R_UNITARY1 PERIOD { R_UNITARY1 }
 
 terms:
   | v = ID { Var v }
@@ -137,6 +139,7 @@ opt:
 cqassn:
   | psi = terms MAPSTO p = terms { Fiber {psi; p} }
   | cq1 = terms PLUSCQ cq2 = terms { Add {cq1; cq2} }
+  | u = terms AT cq = terms { UApply {u; cq} }
 
 stmt_seq:
   | s = stmt ss = stmt_seq { s :: ss }
@@ -160,3 +163,4 @@ props:
   | PROP_MEAS t = terms { Meas t }
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE { Judgement {pre; s1; s2; post} }
   | t1 = terms EQ t2 = terms { Eq {t1; t2} }
+  | t1 = terms LEQ t2 = terms { Leq {t1; t2} }

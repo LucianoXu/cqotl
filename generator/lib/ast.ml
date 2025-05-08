@@ -30,6 +30,7 @@ and tactic =
   | R_SKIP
   | SEQ_FRONT of terms
   | SEQ_BACK of terms
+  | R_UNITARY1
 
 and terms = 
   | Var of string
@@ -87,6 +88,7 @@ and opt =
 and cqassn =
   | Fiber of {psi: terms; p: terms}
   | Add of {cq1: terms; cq2: terms}
+  | UApply of {u: terms; cq: terms}
 
 (* A Statement Sequence *)
 and stmt_seq =
@@ -117,14 +119,8 @@ and props =
     post : terms;
   } 
   | Eq of {t1: terms; t2: terms}
+  | Leq of {t1: terms; t2: terms}
 
-
-(* the function to calculate the qvlist from the qreg term *)
-let rec get_qvlist (qreg : terms) : terms list =
-  match qreg with
-  | Var _ | At1 _ | At2 _ -> [qreg]
-  | Pair (t1, t2) -> List.concat [(get_qvlist t1); (get_qvlist t2)]
-  | _ -> raise (Failure "Undefined get_qvlist")
 
 let get_front_stmt (s: stmt_seq) : (stmt * stmt_seq) =
   match s with

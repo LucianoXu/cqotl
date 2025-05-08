@@ -76,10 +76,32 @@ let find_item (f: frame) (name: string) : envItem option =
     ) 
   (get_ctx f)
 
+
+(* QVList Calculation *)
+(* the function to calculate the qvlist from the qreg term *)
+type termls_result =
+  | TermList of terms list
+  | TermError of string
+
+let rec get_qvlist (qreg : terms) : termls_result =
+  match qreg with
+  | Var _ | At1 _ | At2 _ -> TermList [qreg]
+  | Pair (t1, t2) -> 
+    let t1_list = get_qvlist t1 in
+    let t2_list = get_qvlist t2 in
+    (
+      match t1_list, t2_list with
+      | TermList l1, TermList l2 -> TermList (l1 @ l2)
+      | TermError msg, _ -> TermError msg
+      | _, TermError msg -> TermError msg
+    )
+  | _ -> TermError "Cannot calculate the quantum variable list for the given term."
+
+
+
 type typing_result =
   | Type of terms
   | TypeError of string
-
 
 
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
@@ -149,6 +171,27 @@ let rec calc_type (f : frame) (s : terms) : typing_result =
   | PropTerm prop -> calc_type_prop f prop
 
   | ProofTerm -> raise (Failure "<proof> should not be typed")
+
+
+(** annotate the variables in the term and return the result *)
+and annotate_var (f: frame) (t: terms) (g: string -> terms) : terms option =
+  match t with
+  | Var x ->
+    let type_of_t = calc_type f (Var x) in
+    begin
+      match type_of_t with
+      | Type (CVar _) | Type (QReg _) -> Some (g x)
+      | _ -> None
+    end
+  | Pair (t1, t2) -> 
+    let t1' = annotate_var f t1 g in
+    let t2' = annotate_var f t2 g in
+    begin
+      match t1', t2' with
+      | Some t1'', Some t2'' -> Some (Pair (t1'', t2''))
+      | _ -> None
+    end
+  | _ -> None
 
 (* Check whether the term is CTerm[..] *)
 and is_CTerm (f: frame) (e: terms) : typing_result =
@@ -292,7 +335,14 @@ and calc_type_subscript f e t1 t2 =
   match type_of_e, type_of_t1, type_of_t2 with
   | Type (OType (ot1, ot2)), Type (QReg rt1), Type (QReg rt2) when
     ot1 = rt1 && ot2 = rt2 ->
-      Type (DType (QVListTerm (get_qvlist t1), QVListTerm (get_qvlist t2)))
+      let qvlist1 = get_qvlist t1 in
+      let qvlist2 = get_qvlist t2 in
+      (match qvlist1, qvlist2 with
+      | TermList ls1, TermList ls2 -> 
+        Type (DType (QVListTerm ls1, QVListTerm ls2))
+      | _ -> 
+        TypeError (Printf.sprintf "Calculation of quantum variable list failed.")
+      )
   | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str (Subscript (e, t1, t2))))
 
 and calc_type_bitterm f e =
@@ -354,6 +404,19 @@ and calc_type_cqassn f cq =
     (match type_cq1, type_cq2 with
     | Type CQAssn, Type CQAssn -> Type CQAssn
     | _ -> TypeError (Printf.sprintf "The two terms %s and %s for +cq should have type CQAssn." (term2str cq1) (term2str cq2))
+    )
+  | UApply {u; cq=cq'} ->
+    let type_u = calc_type f u in
+    let type_cq' = calc_type f cq' in
+    (match type_u, type_cq' with
+    | Type (DType _), Type CQAssn -> 
+      (* check the proof *)
+      if prop_proved f (Unitary u) then
+        Type CQAssn
+      else
+        TypeError (Printf.sprintf "The term %s is not proved to be a unitary operator." (term2str u))
+    | _ -> 
+      TypeError (Printf.sprintf "The term %s is not well typed." (cqassn2str cq))
     )
 
   
@@ -472,6 +535,7 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
       let t = calc_type f e in
       (match t with
       | Type (OType _) -> Type Prop
+      | Type (DType _) -> Type Prop
       | Type _ -> 
           TypeError (Printf.sprintf "The term %s is not of operator type." (term2str e))
       | _ -> TypeError (Printf.sprintf "The term %s is not well typed." (term2str e))
@@ -524,6 +588,14 @@ and calc_type_prop (f : frame) (prop: props) : typing_result =
             TypeError (Printf.sprintf "The terms %s and %s are not of the same operator type." (term2str t1) (term2str t2))
         | _ -> 
             TypeError (Printf.sprintf "The terms %s and %s should have operator." (term2str t1) (term2str t2))
+        )
+  | Leq {t1; t2} ->
+      let t1_type = calc_type f t1 in
+      let t2_type = calc_type f t2 in
+        (match t1_type, t2_type with
+        | Type CQAssn, Type CQAssn -> Type Prop
+        | _ -> 
+            TypeError (Printf.sprintf "The terms %s and %s should have CQAssn type." (term2str t1) (term2str t2))
         )
   (* | _ -> raise (Failure "Not implemented yet") *)
 
@@ -604,7 +676,7 @@ let frame2str (f: frame): string =
         Printf.sprintf "Context: %s" env_str
   | ProofFrame f ->
     let env_str = env2str f.env in
-    let proof_mode_str = Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode] %s : %s\n\n%s" f.proof_name (prop2str f.proof_prop) (goals2str f)
+    let proof_mode_str = Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode]\n\n%s" (goals2str f)
     in
       Printf.sprintf "Context: %s%s" env_str proof_mode_str
 
@@ -800,6 +872,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | R_SKIP -> eval_tac_R_SKIP proof_f
           | SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
           | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
+          | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f
           (* | _ -> raise (Failure "Tactic not implemented yet") *)
         end
         in 
@@ -895,6 +968,36 @@ and eval_tac_SEQ_BACK (f: proof_frame) (t: terms): tactic_result =
         Success (ProofFrame new_frame)
 
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+and eval_tac_R_UNITARY1 (f : proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | hd :: _ ->
+      (* Check the application condition *)
+      (match hd with
+      | Judgement {pre=pre; s1 = ProgTerm s1; s2 = ProgTerm s2; post=post} ->
+        let s1_front, s1_remain = get_front_stmt s1 in
+        (match s1_front with
+        | Unitary {u_opt; qs} ->
+          let annotated_qs = annotate_var (ProofFrame f) qs (fun v -> At1 v) in
+          begin
+            match annotated_qs with
+            | Some qs' ->
+            let new_goal = Judgement{
+              pre=pre; 
+              s1=ProgTerm s1_remain; 
+              s2=ProgTerm s2; 
+              post=CQAssnTerm (UApply {u = Subscript (u_opt, qs', qs'); cq = post})} in
+            let removed_frame = discharge_first_goal f in
+            let new_frame = add_goal removed_frame new_goal in
+            Success (ProofFrame new_frame)
+            | None -> 
+              TacticError (Printf.sprintf "Cannot annotate the variable %s." (term2str qs))
+          end
+          | _ -> TacticError (Printf.sprintf "The first statment for  program 1 should be unitary transformation, but is %s." (stmt2str s1_front))
+        )
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+  )
 
 and eval_QED (p: prover) : eval_result =
   let frame = get_frame p in
