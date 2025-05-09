@@ -36,6 +36,7 @@ lemma ker_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P)
         have hQ_nonneg := hP_re x
         linarith
       · exact hQ_re x
+    
     sorry
   · intro h
     simp_all only [inner_zero_left, map_zero, add_zero, LinearMap.add_apply]
@@ -61,6 +62,7 @@ lemma supp_add (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isPositiveSemiDefinite P
     rw [supp]
     rw [ker_add]
     rw [ker_union]
+
     · apply hP
     · apply hQ
     · apply hP
