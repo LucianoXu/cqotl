@@ -1,0 +1,11 @@
+*.vo
+*.vos
+*.vok
+*.glob
+*.vio
+*.aux
+.Makefile.d
+Makefile
+Makefile.conf
+
+.DS_Store
