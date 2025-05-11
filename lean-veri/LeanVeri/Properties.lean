@@ -64,6 +64,15 @@ end BasicProperties
 -- lemma A.8
 namespace AlgebraicProperties
 
+
+/- Auxilary lemma for adjoint-/
+lemma adjointeql (T: E →ₗ[𝕜] E)
+    (hT : LinearMap.isProjection T) : T.adjoint = T := by
+    rw [← @LinearMap.isSelfAdjoint_iff']
+    rcases hT with ⟨hT_posS, hT_proj⟩
+    rcases hT_posS with ⟨hT_self, hT_inner⟩
+    repeat assumption
+
 /-
 This lemma shows the `Zero_Multiplication` property `0A = 0`.
 -/
@@ -184,5 +193,39 @@ lemma zero_prod_prod_zero_eqv (A :  E →ₗ[𝕜] E) (_: LinearMap.isPositiveSe
     rw [zero_prod_identity]
     repeat assumption
 
-
 end AlgebraicProperties
+
+
+/-
+Example 1:
+  (|-⟩⟨-|, |+⟩⟨+|) => (0, 1⧸2 • I + |1⟩⟨1|),
+    where |-⟩⟨-| ∈ Pos(ℍ) -- Positive semi-definite operators on ℍ
+          |+⟩⟨+| ∈ S(ℍ)   -- Closed subspaces of a Hilbert space ℍ ≃ set of all orthogonal projectors on ℍ
+                            - An orthogonal projector P satisfies P² = P and P = P†
+                            - Each closed subspace V ⊆ H corresponds to a unique project Pᵥ s.t. Pᵥ maps
+                              any vector to its orthogonal projection onto V.
+Proof sketch:
+    (|-⟩⟨-|, |+⟩⟨+|).
+
+    Let A = P + X = |-⟩⟨-| + (+∞ · |+⟩⟨+|) by definition A.5 (Equivalent representation)
+    So, now we have A ∈ Pos∞(ℍ)
+
+    By definition A.6,
+    For any |ψ⟩ ∈ ℍ, the inner product is defined
+
+      ⟨ψ|A|ψ⟩ ≅ ∑ᵢ λᵢ⟨ψ|Xᵢ|ψ⟩.
+
+    - ⟨ψ|A|ψ⟩ = ⟨ψ| (|-⟩⟨-| + (+∞ · |+⟩⟨+|)) |ψ⟩
+              = ⟨ψ|-⟩⟨-|ψ⟩  + (+∞ . ⟨ψ||+⟩⟨+||ψ⟩)
+
+      let |ψ⟩ = a|-⟩ + b|+⟩
+          so, ⟨ψ| = a⋆⟨-| + b⋆⟨+|
+
+      ⟨ψ|A|ψ⟩ = (a⋆⟨-| + b⋆⟨+|)A(a|-⟩ + b|+⟩)
+              =   ‖a‖² ⟨-|A|-⟩ + a⋆.b ⟨-|A|+⟩ + a . b⋆ ⟨+|A|-⟩ + ‖b‖² ⟨+|A|+⟩
+              =   ‖a‖² ⟨-|A|-⟩ + ‖b‖² ⟨+|A|+⟩
+              =   ‖a‖² ⟨-|(|-⟩⟨-| + (+∞ · |+⟩⟨+|))|-⟩ + ‖b‖² ⟨+|(|-⟩⟨-| + (+∞ · |+⟩⟨+|))|+⟩
+              =   ‖a‖² + +∞ ‖b‖²
+      case: a = 0, ⟨ψ|A|ψ⟩ = 0
+      case: b = 0, ⟨ψ|A|ψ⟩ = ‖a‖²
+-/
