@@ -85,11 +85,9 @@ lemma ker_union (P Q : E →ₗ[𝕜] E) (hP : LinearMap.isProjection P) (hQ : L
           rw [@LinearMap.mem_ker]
 
           refine LinearMap.mem_ker.mpr ?_
-          apply?
           sorry
-        sorry
       sorry
-    · rw? 
+    · rw?
       sorry
   · intro H
     sorry
