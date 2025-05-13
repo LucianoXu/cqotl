@@ -114,7 +114,7 @@ lemma aux0 (n : ℕ) (f : Fin n → Fin n → ℝ) :
   simp
 
 omit [CompleteSpace E] in
-lemma isPositiveSemiDefinite.re_inner_app_eq_zero_if_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
   have hTsymm : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
   let n : ℕ := Module.finrank 𝕜 E
@@ -224,14 +224,14 @@ lemma isPositiveSemiDefinite.re_inner_app_eq_zero_if_app_eq_zero {T : E →ₗ[�
     simp
 
 omit [CompleteSpace E] in
-lemma isPositiveSemiDefinite.inner_app_eq_zero_if_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+lemma isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     inner 𝕜 (T x) x = 0 ↔ T x = 0 := by
   apply Iff.intro
   · intro hx
     have hx' : RCLike.re (inner 𝕜 (T x) x) = 0 := by
       rw [hx]
       exact RCLike.zero_re'
-    exact (re_inner_app_eq_zero_if_app_eq_zero hT x).mp hx'
+    exact (re_inner_app_eq_zero_iff_app_eq_zero hT x).mp hx'
   · intro hx
     rw [hx]
     simp
