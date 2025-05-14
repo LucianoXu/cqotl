@@ -7,6 +7,9 @@ import Mathlib.Analysis.InnerProductSpace.Positive
 import Mathlib.Analysis.InnerProductSpace.Projection
 import Mathlib.Analysis.InnerProductSpace.Spectrum
 import Mathlib.LinearAlgebra.Trace
+
+import LeanVeri.Sum
+
 open scoped ComplexOrder
 
 /-!
@@ -96,20 +99,6 @@ lemma isPositiveSemiDefinite.nonneg_eigenvalues {T : E →ₗ[𝕜] E} (hT : T.i
   simp only [one_pow, mul_one] at h
   exact h
 
-lemma aux0 (n : ℕ) (f : Fin n → Fin n → ℝ) :
-    ∑i ∈ ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2), f i.1 i.2 =
-    ∑i, f i i := by
-  let diag := (@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2
-  rw [← Lean.Grind.CommRing.add_zero (∑i ∈ ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2), f i.1 i.2)]
-  rw [← show ∑i ∈ diagᶜ, (0 : ℝ) = 0 by exact Finset.sum_const_zero]
-  have diagc : diagᶜ = ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ ¬i.1 = i.2) := by
-    unfold diag
-    simp
-  rw [diagc]
-  rw [← Finset.sum_ite]
-  rw [Fintype.sum_prod_type]
-  simp
-
 omit [CompleteSpace E] in
 lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
@@ -174,7 +163,7 @@ lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[
           let f : Fin n → Fin n → ℝ := fun i j ↦
             RCLike.re (starRingEnd 𝕜 (base.repr x j) * (starRingEnd 𝕜 ↑(hTsymm.eigenvalues hn j) * base.repr x i))
           unfold diag
-          apply aux0 n f
+          apply sum_diag_eq n f
       _ = ∑ i, RCLike.re (starRingEnd 𝕜 (base.repr x i) * base.repr x i *
           ↑(hTsymm.eigenvalues hn i)
         ) := by
