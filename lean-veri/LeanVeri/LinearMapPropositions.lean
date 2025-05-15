@@ -70,8 +70,34 @@ def LoewnerOrder (T N : E →ₗ[𝕜] E) : Prop :=
 def isPureState (T : E →ₗ[𝕜] E) : Prop :=
   T.isDensityOperator ∧ T.rank = 1
 
+
 omit [CompleteSpace E] in
-lemma isPositiveSemiDefinite.IsSymmetric (T : E →ₗ[𝕜] E) (hT : T.isPositiveSemiDefinite) : T.IsSymmetric :=
+lemma isPositiveSemiDefinite.zero : (0 : E →ₗ[𝕜] E).isPositiveSemiDefinite := by
+  apply And.intro
+  · exact IsSelfAdjoint.zero (E →ₗ[𝕜] E)
+  · intro x
+    simp [zero_apply]
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.one : (1 : E →ₗ[𝕜] E).isPositiveSemiDefinite := by
+  apply And.intro
+  · exact (isSymmetric_iff_isSelfAdjoint 1).mp fun x ↦ congrFun rfl
+  · intro x
+    exact inner_self_nonneg
+
+omit [CompleteSpace E] in
+lemma isProjection.one : (1 : E →ₗ[𝕜] E).isProjection := And.intro isPositiveSemiDefinite.one rfl
+
+omit [CompleteSpace E] in
+lemma isProjection.apply_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) {x : E} (hx : x ∈ range T) :
+    T x = x := by
+  obtain ⟨y, hy⟩ := hx
+  rw [← hy]
+  rw [← comp_apply]
+  rw [hT.right]
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.IsSymmetric {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite) : T.IsSymmetric :=
   (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
 
 omit [CompleteSpace E] in
@@ -86,6 +112,19 @@ lemma isPositiveSemiDefinite_add_of_isPositiveSemiDefinite {T S : E →ₗ[𝕜]
     rw [inner_add_left]
     rw [AddMonoidHom.map_add]
     exact Left.add_nonneg (hT.right x) (hS.right x)
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.isPositiveSemiDefinite_nonneg_real_smul {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
+    (c : ℝ) (hc : 0 ≤ c) : ((c : 𝕜) • T).isPositiveSemiDefinite := by
+  apply And.intro
+  · rw [← isSymmetric_iff_isSelfAdjoint]
+    exact IsSymmetric.smul (RCLike.conj_ofReal c) hT.IsSymmetric
+  · intro x
+    rw [smul_apply]
+    rw [inner_smul_left]
+    rw [RCLike.conj_ofReal]
+    rw [RCLike.re_ofReal_mul]
+    exact Left.mul_nonneg hc (hT.right x)
 
 omit [CompleteSpace E] in
 lemma isPositiveSemiDefinite.nonneg_eigenvalues {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
