@@ -1,7 +1,47 @@
 
+import Mathlib.LinearAlgebra.TensorProduct.Basic
+import Mathlib.Data.Matrix.Basic
+import Mathlib.Tactic
 import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
-import Mathlib.LinearAlgebra.TensorProduct.Basic
+import Mathlib.Analysis.InnerProductSpace.Positive
+import Mathlib.Analysis.InnerProductSpace.Projection
+import Mathlib.LinearAlgebra.Trace
+
+open Complex LinearMap Matrix FiniteDimensional
+
+noncomputable section
+variable {E : Type}
+
+variable? [HilbertSpace ℂ E] => [NormedAddCommGroup E] [InnerProductSpace ℂ E] [CompleteSpace E]
+variable [FiniteDimensional ℂ E]
+
+-- Define a finite-dimensional Hilbert space E over ℂ
+@[reducible] def H2 : Type  := Fin 2 → ℂ
+
+namespace H2
+-- Instance declarations to make H2 a Hilbert space
+instance : AddCommGroup H2 := Pi.addCommGroup
+instance : Module ℂ H2 := Pi.module _ _ _
+instance : NormedAddCommGroup H2 := Pi.normedAddCommGroup
+instance : InnerProductSpace ℂ H2 := Pi.innerProductSpace ℂ (fun _ => ℂ)
+
+-- The standard/computational basis vectors |0⟩ and |1⟩
+def ket0 : H2 := fun i => if i = 0 then 1 else 0
+def ket1 : H2 := fun i => if i = 1 then 1 else 0
+
+-- Square root notation
+local notation "√2" => Real.sqrt 2
+
+-- The hadamard basis vectors |+⟩ and |-⟩
+def ketplus   : H2 := ((1 : ℂ) / √2 : ℂ) • (ket0 + ket1)
+def ketminus  : H2 := ((1 : ℂ) / √2 : ℂ) • (ket0 - ket1)
+
+-- Inner product calculations
+@[simp] lemma inner_apply (x y : H2) : ⟨x, y⟩ = ∑ i, (x i) * (y i) := rfl
+
+-- Proof that ket0 and ket1 form an orthonormal basis
+lemma is_orthonomal_basis_v0_v1 : OrthonormalBasis ℂ H2 (ket0 : Fin 2 → ℂ) (ket1 : Fin 2 → ℂ)
 
 /-
   Löwner order of (|-><-|,|+><+|) is greater than (0, 1/2I + |0><0|)
@@ -47,6 +87,5 @@ import Mathlib.LinearAlgebra.TensorProduct.Basic
 
 /-
   (|-><-|,|+><+|) ≥ (0, 1/2I + |1><1|)
-
   Proof. Same pattern as the one above.
 -/

@@ -6,8 +6,18 @@ Authors: Iván Renison, Jam Khan
 import Mathlib.Analysis.InnerProductSpace.Positive
 import Mathlib.Analysis.InnerProductSpace.Projection
 import Mathlib.LinearAlgebra.Trace
-open scoped ComplexOrder
+import Mathlib.Analysis.InnerProductSpace.Positive
+import Mathlib.Analysis.InnerProductSpace.Projection
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.LinearAlgebra.Eigenspace.Basic
+import Mathlib.LinearAlgebra.TensorProduct.Basic
+import Mathlib.LinearAlgebra.Trace
+import Mathlib.Topology.Algebra.Support
+import Mathlib.Data.Real.Basic
+import Mathlib.Data.ENNReal.Basic
+import Mathlib.Order.Filter.Ker
 
+open scoped ComplexOrder
 /-!
 # Some basic propositions about `LinearMap`
 
@@ -65,5 +75,18 @@ def LoewnerOrder (T N : E →ₗ[𝕜] E) : Prop :=
 /-- Pure state operators. -/
 def isPureState (T : E →ₗ[𝕜] E) : Prop :=
   T.isDensityOperator ∧ T.rank = 1
+
+/-- The outer product of two vectors -/
+def outerProduct (φ : E) (ψ : E) : E →ₗ[𝕜] E where
+  toFun := fun χ => (inner 𝕜 ψ χ : 𝕜) • φ
+  map_add' := by
+    intro χ η
+    rw [← Module.add_smul]
+    rw [inner_add_right ψ χ η]
+  map_smul' := by
+    intro m χ
+    rw [RingHom.id_apply]
+    rw [inner_smul_right_eq_smul ψ χ m]
+    exact IsScalarTower.smul_assoc m (inner 𝕜 ψ χ) φ
 
 end LinearMap

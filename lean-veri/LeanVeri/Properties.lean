@@ -26,6 +26,15 @@ open scoped TensorProduct
 namespace BasicProperties
 
 /-
+This lemma shows the `Scalar product equal 1` property `⟨φ|φ⟩ = 1`
+-/
+lemma scalar_product_eq_one (_ : 𝕜) (φ : E) :
+    ‖φ‖ = 1 → inner 𝕜 φ φ = 1 :=
+    by  intro H
+        refine (inner_eq_one_iff_of_norm_one ?_ ?_).mpr rfl
+        repeat assumption
+
+/-
 This lemma shows the `Scalar product` property `⟨φ|(c•A)|φ⟩ = c * ⟨φ|A|φ⟩`.
 -/
 lemma scalar_product (c : 𝕜) (φ : E) (A : E →ₗ[𝕜] E) (_ : LinearMap.isPositiveSemiDefinite A) :
@@ -38,6 +47,16 @@ This lemma shows the `Addition` property `⟨φ|(A₁ + A₂)|φ⟩ = ⟨φ|A₁
 lemma addition (φ : E) (A₁ A₂ : E →ₗ[𝕜] E) (_ : LinearMap.isPositiveSemiDefinite A₁) (_ : LinearMap.isPositiveSemiDefinite A₂) :
   inner 𝕜 φ ((A₁ + A₂) φ) = inner 𝕜 φ (A₁ φ) + inner 𝕜 φ (A₂ φ) := by
     rw [@LinearMap.add_apply, @inner_add_right]
+
+/-
+This lemma shows the `reflexivity` of the inner product with operators `⟨φ|(A|ψ⟩) = ⟨ψ()
+-/
+lemma inner_rfl (φ : E) (ψ : E) (A : E →ₗ[𝕜] E) (h : LinearMap.isPositiveSemiDefinite A) :
+  inner 𝕜 φ (A ψ) = inner 𝕜 (A φ) ψ := by
+  rcases h with ⟨h_adj, h_pos⟩
+  rw [LinearMap.isSelfAdjoint_iff'] at h_adj
+  rw [← h_adj, @LinearMap.adjoint_inner_right]
+  exact congrFun (congrArg (inner 𝕜) (congrFun (congrArg DFunLike.coe (id (Eq.symm h_adj))) φ)) ψ
 
 /-
 This lemma shows the `Tensor` product property `(⟨φ₁|⨂⟨φ₂|)(A₁ ⨂ A₂)(|φ₁⟩⨂|φ₂⟩) = (⟨φ₁|A₁|φ₁⟩)·(⟨φ₂|A₂|φ₂⟩)`
@@ -193,4 +212,3 @@ lemma zero_prod_prod_zero_eqv (A :  E →ₗ[𝕜] E) (_: LinearMap.isPositiveSe
     repeat assumption
 
 end AlgebraicProperties
-
