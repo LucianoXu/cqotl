@@ -2,6 +2,7 @@
 Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
+import Mathlib.Data.ENNReal.Real
 import LeanVeri.LinearMapPropositions
 import LeanVeri.ProjectionSubmodule
 
@@ -26,6 +27,32 @@ lemma eq_iff (A B : InfValPred 𝕜 E) : A = B ↔ A.P = B.P ∧ A.X = B.X := by
     cases A
     cases B
     congr
+
+instance Zero : Zero (InfValPred 𝕜 E) where
+  zero :=
+    {
+      P := 0
+      X := 0
+      PisPos := LinearMap.isPositiveSemiDefinite.zero
+      XisProj := LinearMap.isProjection.zero
+      compPX := rfl
+    }
+
+lemma zero_X_def : (0 : InfValPred 𝕜 E).X = 0 := rfl
+lemma zero_P_def : (0 : InfValPred 𝕜 E).P = 0 := rfl
+
+instance One : One (InfValPred 𝕜 E) where
+  one :=
+    {
+      P := 1
+      X := 0
+      PisPos := LinearMap.isPositiveSemiDefinite.one
+      XisProj := LinearMap.isProjection.zero
+      compPX := rfl
+    }
+
+lemma one_X_def : (1 : InfValPred 𝕜 E).X = 0 := rfl
+lemma one_P_def : (1 : InfValPred 𝕜 E).P = 1 := rfl
 
 noncomputable instance Add : Add (InfValPred 𝕜 E) where
   add A B :=
@@ -89,11 +116,79 @@ noncomputable instance HSMul : HSMul ℝ≥0∞ (InfValPred 𝕜 E) (InfValPred 
         {
           P := (c.val : 𝕜) • A.P
           X := A.X
-          PisPos := A.PisPos.isPositiveSemiDefinite_nonneg_real_smul c c.zero_le_coe
+          PisPos := A.PisPos.nonneg_real_smul c.zero_le_coe
           XisProj := A.XisProj
           compPX := by
             rw [LinearMap.comp_smul]
             exact smul_eq_zero.mpr (Or.inr A.compPX)
         }
+
+noncomputable def inner_app_self (A : InfValPred 𝕜 E) [Decidable (A.X = 0)] (x : E) : ℝ≥0∞ :=
+  if inner 𝕜 (A.X x) x = 0
+    then some ⟨RCLike.re (inner 𝕜 (A.P x) x), A.PisPos.right x⟩
+    else ∞
+  /- (ENNReal.ofReal (RCLike.re (inner 𝕜 (A.P x) x)) : ℝ≥0∞) +
+    ∞ * (ENNReal.ofReal (RCLike.re (inner 𝕜 (A.X x) x)) : ℝ≥0∞) -/
+
+lemma eq_zero_iff_forall_inner_app_self_eq_zero (A : InfValPred 𝕜 E) [Decidable (A.X = 0)] :
+    A = 0 ↔ ∀x : E, A.inner_app_self x = 0 := by
+  apply Iff.intro
+  · intro h x
+    have hX : A.X = 0 := by
+      rw [h]
+      rfl
+    have hP : A.P = 0 := by
+      rw [h]
+      rfl
+    unfold inner_app_self
+    simp [hX, hP]
+  · intro h
+
+    sorry
+
+lemma eq_iff_forall_inner_app_self_eq (A B : InfValPred 𝕜 E) [Decidable (A.X = 0)] [Decidable (B.X = 0)] :
+    A = B ↔ ∀x : E, A.inner_app_self x = B.inner_app_self x := by
+  apply Iff.intro
+  · intro h x
+    simp [h]
+  · intro h
+    rw [eq_iff]
+    apply And.intro
+    · rw [LinearMap.ext_iff]
+      intro x
+      by_cases hAX : inner 𝕜 (A.X x) x = 0 <;> by_cases hBX : inner 𝕜 (B.X x) x = 0
+      · have hx := h x
+        simp [inner_app_self, hAX, hBX] at hx
+        rw [NNReal.eq_iff] at hx
+        simp at hx
+        --apply A.PisPos.eq_iff_forall_re_inner_app_self_eq
+        --rw [A.PisPos.right.rw_inner_app_self_eq_zero_iff_app_eq_zero] at hAX
+
+
+        sorry
+      · sorry
+      · sorry
+      · sorry
+    · rw [LinearMap.ext_iff]
+      intro x
+      by_cases hAX : inner 𝕜 (A.X x) x = 0 <;> by_cases hBX : inner 𝕜 (B.X x) x = 0
+      · rw [A.XisProj.left.inner_app_self_eq_zero_iff_app_eq_zero] at hAX
+        rw [B.XisProj.left.inner_app_self_eq_zero_iff_app_eq_zero] at hBX
+        rw [hAX, hBX]
+      · sorry
+      · sorry
+      · sorry
+/-     by_cases hAX : A.X = 0 <;> by_cases hBX : B.X = 0
+    · apply And.intro
+      · unfold inner_app_self at h
+        simp [hAX, hBX] at h
+
+        sorry
+      · rw [hAX, hBX]
+    · sorry
+    · sorry
+    · sorry -/
+
+
 
 end InfValPred
