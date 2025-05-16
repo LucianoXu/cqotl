@@ -11,59 +11,88 @@ Extending Quantum Relational Hoare Logics from Optimal Transport Duality with Cl
 
 
 \section{Type System}
-This section introduces the typing system of the prover, which includes the types, terms and propositions.
+This section introduces the typing system of the prover, which includes the types, terms and propositions. We use $x$ to denote the variables.
 
-\newcommand{\qvar}{\textsf{QVar}}
+\newcommand{\Type}{\textsf{Type}}
+\newcommand{\CType}{\textsf{CType}}
+\newcommand{\CTerm}[1]{\ensuremath{\textsf{CTerm}(#1)}}
+\newcommand{\SType}{\ensuremath{\mathcal{S}}}
+
+\newcommand{\cvar}[1]{\ensuremath{\textsf{CVar}(#1)}}
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
-\newcommand{\opt}[1]{\ensuremath{\textsf{Opt}(#1)}}
-\newcommand{\lopt}{\ensuremath{\textsf{LOpt}}}
-\newcommand{\measopt}{\ensuremath{\textsf{MeasOpt}}}
+\newcommand{\cAssn}{\ensuremath{\textsf{CAssn}}}
+\newcommand{\qAssn}{\ensuremath{\textsf{QAssn}}}
+\newcommand{\cqAssn}{\ensuremath{\textsf{CQAssn}}}
+\newcommand{\qvlist}{\textsf{QVList}}
+\newcommand{\opt}[2]{\ensuremath{\mathcal{O}(#1, #2)}}
+\newcommand{\ldirac}[2]{\ensuremath{\mathcal{D}(#1, #2)}}
+\newcommand{\abracket}[1]{\ensuremath{\langle #1 \rangle}}
+
+\newcommand{\optpair}[1]{\ensuremath{\textsf{OptPair}(#1)}}
 \newcommand{\unitary}[1]{\ensuremath{\textsf{Unitary}({#1})}}
-\newcommand{\assn}[1]{\ensuremath{\textsf{Assn}(#1)}}
+\newcommand{\proppos}[1]{\ensuremath{\textsf{Pos}({#1})}}
+\newcommand{\propproj}[1]{\ensuremath{\textsf{Proj}({#1})}}
 \newcommand{\meas}[1]{\ensuremath{\textsf{Meas}(#1)}}
+
+
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
+\newcommand{\bit}{\textsf{Bit}}
+\newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
 
-\begin{definition}[type syntax]
-    \label{def:type syntax}
-    The syntax for types in the prover are defined as follows:
+\newcommand{\ONEO}{\ensuremath{\mathbf{1}_\mathcal{O}}}
+\newcommand{\ZEROO}{\ensuremath{\mathbf{0}_\mathcal{O}}}
+
+\newcommand{\true}{\textsf{true}}
+\newcommand{\false}{\textsf{false}}
+
+\begin{definition}
     \begin{align*}
-        T ::=\ & \qvar \mid \qreg{n} \mid \opt{n} \mid \lopt \mid \measopt \mid \prog
+        t ::=\ & \mid x \\
+        & \mid \Type \mid \prop \mid \qvlist \mid \optpair{t} \\
+        & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \mid \cAssn \mid \qAssn \mid \cqAssn \\
+        & \mid \bit \\
+        & \mid \CTerm{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
+        & \mid t \times t \mid  x@1 \mid x@2 \\ 
+        & \mid (t, t) \mid \abracket{t, t} \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
+        & \mid bitterm \mid opt \mid cqassn \mid stmts \mid \phi \\
+        & \mid \pf
     \end{align*}
 \end{definition}
-Here $n$ are positive integers. 
 
-\newcommand{\assert}[1]{\ensuremath{\textsf{assert}(#1)}}
-\newcommand{\pf}{\textsf{proof}}
+\subsection{Classical terms, operators and assertions}
 
-\begin{definition}[term syntax]
-    \label{def:term syntax}
-    The syntax for terms is defined as follows:
+\begin{definition}
     \begin{align*}
-        t ::= x \mid [x_1, x_2, ... x_n] \mid opt \mid lopt \mid \{lopt_1, lopt_2\} \mid stmts
+        bitterm ::= \true \mid \false \mid t == t
     \end{align*}
 \end{definition}
-Here $x$ is a variable. $[x_1, x_2, ... x_n]$ is a quantum register. $opt$, $lopt$ and $stmts$ are operators, labeled operators and program statments, which are defined later on. $\{lopt_1, lopt_2\}$ represents the pair of measurement operators.
 
-\begin{definition}[proposition syntax]
-    \label{def:prop syntax}
+\begin{definition}
     \begin{align*}
-        \phi ::=\ & \unitary{t} \mid \assn{t} \mid \meas{t} \mid \judge{P}{s_1}{s_2}{Q} \\
-                & \mid t = t
+        opt ::= & \ONEO(t) \mid \ZEROO(t,t) \mid t + t
     \end{align*}
 \end{definition}
-Here $P$ and $Q$ are operators. $s_1$ and $s_2$ are program terms.
 
-\textbf{Remark:} Here the arguments in constructors like $\judge{P}{s_1}{s_2}{Q}$ are hinted to be particular types, but this is only for elaboration consideration. We adopt the general approach in the implementation, which allows the arguments to be any term in syntax, and validity is guaranteed by type checking.
-
-\subsection{Operators}
+\begin{definition}
+    \begin{align*}
+        cqassn ::= t\mapsto t \mid t +_{cq} t \mid t @ t
+    \end{align*}
+\end{definition}
 
 \subsection{Program statements}
 qwhile programs are encoded as terms in the prover.
 
+\newcommand{\rndarrow}{%
+  \stackrel{\raisebox{-.25ex}[.25ex]%
+   {\tiny $\mathdollar$}}{\raisebox{-.25ex}[.25ex]{$\leftarrow$}}}
+
 \newcommand{\Skip}{\textbf{skip}}
+\newcommand{\Assign}[2]{\ensuremath{#1:=#2}}
+\newcommand{\pAssign}[2]{\ensuremath{#1 \rndarrow #2}}
 \newcommand{\Init}[1]{\ensuremath{#1:=\ket{0}}}
+\newcommand{\MeaAssign}[3]{\ensuremath{#1 := \textbf{meas}\ #2\ #3}}
 \newcommand{\If}[3]{\ensuremath{
     \textbf{if}\ #1\ \textbf{then}\ #2\ \textbf{else}\ #3\ \textbf{end}
 }}
@@ -77,12 +106,28 @@ qwhile programs are encoded as terms in the prover.
     \begin{align*}
         & stmts ::= && stmt \mid stmts\ stmt & \text{(statement sequence)} \\
         & stmt ::= && \Skip & \text{(skip)} \\
+            & && \mid \Assign{x}{t} & \text{(deterministic assignment)} \\
+            & && \mid \pAssign{x}{T} & \text{(probabilistic assignment)} \\
             & && \mid \Init{t} & \text{(initialization)} \\
             & && \mid U\ t & \text{(unitary transformation)} \\
-            & && \mid \If{P}{stmts_1}{stmts_2} & \text{(if statement)} \\
-            & && \mid \While{P}{stmts} & \text{(while statement)}
+            & && \mid \MeaAssign{x}{M}{t} & \text{(quantum measurement)} \\
+            & && \mid \If{t}{stmts_1}{stmts_2} & \text{(if statement)} \\
+            & && \mid \While{t}{stmts} & \text{(while statement)}
     \end{align*}
 \end{definition}
+
+\subsection{Propositions}
+
+\begin{definition}[proposition syntax]
+    \label{def:prop syntax}
+    \begin{align*}
+        \phi ::=\ & \unitary{t} \mid \proppos{t} \mid \propproj{t} \mid \meas{t} \mid \judge{P}{s_1}{s_2}{Q} \\
+                & \mid t = t \mid t \sqsubseteq t
+    \end{align*}
+\end{definition}
+Here $P$ and $Q$ are operators. $s_1$ and $s_2$ are program terms.
+
+\textbf{Remark:} Here the arguments in constructors like $\judge{P}{s_1}{s_2}{Q}$ are hinted to be particular types, but this is only for elaboration consideration. We adopt the general approach in the implementation, which allows the arguments to be any term in syntax, and validity is guaranteed by type checking.
 
 
 \subsection{Typing}
@@ -90,83 +135,213 @@ qwhile programs are encoded as terms in the prover.
 \newcommand{\WF}[1]{\ensuremath{\mathcal{WF}(#1)}}
 
 We maintain a context $\Gamma$ for the typing of terms and the proof of propositions. 
-A context $\Gamma$ consists of a list of declarations, which are definitions $x := t : T$, assumptions $x : T$, proofs $x := \pf : \phi$ or hypothesis $x : \phi$. 
-Here \pf\ is a symbol representing the opaque proof of propositions.
+A context $\Gamma$ consists of a list of declarations, which are definitions $x := t : T$ or assumptions $x : T$. 
 We use $[]$ to denote the empty context, and $x \in \Gamma$ to denote that variable $x$ appears in the context as a declaration.
 We only work with well-formed contexts, denoted as \WF{\Gamma}. 
 The typing judgement, denoted as $\Gamma \vdash t : T$, represents that the term $t$ has type $T$ in well-formed context $\Gamma$. 
-The proof judgement, denoted as $\Gamma \vdash \phi$, represents that the proposition is proved in the context.
 
-We use $\Gamma \vdash \phi : \prop$ to denote that $\phi$ is a valid proposition in $\Gamma$. It can be proved using the following rules:
-\begin{gather*}
-    \frac{\Gamma \vdash o : \opt{n}}{\Gamma \vdash \unitary{o} : \prop}
-    \qquad
-    \frac{\Gamma \vdash lo : \lopt}{\Gamma \vdash \assn{lo} : \prop} \\
-    \\
-    \frac{\Gamma \vdash M : \measopt}{\Gamma \vdash \meas{M} : \prop}
-    \qquad
-    \frac{
-        \begin{aligned}
-            & \Gamma \vdash \assn{P} \qquad \Gamma \vdash \assn{Q} \\
-            & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
-        \end{aligned}}
-        {
-            \Gamma \vdash \judge{P}{s_1}{s_2}{Q} : \prop
-        } \\
-    \\
-    \frac{\Gamma \vdash o_1 : \opt{n} \qquad \Gamma \vdash o_2 : \opt{n}}{\Gamma \vdash o_1 = o_2 : \prop}
-    \qquad
-    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash lo_1 = lo_2 : \prop}
-\end{gather*}
 
 The well-formed contexts can be constructed in the following ways:
 
 \begin{gather*}
     \frac{}{\WF{[]}} \\
     \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad T \in \{\qvar, \opt{n}, \prog \}}{\WF{\Gamma;x:T}} \\
+    \frac{\WF{\Gamma} \quad x \notin \Gamma \quad \Gamma \vdash T : \Type \text{ or } \Gamma \vdash T : \prop}{\WF{\Gamma;x:T}} \\
     \\
     \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash t : T}{\WF{\Gamma;x := t : T}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop}{\WF{\Gamma;x:\phi}} \\
-    \\
-    \frac{\WF{\Gamma} \qquad x \notin \Gamma \qquad \Gamma \vdash \phi : \prop \qquad \text{(proof provided)}}{\WF{\Gamma;x:=\pf:\phi}} \\
 \end{gather*}
 
-The rules for typing judgements are as follows.
-
+These are subtyping rules:
 \begin{gather*}
-    \frac{\WF{\Gamma} \qquad x : T \in \Gamma}{\Gamma \vdash x : T}
+    \frac{\Gamma \vdash t : \cvar{t}}{\Gamma \vdash t : \CTerm{t}}
+    \quad
+    \frac{\Gamma \vdash t : \CTerm{\bit}}{\Gamma \vdash t : \cAssn}
+\end{gather*}
+
+
+The typing rules for type terms are as follows.
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \prop : \Type}
     \qquad
-    \frac{\WF{\Gamma} \qquad x := t : T \in \Gamma}{\Gamma \vdash x : T} \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \qvlist : \Type}
+    \qquad
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \optpair{T} : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \CType : \Type} \\
+    \\
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \cvar{T} : \Type}
+    \qquad
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \qreg{T} : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type} \\
+    \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \cAssn : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \qAssn : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \cqAssn : \Type} \\
+    \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
+    \qquad
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \SType : \Type} \\
+    \\
+    \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash \opt{T_1}{T_2} : \Type}
+    \qquad
+    \frac{\Gamma \vdash r_1 : \qvlist \quad \Gamma \vdash r_2 : \qvlist}{\Gamma \vdash \ldirac{r_1}{r_2} : \Type} \\
+    \\
+    \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash T_1 \times T_2 : \CType} \\
+    \\
+    \frac{\Gamma \vdash x : \qreg{T}}{\Gamma \vdash x@1 : \qreg{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \qreg{T}}{\Gamma \vdash x@2 : \qreg{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash x@1 : \cvar{T}}
+    \qquad
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash x@2 : \cvar{T}}
+    \\
+    \\
+    \frac{
+    \Gamma \vdash t_1 : \CTerm{T_1} \quad \Gamma \vdash t_2 : \CTerm{T_2}
+    }
+    {\Gamma \vdash (t_1, t_2) : \CTerm{T_1 \times T_2}}
+    \qquad
+    \frac{\Gamma \vdash o_1 : \opt{t}{t} \quad \Gamma \vdash o_2 : \opt{t}{t}}{\Gamma \vdash (o_1, o_2) : \optpair{t}} \\
     \\
     \frac{
         \begin{aligned}
-            & \Gamma \vdash q_i : \qvar \text{ for all } i = 1, 2, \dots, n\\
-            & q_i \neq q_j \text{ for all } i \neq j
-        \end{aligned}}{\Gamma \vdash [q_1, q_2, \dots, q_n] : \qreg{n}} \\
+            & \Gamma \vdash P : \ldirac{r_1}{r_2} \qquad \Gamma \vdash \propproj{P} \\
+            & \Gamma \vdash A : \ldirac{r_1'}{r_2'} \qquad \Gamma \vdash \proppos{P}
+        \end{aligned}
+    }{\Gamma \vdash \abracket{P, A} : \qAssn} \\
     \\
-    \frac{\Gamma \vdash lo_1 : \lopt \qquad \Gamma \vdash lo_2 : \lopt}{\Gamma \vdash \{lo_1, lo_2\} : \measopt}
+    \frac{\Gamma \vdash r_1 : \qreg{T_1} \quad \Gamma \vdash r_2 : \qreg{T_2}}{\Gamma \vdash (r_1, r_2) : \qreg{T_1 \times T_2}}
+    \\
+    \\
+    \frac{\Gamma \vdash x_i : \qreg{\sigma_i} \text{ for all } i \qquad x_i \neq x_j \text{ for all } i \neq j}{\Gamma \vdash [x_1, x_2, \dots, x_n] : \qvlist} \\
+    \\
+    \frac{\Gamma \vdash o : \opt{T_1}{T_2} \quad \Gamma \vdash r_1 : \qreg{T_1} \quad \Gamma \vdash r_2 : \qreg{T_2}}{\Gamma \vdash o_{r_1,r_2} : \ldirac{\textsf{qvars}\ r_1}{\textsf{qvars}\ r_2}}
 \end{gather*}
+
+The typing rules for bit terms are
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \true: \CTerm{\bit}}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \false: \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t_1 : \CTerm{T} \quad \Gamma \vdash t_2 : \CTerm{T}}{\Gamma \vdash t_1 == t_2 : \CTerm{\bit}}
+\end{gather*}
+
+The typing rules for classical assertions are
+\begin{gather*}
+    \cdots
+\end{gather*}
+
+The typing rules for Dirac notations are
+\begin{gather*}
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \ONEO(T) : \opt{T}{T}}
+    \qquad
+    \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash \ZEROO(T_1, T_2) : \opt{T_1}{T_2}} \\
+    \\
+    \frac{\Gamma \vdash o_1 : \opt{T_1}{T_2} \quad \Gamma \vdash o_2 : \opt{T_1}{T_2}}{\Gamma \vdash o_1 + o_2 : \opt{T_1}{T_2}}
+\end{gather*}
+
+The typing rules for cq-assertions are
+\begin{gather*}
+    \frac{\Gamma \vdash \psi : \cAssn \quad \Gamma \vdash P : \qAssn}{\Gamma \vdash \psi \mapsto P : \cqAssn}
+    \qquad
+    \frac{\Gamma \vdash f : \cqAssn \quad \Gamma \vdash g : \cqAssn}{\Gamma \vdash f +_{cq} g : \cqAssn} \\
+    \\
+    \frac{\Gamma \vdash f : \cqAssn \quad \Gamma \vdash U : \ldirac{r_1}{r_2} \quad \Gamma \vdash \unitary{U}}{\Gamma \vdash U@f : \cqAssn}
+\end{gather*}
+
 
 The typing rules for program statements are:
 \begin{gather*}
-    \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog}
-    \qquad
-    \frac{\Gamma \vdash t : \qreg{n}}{\Gamma \vdash \Init{t} : \prog} \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \Skip : \prog} \\
     \\
-    \frac{\Gamma \vdash t : \qreg{n} \qquad \Gamma \vdash U : \opt{n} \qquad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
+    \frac{\Gamma \vdash x : \cvar{T} \quad \Gamma \vdash t : \CTerm{T}}{\Gamma \vdash \Assign{x}{t} : \prog} \\
     \\
-    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog}
-    {\Gamma \vdash \If{M}{s_1}{s_2} : \prog} \\
+    \frac{\Gamma \vdash x : \cvar{T}}{\Gamma \vdash \pAssign{x}{T} : \prog} \\
     \\
-    \frac{\Gamma \vdash \meas{M} \qquad \Gamma \vdash s : \prog}
-    {\Gamma \vdash \While{M}{s} : \prog}
+    \frac{\Gamma \vdash t : \qreg{T}}{\Gamma \vdash \Init{t} : \prog} \\
+    \\
+    \frac{\Gamma \vdash U : \opt{T}{T} \quad \Gamma \vdash t : \qreg{T} \quad \Gamma \vdash \unitary{U}}{\Gamma \vdash U\ t : \prog} \\
+    \\
+    \frac{\Gamma \vdash x : \cvar{\bit} \quad \Gamma \vdash M : \optpair{t} \quad \Gamma \vdash \meas{M} \quad \Gamma \vdash t : \qreg{T} }{\Gamma \vdash \MeaAssign{x}{M}{t} : \prog} \\
+    \\
+    \frac{\Gamma \vdash t : \CTerm{\bit} \quad \Gamma \vdash s_1 : \prog \quad \Gamma \vdash s_2 : \prog}
+    {\Gamma \vdash \If{t}{s_1}{s_2} : \prog} \\
+    \\
+    \frac{\Gamma \vdash t : \CTerm{\bit} \quad \Gamma \vdash s : \prog}
+    {\Gamma \vdash \While{t}{s} : \prog}
 \end{gather*}
 
-\yx{About unitary and measurement operators: currently we directly assum that all operators involved are valid. We can add the unitary and measurement operator type to further charactorize it.}
+
+
+The typing rules for propositions are
+\begin{gather*}
+    \frac{\Gamma \vdash o : \opt{\sigma}{\sigma}}{\Gamma \vdash \unitary{o} : \prop} 
+    \qquad
+    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \unitary{lo} : \prop} 
+    \\
+    \\
+    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \proppos{lo} : \prop} 
+    \qquad
+    \frac{\Gamma \vdash lo : \ldirac{r_1}{r_2}}{\Gamma \vdash \propproj{lo} : \prop} \\
+    \\
+    \frac{\Gamma \vdash M : \optpair{t}}{\Gamma \vdash \meas{M} : \prop}
+    \qquad
+    \frac{
+        \begin{aligned}
+            & \Gamma \vdash P : \cqAssn \qquad \Gamma \vdash Q : \cqAssn \\
+            & \Gamma \vdash s_1 : \prog \qquad \Gamma \vdash s_2 : \prog
+        \end{aligned}}
+        {
+            \Gamma \vdash \judge{P}{s_1}{s_2}{Q} : \prop
+        } \\
+    \\
+    \frac{\Gamma \vdash o_1 : \opt{T_1}{T_2} \qquad \Gamma \vdash o_2 : \opt{T_1}{T_2}}{\Gamma \vdash o_1 = o_2 : \prop} \\
+    \\
+    \frac{\Gamma \vdash \Delta_1 : \cqAssn \quad \Gamma \vdash \Delta_2 : \cqAssn}{\Gamma \vdash \Delta_1 \sqsubseteq \Delta_2 : \prop}
+\end{gather*}
+
 
 The propositions can be proved using the following rules:
 \begin{gather*}
     ...
+\end{gather*}
+
+\section{Reasoning rules and tactics}
+
+\begin{itemize}
+    \item \texttt{sorry} discharge the first goal directly.
+    \item \texttt{choose i} choose the i-th goal as the first one.
+\end{itemize}
+
+The tactics for program logic rules are:
+
+\begin{gather*}
+  \inferrule[\texttt{r\_skip}]
+    {\ }
+    {\judge{P}{\Skip}{\Skip}{P}}
+  \qquad
+  \inferrule[\texttt{seq\_front}]
+    {   \judge{P}{c_1}{c_1'}{R} \\
+        \judge{R}{c_2; \cdots c_n}{c_2'; \cdots c_n'}{Q}
+    }
+    {\judge{P}{c_1; c_2; \cdots; c_n}{c_1'; c_2'; \cdots; c_n'}{Q}} \\
+    \\
+  \inferrule[\texttt{seq\_back}]
+    {   \judge{P}{c_1; \cdots c_{n-1}}{c_2'; \cdots c_{n-1}'}{R} \\
+        \judge{R}{c_n}{c_n'}{Q}
+    }
+    {\judge{P}{c_1; \cdots; c_{n-1}; c_n}{c_1'; \cdots; c_{n-1}; c_n'}{Q}} \\
+    \\
+  \inferrule[\texttt{r\_unitary1}]
+    {
+        \judge{P}{c_1}{c_2}{U_{q@1} @ Q}
+    }
+    {\judge{P}{c_1; U q}{c_2}{Q}}
 \end{gather*}

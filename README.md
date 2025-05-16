@@ -31,7 +31,7 @@ GitHub repository: https://github.com/LucianoXu/cqotl.git
 
 3. Build and run:
     ```bash
-    dune build && dune exec ./bin/main.exe
+    dune build && dune exec filewatcher source status
     ```
 ## Usage of CQOTL
 The prover executable accepts two command line argument as the source input and status output file. To start the prover, navigate to `generator` folder and run

@@ -5,22 +5,32 @@
 
 let whitespace  = [' ' '\t' '\r' '\n']
 let digit       = ['0'-'9']
+let number      = ['1'-'9'] (digit*)
 let alpha       = ['a'-'z' 'A'-'Z']
-let id          = alpha (alpha | digit | '_')*
+(* let id          = alpha (alpha | digit | '_')* *)
+let id          = alpha (alpha | digit)*
 
 rule token = parse
     | whitespace                    { token lexbuf }
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
+    | "@1"                          { AT1 }
+    | "@2"                          { AT2 }
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
+    | "|->"                         { MAPSTO }
+    | "+cq"                         { PLUSCQ }
+    | "<-$"                         { RNDARROW }
     | ":="                          { ASSIGN }
+    | "*="                          { STARASSIGN }
     | "|0>"                         { KET0 }
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
+    | "<="                          { LEQ }
+    | "=="                          { EQEQ }
     | "="                           { EQ }
     | "~"                           { TILDE }
     | "{"                           { LBRACE }
@@ -28,6 +38,11 @@ rule token = parse
     | "<"                           { LANGLE }
     | ">"                           { RANGLE }
     | "+"                           { PLUS }
+    | "("                           { LPAREN }
+    | ")"                           { RPAREN }
+    | "*"                           { STAR }
+    | "@"                           { AT }
+    | "_"                           { UNDERSCORE }
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -37,28 +52,60 @@ rule token = parse
     | "ShowAll"                     { SHOWALL }
     | "Undo"                        { UNDO }
     | "Pause"                       { PAUSE }
-    | "Assume"                      { ASSUME }
     | "Prove"                       { PROVE }
     | "QED"                         { QED }
+    
+    (* Tactics *)
+    | "sorry"                       { SORRY }
+    | "choose"                      { CHOOSE }
+    | "r_skip"                      { R_SKIP }
+    | "seq_front"                   { SEQ_FRONT }
+    | "seq_back"                    { SEQ_BACK }
+    | "r_unitary1"                  { R_UNITARY1 }
 
     (* Types *)
-    | "QVar"                        { QVAR }
+    | "Type"                        { TYPE }
+    | "Prop"                        { PROP }
+    | "QVList"                      { QVLIST }
+    | "OptPair"                     { OPTPAIR }
+    | "CType"                       { CTYPE }
+    | "CVar"                        { CVAR }
     | "QReg"                        { QREG }
-    | "Opt"                         { OPT }
-    | "LOpt"                        { LOPT }
-    | "MeasOpt"                     { MEASOPT }
-    | "Program"                     { PROGRAM }
+    | "Prog"                        { PROG }
+    | "CAssn"                       { CASSN }
+    | "QAssn"                       { QASSN }
+    | "CQAssn"                      { CQASSN }
+
+    | "Bit"                         { BIT }
+
+    | "CTerm"                       { CTERM }
+    | "SType"                       { STYPE }
+    | "OType"                       { OTYPE }
+    | "DType"                       { DTYPE }
+
+
+    (* Assertions *)
+    | "true"                        { TRUE }
+    | "false"                       { FALSE }
+
 
     (* Propositions *)
-    | "Unitary"                     { UNITARY }
-    | "Assn"                        { ASSN }
-    | "Meas"                        { MEAS }
+    | "Unitary"                     { PROP_UNITARY }
+    | "Pos"                         { PROP_POS }
+    | "Proj"                        { PROP_PROJ }
+    | "Meas"                        { PROP_MEAS }
     (* Judgement *)
     (* eq = *)
 
+    (* Dirac notation *)
+    | "1O"                          { ONEO }
+    | "0O"                          { ZEROO }
 
     (* Terms *)
     | "skip"                        { SKIP }
+    | "init"                        { INIT }
+    | "unitary"                     { UNITARY_PROG }
+    | "meas"                        { MEAS }
     | "if"                          { IF }
     | "then"                        { THEN }
     | "else"                        { ELSE }
@@ -66,13 +113,9 @@ rule token = parse
     | "do"                          { DO }
     | "end"                         { END }
 
-    (* Tactics *)
-    | "sorry"                       { SORRY }
-    | "r_skip"                      { R_SKIP }
-
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)
-    | digit as d                    { INT (int_of_char d - 48) }
+    | number as n                    { NUM (int_of_string n) }
     | eof                           { EOF }
 
     | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}
