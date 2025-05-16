@@ -70,8 +70,37 @@ def LoewnerOrder (T N : E →ₗ[𝕜] E) : Prop :=
 def isPureState (T : E →ₗ[𝕜] E) : Prop :=
   T.isDensityOperator ∧ T.rank = 1
 
+
 omit [CompleteSpace E] in
-lemma isPositiveSemiDefinite.IsSymmetric (T : E →ₗ[𝕜] E) (hT : T.isPositiveSemiDefinite) : T.IsSymmetric :=
+lemma isPositiveSemiDefinite.zero : (0 : E →ₗ[𝕜] E).isPositiveSemiDefinite := by
+  apply And.intro
+  · exact IsSelfAdjoint.zero (E →ₗ[𝕜] E)
+  · intro x
+    simp [zero_apply]
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.one : (1 : E →ₗ[𝕜] E).isPositiveSemiDefinite := by
+  apply And.intro
+  · exact (isSymmetric_iff_isSelfAdjoint 1).mp fun x ↦ congrFun rfl
+  · intro x
+    exact inner_self_nonneg
+
+omit [CompleteSpace E] in
+lemma isProjection.zero : (0 : E →ₗ[𝕜] E).isProjection := And.intro isPositiveSemiDefinite.zero rfl
+
+omit [CompleteSpace E] in
+lemma isProjection.one : (1 : E →ₗ[𝕜] E).isProjection := And.intro isPositiveSemiDefinite.one rfl
+
+omit [CompleteSpace E] in
+lemma isProjection.apply_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) {x : E} (hx : x ∈ range T) :
+    T x = x := by
+  obtain ⟨y, hy⟩ := hx
+  rw [← hy]
+  rw [← comp_apply]
+  rw [hT.right]
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.IsSymmetric {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite) : T.IsSymmetric :=
   (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
 
 omit [CompleteSpace E] in
@@ -87,6 +116,26 @@ lemma isPositiveSemiDefinite_add_of_isPositiveSemiDefinite {T S : E →ₗ[𝕜]
     rw [AddMonoidHom.map_add]
     exact Left.add_nonneg (hT.right x) (hS.right x)
 
+lemma isPositiveSemiDefinite.sub_of_LoewnerOrder {T S : E →ₗ[𝕜] E} (h : T.LoewnerOrder S) :
+    (T - S).isPositiveSemiDefinite := by
+  apply And.intro
+  · rw [← isSymmetric_iff_isSelfAdjoint]
+    exact h.IsSymmetric
+  · exact h.right
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.nonneg_real_smul {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
+    {c : ℝ} (hc : 0 ≤ c) : ((c : 𝕜) • T).isPositiveSemiDefinite := by
+  apply And.intro
+  · rw [← isSymmetric_iff_isSelfAdjoint]
+    exact IsSymmetric.smul (RCLike.conj_ofReal c) hT.IsSymmetric
+  · intro x
+    rw [smul_apply]
+    rw [inner_smul_left]
+    rw [RCLike.conj_ofReal]
+    rw [RCLike.re_ofReal_mul]
+    exact Left.mul_nonneg hc (hT.right x)
+
 omit [CompleteSpace E] in
 lemma isPositiveSemiDefinite.nonneg_eigenvalues {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
     (i : Fin (Module.finrank 𝕜 E)) : 0 ≤ hT.IsSymmetric.eigenvalues rfl i := by
@@ -99,8 +148,64 @@ lemma isPositiveSemiDefinite.nonneg_eigenvalues {T : E →ₗ[𝕜] E} (hT : T.i
   simp only [one_pow, mul_one] at h
   exact h
 
+omit [CompleteSpace E] [FiniteDimensional 𝕜 E] in
+lemma eq_zero_iff_forall_re_inner_eq_zero (T : E →ₗ[𝕜]E) : T = 0 ↔ ∀x : E, ∀y : E,  RCLike.re (inner 𝕜 (T x) y) = 0 := by
+  apply Iff.intro
+  · intro h
+    simp [h]
+  · intro h
+    apply LinearMap.ext
+    intro x
+    have hTx := h x (T x)
+    rw [inner_self_eq_norm_mul_norm, mul_self_eq_zero] at hTx
+    exact norm_eq_zero.mp hTx
+
 omit [CompleteSpace E] in
-lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+lemma IsSelfAdjoint.re_inner_app_self_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : IsSelfAdjoint T) :
+    T = 0 ↔ ∀x : E,  RCLike.re (inner 𝕜 (T x) x) = 0 := by
+  apply Iff.intro
+  · intro h
+    simp [h]
+  · intro h
+    have aux : ∀x : E, ∀y : E, RCLike.re (inner 𝕜 (T x) y) = RCLike.re ((inner 𝕜 (T (x + y)) (x + y) - inner 𝕜 (T (x - y)) (x - y))) / 4 := by
+      intro x y
+      simp only [LinearMap.map_add, LinearMap.map_sub]
+      simp only [inner_add_left, inner_add_right, inner_sub_left, inner_sub_right]
+      simp only [map_sub, map_add]
+      simp only [inner_re_symm (T y) x]
+      rw [(isSymmetric_iff_isSelfAdjoint T).mpr hT]
+      ring_nf
+    have h' : ∀x : E, ∀y : E, RCLike.re (inner 𝕜 (T x) y) = 0 := by
+      intro x y
+      rw [aux]
+      rw [map_sub]
+      rw [h (x + y), h (x - y)]
+      ring
+    apply (eq_zero_iff_forall_re_inner_eq_zero T).mpr h'
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.eq_iff_forall_re_inner_app_self_eq {T N : E →ₗ[𝕜]E} (hT : IsSelfAdjoint T)
+    (hN : IsSelfAdjoint N) :
+    T = N ↔ ∀x : E, RCLike.re (inner 𝕜 (T x) x) = RCLike.re (inner 𝕜 (N x) x) := by
+  have hT' : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT
+  have hN' : N.IsSymmetric := (isSymmetric_iff_isSelfAdjoint N).mpr hN
+  have hTN : IsSelfAdjoint (T - N) := (isSymmetric_iff_isSelfAdjoint (T - N)).mp (hT'.sub hN')
+  apply Iff.intro
+  · intro h x
+    rw [h]
+  · intro h
+    have hTN' : ∀x : E, RCLike.re (inner 𝕜 ((T - N) x) x) = 0 := by
+      intro x
+      rw [LinearMap.sub_apply]
+      rw [inner_sub_left]
+      rw [map_sub]
+      rw [sub_eq_zero]
+      exact h x
+    rw [← sub_eq_zero]
+    exact (IsSelfAdjoint.re_inner_app_self_eq_zero_iff_app_eq_zero hTN).mpr hTN'
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.re_inner_app_self_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
   have hTsymm : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
   let n : ℕ := Module.finrank 𝕜 E
@@ -208,16 +313,23 @@ lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[
     simp
 
 omit [CompleteSpace E] in
-theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+theorem isPositiveSemiDefinite.inner_app_self_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     inner 𝕜 (T x) x = 0 ↔ T x = 0 := by
   apply Iff.intro
   · intro hx
     have hx' : RCLike.re (inner 𝕜 (T x) x) = 0 := by
       rw [hx]
       exact RCLike.zero_re'
-    exact (re_inner_app_eq_zero_iff_app_eq_zero hT x).mp hx'
+    exact (re_inner_app_self_eq_zero_iff_app_eq_zero hT x).mp hx'
   · intro hx
     rw [hx]
     simp
+
+omit [CompleteSpace E] in
+lemma isPositiveSemiDefinite.app_eq_iff_re_inner_app_self_eq {T N : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite)
+    (hN : N.isPositiveSemiDefinite) (x : E) :
+    T x = N x ↔ RCLike.re (inner 𝕜 (T x) x) = RCLike.re (inner 𝕜 (N x) x) := by
+
+  sorry
 
 end LinearMap
