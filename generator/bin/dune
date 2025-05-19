@@ -1,4 +1,4 @@
 (executable
  (public_name filewatcher)
  (name filewatcher)
- (libraries cqotl_vgc unix))
+ (libraries cqotl_vgc unix menhirLib))
