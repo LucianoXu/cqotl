@@ -5,7 +5,6 @@ module I  = Parser.MenhirInterpreter
 
 exception SyntaxError of string
 
-
 (* Incremental Parser with loop and entry point *)
 (* Incremental Parser loop *)
 let rec loop lexbuf (checkpoint : command list I.checkpoint) : command list = 
@@ -15,14 +14,14 @@ let rec loop lexbuf (checkpoint : command list I.checkpoint) : command list =
       and offer it to the parser, which will produce a new
       checkpoint. Then, repeat *)
       let   token     = Lexer.token lexbuf  in (* Taking the next token from the lexer *)
-      let   startp    = lexbuf.lex_start_p     (* Start point at the lex buffer *)
-      and   endp      = lexbuf.lex_curr_p   in (* End point at the lex buffer *)
+      let   startp    = lexbuf.lex_start_p  in (* Start point at the lex buffer *)
+      let   endp      = lexbuf.lex_curr_p   in (* End point at the lex buffer *)
       let checkpoint  = I.offer checkpoint (token, startp, endp) in (* Get the next checkpoint *)
       loop lexbuf checkpoint (* Repeat the loop *)
   | I.Shifting _
   | I.AboutToReduce _     ->
       let checkpoint  = I.resume checkpoint in
-      loop lexbuf checkpoint
+        loop lexbuf checkpoint
   | I.HandlingError env ->
       let start_pos       = Lexing.lexeme_start_p lexbuf in
       let offending_token = Lexing.lexeme lexbuf in
