@@ -39,18 +39,15 @@
 %right AT
 /**************************/
 
-%start main
-%type <Ast.command list> main
+%start command_list
+%type <Ast.command list> command_list
 
 %%
 
-main:
-  | EOF { [] }
-  | cl = command_list EOF { cl }
-
 command_list:
-  | c = command cl = command_list { c :: cl }
+  | EOF { [] }
   | c = command { [c] }
+  | c = command cl = command_list { c :: cl }
 
 command:
   | DEF x = ID COLON t = terms ASSIGN e = terms PERIOD { Def {x; t; e} }
