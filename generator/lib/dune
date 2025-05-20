@@ -1,7 +1,7 @@
 (menhir
  (modules parser)
 ; --trace outputs the parsing trace, can be used for debugging purposes
-;  (flags --trace)
+ (flags --table)
 )
 
 (ocamllex lexer)
@@ -18,10 +18,7 @@
   kernel)
  (libraries menhirLib) 
 )
-
 ; Disable warnings for unused variables
 (env
   (dev
-    (flags (:standard -warn-error -27))
-  )
-)
+    (flags (:standard -warn-error -27))))

@@ -69,7 +69,7 @@ let () =
       let status_content : string = 
         try
           let content   = read_file source in
-          let cmds = parse_top content in
+          let cmds = parse_top_inc content in
           let eval_res = eval_list p cmds in
             get_status p eval_res
         with

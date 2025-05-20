@@ -39,12 +39,12 @@
 %right AT
 /**************************/
 
-%start top
-%type <Ast.command list> top
+%start main
+%type <Ast.command list> main
 
 %%
 
-top:
+main:
   | EOF { [] }
   | cl = command_list EOF { cl }
 
@@ -74,26 +74,22 @@ tactic:
   | R_UNITARY1 PERIOD { R_UNITARY1 }
 
 terms:
-  | v = ID { Var v }
-
-  | LPAREN t1 = terms RPAREN { t1 }
-
-  | TYPE { Type }
-  | PROP { Prop }
-  | QVLIST { QVList }
-  | OPTPAIR LBRACK t = terms RBRACK { OptPair t }
-  | CTYPE { CType }
-  | CVAR LBRACK t = terms RBRACK { CVar t }
-  | QREG LBRACK t = terms RBRACK { QReg t }
-  | PROG { Prog }
-  | CASSN { CAssn }
-  | QASSN { QAssn }
-  | CQASSN { CQAssn }
-
-  | BIT { Bit }
-
-  | CTERM LBRACK t = terms RBRACK { CTerm t }
-  | STYPE { SType }
+  | v = ID                                { Var v }
+  | LPAREN t1 = terms RPAREN              { t1 }
+  | TYPE                                  { Type }
+  | PROP                                  { Prop }
+  | QVLIST                                { QVList }
+  | OPTPAIR LBRACK t = terms RBRACK       { OptPair t }
+  | CTYPE                                 { CType }
+  | CVAR LBRACK t = terms RBRACK          { CVar t }
+  | QREG LBRACK t = terms RBRACK          { QReg t }
+  | PROG                                  { Prog }
+  | CASSN                                 { CAssn }
+  | QASSN                                 { QAssn }
+  | CQASSN                                          { CQAssn }
+  | BIT                                             { Bit }
+  | CTERM LBRACK t = terms RBRACK                   { CTerm t }
+  | STYPE                                           { SType }
   | OTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { OType (t1, t2) }
   | DTYPE LBRACK t1 = terms COMMA t2 = terms RBRACK { DType (t1, t2) }
 
@@ -106,61 +102,61 @@ terms:
   | LBRACK qrls = qreg_list RBRACK { QVListTerm qrls }
   | t1 = terms UNDERSCORE t2 = terms COMMA t3 = terms { Subscript (t1, t2, t3) }
 
-  | t = bitterm { BitTerm t }
+  | t = bitterm   { BitTerm t }
   // | c = cassn { CAssnTerm c }
-  | op = opt { OptTerm op }
-  | cq = cqassn { CQAssnTerm cq }
-  | s = stmt_seq { ProgTerm s }
-  | p = props { PropTerm p }
+  | op = opt      { OptTerm op }
+  | cq = cqassn   { CQAssnTerm cq }
+  | s = stmt_seq  { ProgTerm s }
+  | p = props     { PropTerm p }
 
 qreg:
-  | v = ID { Var v }
-  | v = ID AT1 { At1 v }
-  | v = ID AT2 { At2 v }
+  | v = ID      { Var v }
+  | v = ID AT1  { At1 v }
+  | v = ID AT2  { At2 v }
 
 qreg_list:
   | qr = qreg COMMA tls = qreg_list { qr :: tls }
-  | qr = qreg { [qr] }
+  | qr = qreg                       { [qr] }
 
 bitterm:
-  | TRUE { True }
-  | FALSE { False }
-  | t1 = terms EQEQ t2 = terms { Eq {t1; t2} }
+  | TRUE                        { True }
+  | FALSE                       { False }
+  | t1 = terms EQEQ t2 = terms  { Eq {t1; t2} }
 
 // cassn:
 //   | TRUE { True }
 //   | FALSE { False }
 
 opt:
-  | ONEO LBRACK t = terms RBRACK { OneO t }
-  | ZEROO LBRACK t1 = terms COMMA t2 = terms RBRACK { ZeroO {t1; t2} }
-  | o1 = terms PLUS o2 = terms { Add {o1; o2} }
+  | ONEO LBRACK t       = terms RBRACK    { OneO t }
+  | ZEROO LBRACK t1     = terms COMMA t2 = terms RBRACK { ZeroO {t1; t2} }
+  | o1 = terms PLUS o2  = terms      { Add {o1; o2} }
 
 cqassn:
-  | psi = terms MAPSTO p = terms { Fiber {psi; p} }
-  | cq1 = terms PLUSCQ cq2 = terms { Add {cq1; cq2} }
-  | u = terms AT cq = terms { UApply {u; cq} }
+  | psi = terms MAPSTO p = terms    { Fiber {psi; p} }
+  | cq1 = terms PLUSCQ cq2 = terms  { Add {cq1; cq2} }
+  | u = terms AT cq = terms         { UApply {u; cq} }
 
 stmt_seq:
-  | s = stmt ss = stmt_seq { s :: ss }
-  | s = stmt { SingleCmd s }
+  | s = stmt ss = stmt_seq          { s :: ss }
+  | s = stmt                        { SingleCmd s }
 
 stmt:
-  | SKIP                                                                     { Skip }
-  | id = ID ASSIGN t = terms                                          { Assign {x=id; t=t} }
-  | id = ID RNDARROW t = terms                                     { PAssign {x=id; t=t} }
-  | INIT q           = terms                                              { InitQubit q }
-  | UNITARY_PROG u_opt = terms qs = terms                            { Unitary {u_opt; qs} }
-  | id = ID ASSIGN MEAS m_opt = terms qs = terms                   { Meas {x=id; m_opt=m_opt; qs=qs} }
-  | IF b = terms THEN s1 = terms ELSE s2 = terms END          { IfMeas {b; s1; s2} }
-  | WHILE b    = terms DO s = terms END                          { WhileMeas {b; s} }
+  | SKIP                                                        { Skip }
+  | id = ID ASSIGN t = terms                                    { Assign {x=id; t=t} }
+  | id = ID RNDARROW t = terms                                  { PAssign {x=id; t=t} }
+  | INIT q           = terms                                    { InitQubit q }
+  | UNITARY_PROG u_opt = terms qs = terms                       { Unitary {u_opt; qs} }
+  | id = ID ASSIGN MEAS m_opt = terms qs = terms                { Meas {x=id; m_opt=m_opt; qs=qs} }
+  | IF b = terms THEN s1 = terms ELSE s2 = terms END            { IfMeas {b; s1; s2} }
+  | WHILE b    = terms DO s = terms END                         { WhileMeas {b; s} }
 
 
 props:
-  | PROP_UNITARY t = terms { Unitary t }
-  | PROP_POS t = terms { Pos t }
-  | PROP_PROJ t = terms { Proj t }
-  | PROP_MEAS t = terms { Meas t }
+  | PROP_UNITARY t = terms          { Unitary t }
+  | PROP_POS t = terms              { Pos t }
+  | PROP_PROJ t = terms             { Proj t }
+  | PROP_MEAS t = terms             { Meas t }
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE { Judgement {pre; s1; s2; post} }
-  | t1 = terms EQ t2 = terms { Eq {t1; t2} }
-  | t1 = terms LEQ t2 = terms { Leq {t1; t2} }
+  | t1 = terms EQ t2 = terms        { Eq {t1; t2} }
+  | t1 = terms LEQ t2 = terms       { Leq {t1; t2} }
