@@ -102,9 +102,9 @@ lemma inner_ket1_ket1 : @inner 𝕜 𝕜² _ ket1 ket1 = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ket1 norm_ket1).mpr rfl
 
 /-- ⟨+|+⟩ = 1 -/
-lemma inner_ketplus_ketplus : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
+lemma inner_ketP_ketP : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketP norm_ketP).mpr rfl
 
 /-- ⟨-|-⟩ = 1 -/
-lemma inner_ketplus_ketMinus : @inner 𝕜 𝕜² _ ketM ketM = 1 :=
+lemma inner_ketM_ketM : @inner 𝕜 𝕜² _ ketM ketM = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketM norm_ketM).mpr rfl
