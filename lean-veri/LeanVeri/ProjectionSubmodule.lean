@@ -6,7 +6,8 @@ import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
 
 /-!
-There is a one to one correspondence between the projection operators and the submodules.
+There is a one to one correspondence between the projection operators and the subspaces.
+Note that we use the name `Submodule` for the subspaces, as in `Mathlib`.
 In this file we define this correspondence and prove some basic properties about it.
 -/
 
@@ -46,12 +47,9 @@ lemma Submodule.toSubmodule_toProjection_eq (K : Submodule 𝕜 E) :
     K.toProjection.toSubmodule = K := by
   unfold toProjection
   unfold LinearMap.toSubmodule
-  rw [← orthogonalComplement_eq_orthogonalComplement]
-  rw [orthogonal_orthogonal]
-  rw [Submodule.ext_iff]
+  rw [← orthogonalComplement_eq_orthogonalComplement, orthogonal_orthogonal, Submodule.ext_iff]
   intro x
-  rw [LinearMap.mem_ker]
-  rw [← orthogonalProjection_eq_zero_iff]
+  rw [LinearMap.mem_ker, ← orthogonalProjection_eq_zero_iff]
   simp
 
 lemma LinearMap.isProjection.toSubmodule_eq_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
@@ -62,13 +60,10 @@ lemma LinearMap.isProjection.toSubmodule_eq_range {T : E →ₗ[𝕜] E} (hT : T
     unfold toSubmodule
     rw [Submodule.mem_orthogonal]
     intro u hu
-    rw [← hT.apply_range hx]
-    rw [← (isSymmetric_iff_isSelfAdjoint T).mpr hT.left.left]
-    rw [hu]
+    rw [← hT.apply_range hx, ← (isSymmetric_iff_isSelfAdjoint T).mpr hT.left.left, hu]
     exact inner_zero_left x
   · unfold toSubmodule
-    rw [Nat.eq_sub_of_add_eq' (ker T).finrank_add_finrank_orthogonal]
-    rw [eq_tsub_iff_add_eq_of_le (ker T).finrank_le]
+    rw [Nat.eq_sub_of_add_eq' (ker T).finrank_add_finrank_orthogonal, eq_tsub_iff_add_eq_of_le (ker T).finrank_le]
     exact finrank_range_add_finrank_ker T
 
 lemma LinearMap.isProjection.toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
@@ -82,15 +77,11 @@ lemma LinearMap.isProjection.toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} 
   apply Mathlib.Tactic.LinearCombination.add_eq_eq
   · rw [Submodule.toProjection_eq]
     unfold LinearMap.toSubmodule
-    rw [Submodule.orthogonalProjection_orthogonal_val]
-    rw [Submodule.orthogonalProjection_eq_self_iff.mpr hy]
-    rw [sub_self]
-    rw [hy]
+    rw [Submodule.orthogonalProjection_orthogonal_val, Submodule.orthogonalProjection_eq_self_iff.mpr hy, sub_self, hy]
   · rw [Submodule.toProjection_eq]
     unfold LinearMap.toSubmodule
-    rw [Submodule.orthogonalProjection_orthogonal_val]
-    rw [Submodule.orthogonalProjection_eq_zero_iff.mpr hz]
-    rw [ZeroMemClass.coe_zero, sub_zero]
+    rw [Submodule.orthogonalProjection_orthogonal_val, Submodule.orthogonalProjection_eq_zero_iff.mpr hz,
+      ZeroMemClass.coe_zero, sub_zero]
     have hz' : z ∈ range T := by
       rw [← hT.toSubmodule_eq_range]
       exact hz
@@ -112,18 +103,12 @@ lemma LinearMap.isProjection.SubmoduleComplement_eq {T : E →ₗ[𝕜] E} (hT :
   rw [LinearMap.ext_iff]
   intro x
   unfold SubmoduleComplement
-  rw [Submodule.toProjection_eq]
-  rw [Submodule.orthogonalProjection_orthogonal_val]
-  rw [← Submodule.toProjection_eq]
-  rw [hT.toProjection_toSubmodule_eq]
+  rw [Submodule.toProjection_eq, Submodule.orthogonalProjection_orthogonal_val, ← Submodule.toProjection_eq,
+    hT.toProjection_toSubmodule_eq]
   rfl
 
 lemma LinearMap.isProjection.comp_Complement {T : E →ₗ[𝕜] E} (hT : T.isProjection) : T ∘ₗ T.SubmoduleComplement = 0 := by
-  rw [hT.SubmoduleComplement_eq]
-  rw [comp_sub]
-  rw [Module.End.one_eq_id]
-  rw [comp_id]
-  rw [hT.right]
+  rw [hT.SubmoduleComplement_eq, comp_sub, Module.End.one_eq_id, comp_id, hT.right]
   exact sub_self T
 
 lemma LinearMap.SubmoduleInf_comm (T N : E →ₗ[𝕜] E) : T.SubmoduleInf N = N.SubmoduleInf T := by
@@ -137,11 +122,9 @@ lemma LinearMap.SubmoduleSup_comm (T N : E →ₗ[𝕜] E) : T.SubmoduleSup N = 
 lemma LinearMap.SubmoduleInf_assoc (T N M : E →ₗ[𝕜] E) :
     (T.SubmoduleInf N).SubmoduleInf M = T.SubmoduleInf (N.SubmoduleInf M) := by
   unfold SubmoduleInf
-  rw [Submodule.toSubmodule_toProjection_eq, Submodule.toSubmodule_toProjection_eq]
-  rw [inf_assoc]
+  rw [Submodule.toSubmodule_toProjection_eq, Submodule.toSubmodule_toProjection_eq, inf_assoc]
 
 lemma LinearMap.SubmoduleSup_assoc (T N M : E →ₗ[𝕜] E) :
     (T.SubmoduleSup N).SubmoduleSup M = T.SubmoduleSup (N.SubmoduleSup M) := by
   unfold SubmoduleSup
-  rw [Submodule.toSubmodule_toProjection_eq, Submodule.toSubmodule_toProjection_eq]
-  rw [sup_assoc]
+  rw [Submodule.toSubmodule_toProjection_eq, Submodule.toSubmodule_toProjection_eq, sup_assoc]
