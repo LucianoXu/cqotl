@@ -67,14 +67,18 @@ let () =
       (* file changed *)
       let p = init_prover () in
       let status_content : string = 
-        try
           let content   = read_file source in
-          let cmds = parse_top content in
-          let eval_res = eval_list p cmds in
-            get_status p eval_res
-        with
-        | SyntaxError msg ->
-            Printf.sprintf "Syntax error: %s\n%!" msg
+          let parse_res = parse_top_inc content in
+          match parse_res with
+          (* Complete Parsing *)
+          | Complete cmds ->    
+            let eval_res = eval_list p cmds in
+              get_status p eval_res
+
+          (* Partial Parsing, execute the best command list and report the syntax error. *)
+          | Partial (cmds, msg) ->
+            let eval_res = eval_list p cmds in
+              Printf.sprintf "%s\n\nSyntax error: %s" (get_status p eval_res) msg
       in
         write_file ~dst:status ~content:status_content;
         watcher_print (Printf.sprintf "%s updated -> %s\n%!" source status);

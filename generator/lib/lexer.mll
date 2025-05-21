@@ -1,9 +1,18 @@
 {
+    open Lexing
     open Parser
     exception Error of string
+
+    let newline lexbuf =
+        let pos = lexbuf.lex_curr_p in
+        lexbuf.lex_curr_p <- {
+            pos with
+            pos_lnum = pos.pos_lnum + 1;
+            pos_bol = pos.pos_cnum;
+        }
 }
 
-let whitespace  = [' ' '\t' '\r' '\n']
+let whitespace  = [' ' '\t']
 let digit       = ['0'-'9']
 let number      = ['1'-'9'] (digit*)
 let alpha       = ['a'-'z' 'A'-'Z']
@@ -11,6 +20,7 @@ let alpha       = ['a'-'z' 'A'-'Z']
 let id          = alpha (alpha | digit)*
 
 rule token = parse
+    | '\n'                          { newline lexbuf; token lexbuf }
     | whitespace                    { token lexbuf }
     | "(*"                          { comment lexbuf; token lexbuf }
 
@@ -123,4 +133,5 @@ rule token = parse
 and comment = parse
     | "*)"                     { () }  (* End of comment *)
     | eof                      { raise (Error "Unterminated comment") }
+    | '\n'                     { newline lexbuf; comment lexbuf }
     | _                        { comment lexbuf }  (* Skip any other character *)
