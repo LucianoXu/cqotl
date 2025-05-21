@@ -15,7 +15,7 @@
 let whitespace  = [' ' '\t']
 let digit       = ['0'-'9']
 let number      = ['1'-'9'] (digit*)
-let alpha       = ['a'-'z' 'A'-'Z']
+let alpha       = ['a'-'z' 'A'-'Z' '_']
 (* let id          = alpha (alpha | digit | '_')* *)
 let id          = alpha (alpha | digit)*
 
@@ -25,6 +25,7 @@ rule token = parse
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
+    | "=>"                          { DARROW }
     | "@1"                          { AT1 }
     | "@2"                          { AT2 }
     | ":"                           { COLON }
@@ -52,7 +53,6 @@ rule token = parse
     | ")"                           { RPAREN }
     | "*"                           { STAR }
     | "@"                           { AT }
-    | "_"                           { UNDERSCORE }
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -68,13 +68,20 @@ rule token = parse
     (* Tactics *)
     | "sorry"                       { SORRY }
     | "choose"                      { CHOOSE }
-    | "r_skip"                      { R_SKIP }
+    (* | "r_skip"                      { R_SKIP }
     | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
-    | "r_unitary1"                  { R_UNITARY1 }
+    | "r_unitary1"                  { R_UNITARY1 } *)
+
+
+    (* terms *)
+    | "Type"                        { TYPE }
+    | "forall"                      { FORALL }
+    | "fun"                         { FUN }
+
+    (*
 
     (* Types *)
-    | "Type"                        { TYPE }
     | "Prop"                        { PROP }
     | "QVList"                      { QVLIST }
     | "OptPair"                     { OPTPAIR }
@@ -106,6 +113,8 @@ rule token = parse
     | "Meas"                        { PROP_MEAS }
     (* Judgement *)
     (* eq = *)
+
+    *)
 
     (* Dirac notation *)
     | "1O"                          { ONEO }

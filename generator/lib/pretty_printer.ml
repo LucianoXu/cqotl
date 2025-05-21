@@ -1,52 +1,22 @@
 open Ast
-
+(* 
 let rec command_list_2_str (cs: command list) : string =
   let format_command (c: command) : string = 
     command2str c in
   let command_strs = List.map format_command cs in
   String.concat "\n" command_strs
 
-and command2str (c: command) : string =
-  match c with
-  | Def {x; t; e} -> 
-      Printf.sprintf "Def %s : %s := %s." x (term2str t) (term2str e)
-  | DefWithoutType {x; e} -> 
-      Printf.sprintf "Def %s := %s." x (term2str e)
-  | Var {x; t}    -> 
-      Printf.sprintf "Var %s : %s." x (term2str t) 
-  | Check e      -> 
-      Printf.sprintf "Check %s." (term2str e)
-  | Show x       ->
-      Printf.sprintf "Show %s." x
-  | ShowAll      ->
-      Printf.sprintf "ShowAll."
-  | Undo         ->
-      Printf.sprintf "Undo."
-  | Pause       ->
-      Printf.sprintf "Pause."
-  | Prove {x; p}  ->
-      Printf.sprintf "Prove %s : %s." x (term2str p)
-  | Tactic t      ->
-      (tactic2str t)
-  | QED -> "QED."
-  (* | _ -> 
-      Printf.sprintf "Command not implemented yet" *)
-
-and tactic2str (t: tactic) : string =
-  match t with
-  | Sorry -> "sorry."
-  | Choose i -> Printf.sprintf "choose %d." i
-
-  | R_SKIP -> "r_skip."
-  | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
-  | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
-  | R_UNITARY1 -> "r_unitary1."
-  (* | _ -> "Unknown tactic" *)
 
   and term2str (e: terms) : string =
     match e with
     | Var x -> 
         Printf.sprintf "%s" x
+    | Forall {x; t; t'} ->
+        Printf.sprintf "forall (%s : %s), %s" x (term2str t) (term2str t')
+    | Fun {x; t; e} ->
+        Printf.sprintf "fun (%s : %s) => %s" x (term2str t) (term2str e)
+    | Apply (f, t) ->
+        Printf.sprintf "(%s %s)" (term2str f) (term2str t)
     | Type ->
         Printf.sprintf "Type"
     | Prop ->
@@ -207,3 +177,69 @@ and stmt2str (s: stmt) : string =
       Printf.sprintf "while %s do %s end" 
         (term2str b) (term2str s)
   (* | _ -> "Unknown labeled operator" *)
+
+   *)
+
+
+
+let rec command_list_2_str (cs: command list) : string =
+  let format_command (c: command) : string = 
+    command2str c in
+  let command_strs = List.map format_command cs in
+  String.concat "\n" command_strs
+
+and command2str (c: command) : string =
+  match c with
+  | Def {x; t; e} -> 
+      Printf.sprintf "Def %s : %s := %s." x (term2str t) (term2str e)
+  | DefWithoutType {x; e} -> 
+      Printf.sprintf "Def %s := %s." x (term2str e)
+  | Var {x; t}    -> 
+      Printf.sprintf "Var %s : %s." x (term2str t) 
+  | Check e      -> 
+      Printf.sprintf "Check %s." (term2str e)
+  | Show x       ->
+      Printf.sprintf "Show %s." x
+  | ShowAll      ->
+      Printf.sprintf "ShowAll."
+  | Undo         ->
+      Printf.sprintf "Undo."
+  | Pause       ->
+      Printf.sprintf "Pause."
+  | Prove {x; p}  ->
+      Printf.sprintf "Prove %s : %s." x (term2str p)
+  | Tactic t      ->
+      (tactic2str t)
+  | QED -> "QED."
+
+and tactic2str (t: tactic) : string =
+  match t with
+  | Sorry -> "sorry."
+  | Choose i -> Printf.sprintf "choose %d." i
+
+  (* | R_SKIP -> "r_skip."
+  | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
+  | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
+  | R_UNITARY1 -> "r_unitary1." *)
+  (* | _ -> "Unknown tactic" *)
+
+and term2str (e: terms) : string =
+    match e with
+    | Symbol x -> 
+        Printf.sprintf "%s" x
+    | Fun {head; args=[Symbol x; t; t']} when head = _forall->
+        Printf.sprintf "(forall (%s : %s), %s)" x (term2str t) (term2str t')
+    | Fun {head; args=[Symbol x; t; e]} when head = _fun->
+        Printf.sprintf "(fun (%s : %s) => %s)" x (term2str t) (term2str e)
+    | Fun {head; args=[f; t]} when head = _apply->
+        Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
+
+    | Fun {head; args=[t1; t2]} when head = _eq ->
+        Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)
+
+    | Fun {head; args} ->
+        let args_str = List.map term2str args |> String.concat ", " in
+        Printf.sprintf "%s[%s]" head args_str
+
+    | Opaque ->
+        Printf.sprintf "<opaque>"

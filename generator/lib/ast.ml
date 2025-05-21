@@ -1,39 +1,11 @@
-
-(* qWhile Grammar:
-  Seq ::= S1 S2 ... Sn    (n >= 1)
-  S ::= skip ;
-    |   q := |0> ;
-    |   U[q_reg] ;
-    |   if M[q_reg] then Seq1 else Seq2 end
-    |   while M[q_reg] do Seq end
-*)
-
-type command =
-  | Def of {x : string; t : terms; e : terms}
-  | DefWithoutType of {x : string; e : terms}
-  | Var of {x : string; t : terms}
-  | Check of terms
-  | Show of string
-  | ShowAll
-  | Undo
-  | Pause
-  (* for interactive proof *)
-  | Prove of {x : string; p : terms}
-  | Tactic of tactic
-  | QED
-
-and tactic =
-  | Sorry
-  | Choose of int
-
-  (* The two sided rules *)
-  | R_SKIP
-  | SEQ_FRONT of terms
-  | SEQ_BACK of terms
-  | R_UNITARY1
+(* 
 
 and terms = 
   | Var of string
+
+  | Forall of {x: string; t: terms; t': terms}
+  | Fun of {x: string; t: terms; e: terms}
+  | Apply of terms * terms
 
   (* Forbid variables for these three types. *)
   | Type
@@ -138,4 +110,128 @@ let rec get_back_stmt (s: stmt_seq) : (stmt * stmt_seq) =
   | (s1 :: SingleCmd s2) -> (s2, SingleCmd s1)      
   | (s1 :: s2) -> 
       let (end_stmt, remain) = get_back_stmt s2 in
-      (end_stmt, s1 :: remain)
+      (end_stmt, s1 :: remain) *)
+
+type command =
+  | Def of {x : string; t : terms; e : terms}
+  | DefWithoutType of {x : string; e : terms}
+  | Var of {x : string; t : terms}
+  | Check of terms
+  | Show of string
+  | ShowAll
+  | Undo
+  | Pause
+
+  (* for interactive proof *)
+  | Prove of {x : string; p : terms}
+  | Tactic of tactic
+  | QED
+
+and tactic =
+  | Sorry
+  | Choose of int
+
+  (* The two sided rules *)
+  (* | R_SKIP
+  | SEQ_FRONT of terms
+  | SEQ_BACK of terms
+  | R_UNITARY1 *)
+
+
+and terms = 
+  | Symbol of string
+  | Fun of {head: string; args: terms list}
+  | Opaque
+
+
+
+(* The reserved term symbols *)
+
+let _type = "Type"
+let _forall = "FORALL"
+let _fun = "FUN"
+let _apply = "APPLY"
+
+let _ctype = "CTYPE"
+let _cvar = "CVAR"
+let _cterm = "CTERM"
+let _qvlist = "QVLIST"
+let _optpair = "OPTPAIR"
+let _qreg = "QREG"
+let _prog = "PROG"
+
+
+let _eq = "EQ"
+
+let reserved_symbols = [
+  _type;
+  _forall;
+  _fun;
+  _apply;
+  _ctype;
+  _cvar;
+  _cterm;
+  _qvlist;
+  _optpair;
+  _qreg;
+  _prog;
+  
+  _eq;]
+
+
+
+(** return the substitution result t\[v/x\] *)
+let rec subst (t : terms) (x: string) (v: terms) : terms =
+  match t with
+  | Symbol y -> if x = y then v else t
+  | Fun {head; args=[Symbol x'; forall_t; forall_t']} when head = _forall && x' = x ->
+      let new_forall_t = subst forall_t x v in
+      Fun {head; args=[Symbol x'; new_forall_t; forall_t']}
+
+  | Fun {head; args=[Symbol x'; fun_t; fun_e]} when head = _fun && x' = x ->
+      let new_fun_t = subst fun_t x v in
+      Fun {head; args=[Symbol x'; new_fun_t; fun_e]}
+
+  | Fun {head; args} ->
+      let args' = List.map (fun arg -> subst arg x v) args in
+      Fun {head; args = args'}
+
+  | Opaque -> Opaque
+
+
+
+(*************************************)
+(** Get all the symbols in the term (function head are not counted). *)
+let get_symbols (t : terms) : string list =
+  let rec aux acc t =
+    match t with
+    | Symbol s -> s :: acc
+    | Fun {head=_; args} ->
+        List.fold_left aux acc args
+    | Opaque -> acc
+  in
+  List.sort_uniq String.compare (aux [] t)
+
+(** fresh symbol generator *)
+let new_id =
+  let counter = ref 0 in
+  fun () ->
+    let id = !counter in
+    counter := id + 1;
+    id
+
+(** Generates a fresh symbol name with a given prefix *)
+let fresh_name (t : terms) (prefix : string) : string =
+  let t_symbols = get_symbols t in
+
+  if not (List.mem prefix t_symbols) then 
+    prefix
+  else
+    let rec find_fresh id =
+      let candidate = prefix ^ string_of_int id in
+      if List.mem candidate t_symbols then
+        find_fresh (id + 1)
+      else
+        candidate
+    in
+    find_fresh 0

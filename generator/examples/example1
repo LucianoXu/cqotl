@@ -1,8 +1,16 @@
 
+
+
+
 Var x : CVar[Bit].
-Var q : QReg[Bit].
+
+Var q : QReg[Bit]. 
 Var H : OType[Bit, Bit].
 Var Hpf : Unitary H.
+
+Check forall (x : QReg[Bit]), QReg[Bit].
+
+Check fun ()
 
 Prove oneopf : Proj (1O[Bit * Bit]_(q@1, q@2),(q@1, q@2)).
   sorry.
@@ -28,15 +36,19 @@ QED.
 Prove mainpf :
   {true |-> OneObs}
     x <-$ Bit
+    unitary H q
       ~
-    init q 
+    init q
     unitary H q
     x := meas M q
   {x@1 == x@2 |-> OneObs}.
   
-  
 
   seq_back (true |-> OneObs).
+  (* Pause. *)
+    (* Pause. *)
+
+  r_unitary1.
 
   Pause.
 
