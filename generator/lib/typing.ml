@@ -1030,6 +1030,14 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as QReg. %s" (term2str s) (term2str qs) msg)
     end
 
+  (* zeroo *)
+  | Fun {head; args=[t1; t2]} when head = _zeroo ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type (Symbol sym1), Type (Symbol sym2) when sym1 = _ctype && sym2 = _ctype ->
+        Type (Fun {head=_otype; args=[t1; t2]})
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as CType." (term2str s) (term2str t1) (term2str t2))
+    end
   
   (* plus *)
   | Fun {head; args=[t1; t2]} when head = _plus ->

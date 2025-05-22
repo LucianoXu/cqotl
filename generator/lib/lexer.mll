@@ -69,6 +69,7 @@ rule token = parse
     | "sorry"                       { SORRY }
     | "choose"                      { CHOOSE }
     | "by_lean"                     { BYLEAN }
+    | "simpl"                      { SIMPL }
     (* | "r_skip"                   { R_SKIP }
     | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
@@ -90,6 +91,8 @@ rule token = parse
     | "while"                       { WHILE }
     | "do"                          { DO }
     | "end"                         { END }
+
+    | "0O"                          { ZEROO }
 
     (*
 
@@ -129,8 +132,7 @@ rule token = parse
     *)
 
     (* Dirac notation *)
-    (* | "1O"                          { ONEO }
-    | "0O"                          { ZEROO } *)
+    (* | "1O"                          { ONEO } *)
 
 
     | id as v                       { ID v }

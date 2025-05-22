@@ -16,6 +16,7 @@
   lexer
   parser_utils
   typing
+  reasoning
   prover)
  (libraries menhirLib) 
 )

@@ -117,6 +117,7 @@ and tactic =
   | Sorry
   | Choose of int
   | ByLean
+  | Simpl
 
   (* The two sided rules *)
   (* | R_SKIP
@@ -152,6 +153,7 @@ let _dtype = "DTYPE"
 let _prog = "PROG"
 let _assn = "ASSN"
 
+let _zeroo = "ZEROO"
 let _plus = "PLUS"
 
 
@@ -200,6 +202,7 @@ let reserved_symbols = [
   _prog;
   _assn;
 
+  _zeroo;
   _plus;
 
   _seq;

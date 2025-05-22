@@ -182,6 +182,7 @@ and tactic2str (t: tactic) : string =
   | Sorry -> "sorry."
   | Choose i -> Printf.sprintf "choose %d." i
   | ByLean -> "by_lean."
+  | Simpl -> "simpl."
 
   (* | R_SKIP -> "r_skip."
   | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
@@ -200,8 +201,12 @@ and term2str (e: terms) : string =
 
 
     (* dirac notation *)
+    | Fun {head; args=[t1; t2]} when head = _zeroo ->
+        Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
+
     | Fun {head; args=[t1; t2]} when head = _plus ->
         Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
+
 
     | Fun {head; args=[t1; t2]} when head = _eq ->
         Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)

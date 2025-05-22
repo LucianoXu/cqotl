@@ -12,7 +12,7 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY CHOOSE BYLEAN
+%token SORRY CHOOSE BYLEAN SIMPL
 %token R_SKIP SEQ_FRONT SEQ_BACK R_UNITARY1
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
@@ -28,6 +28,7 @@
 
 (* token for programs *)
 %token SKIP INIT UNITARY_PROG MEAS IF THEN ELSE WHILE DO END
+
 %token EOF
 
 
@@ -169,6 +170,7 @@ tactic:
   | SORRY PERIOD { Sorry }
   | CHOOSE n = NUM PERIOD { Choose n }
   | BYLEAN PERIOD { ByLean }
+  | SIMPL PERIOD { Simpl }
   // | R_SKIP PERIOD { R_SKIP }
   // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
@@ -199,6 +201,10 @@ terms:
   | IF b = terms THEN s1 = terms ELSE s2 = terms END            { Fun {head=_if; args=[b; s1; s2]} }
   | WHILE b    = terms DO s = terms END                         { Fun {head=_while; args=[b; s]} }
   | stmts = stmtseq                                             { Fun {head=_seq; args=stmts} }
+
+  (* 0O[T] or 0O[T1, T2] *)
+  | ZEROO LBRACK t = terms RBRACK { Fun {head=_zeroo; args=[t; t]} }
+  | ZEROO LBRACK t1 = terms COMMA t2 = terms RBRACK { Fun {head=_zeroo; args=[t1; t2]} }
 
 termargs:
   | t = terms { [t] }
