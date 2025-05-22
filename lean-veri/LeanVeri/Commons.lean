@@ -108,3 +108,35 @@ lemma inner_ketP_ketP : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
 /-- ⟨-|-⟩ = 1 -/
 lemma inner_ketM_ketM : @inner 𝕜 𝕜² _ ketM ketM = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketM norm_ketM).mpr rfl
+
+/-- |0⟩⟨0| is PSD (Positive Semi-Definitie) -/
+lemma isPositiveSemiDefinite_ketbra0 : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbra0 :=
+  isPositiveSemiDefinite_outerProduct_self 𝕜 ket0
+
+/-- |1⟩⟨1| is PSD -/
+lemma isPositiveSemiDefinite_ketbra1 : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbra1 :=
+  isPositiveSemiDefinite_outerProduct_self 𝕜 ket1
+
+/-- (|0⟩⟨0|)² = |0⟩⟨0| -/
+lemma isProjection_ketbra0 : @LinearMap.isProjection 𝕜 𝕜² _ _ _ _ ketbra0 :=
+  isProjection_outerProduct_self_of_norm_eq_one 𝕜 norm_ket0
+
+/-- (|1⟩⟨1|)² = |1⟩⟨1| -/
+lemma isProjection_ketbra1 : @LinearMap.isProjection 𝕜 𝕜² _ _ _ _ ketbra1 :=
+  isProjection_outerProduct_self_of_norm_eq_one 𝕜 norm_ket1
+
+/-- (|+⟩⟨+|)† = |+⟩⟨+| -/
+lemma isSelfAdjoint_ketbraP : @IsSelfAdjoint (𝕜² →ₗ[𝕜] 𝕜²) _ ketbraP :=
+  IsSelfAdjoint_outerProduct_self 𝕜 ketP
+
+/-- (|-⟩⟨-|)† = |-⟩⟨-| -/
+lemma isSelfAdjoint_ketbraM : @IsSelfAdjoint (𝕜² →ₗ[𝕜] 𝕜²) _ ketbraM :=
+  IsSelfAdjoint_outerProduct_self 𝕜 ketM
+
+/-- |+⟩⟨+| is PSD -/
+lemma isPositiveSemiDefinite_ketbraP : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbraP :=
+  isPositiveSemiDefinite_outerProduct_self 𝕜 ketP
+
+/-- |-⟩⟨-| is PSD -/
+lemma isPositiveSemiDefinite_ketbraM : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbraM :=
+  isPositiveSemiDefinite_outerProduct_self 𝕜 ketM
