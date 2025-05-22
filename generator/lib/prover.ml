@@ -336,6 +336,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           match tac with
           | Sorry -> eval_tac_sorry proof_f
           | Choose i -> eval_tac_choose proof_f i
+          | ByLean -> eval_tac_by_lean proof_f
           (* | R_SKIP -> eval_tac_R_SKIP proof_f
           | SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
           | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
@@ -369,6 +370,12 @@ and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
       proof_prop = f.proof_prop;
       goals = move_to_front f.goals i;
     })
+
+and eval_tac_by_lean (f: proof_frame) : tactic_result =
+  (*** IMPLEMENT THE CODE TO GET LEAN CODE FROM THE proof_frame *)
+  let output_code = frame2str (ProofFrame f) in
+  Printf.printf "Lean code:\n%s\n" output_code;
+  eval_tac_sorry f
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

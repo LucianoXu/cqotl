@@ -143,41 +143,6 @@ and cqassn2str (c: cqassn) : string =
       Printf.sprintf "(%s @ %s)" (term2str u) (term2str cq)
   (* | _ -> "Unknown assertion" *) 
 
-and stmt_seq_2_str (s: stmt_seq) : string =
-    match s with
-    | SingleCmd s1               -> stmt2str s1
-    | (::) (s1, s2)              -> 
-        stmt2str s1 ^ "\n" ^ stmt_seq_2_str s2
-
-and stmt2str (s: stmt) : string =
-  match s with
-  | Skip                        -> 
-      "skip"
-
-  | Assign {x; t}               ->
-    Printf.sprintf "%s := %s" x (term2str t)
-
-  | PAssign {x; t}              ->
-    Printf.sprintf "%s <-$ %s" x (term2str t)
-
-  | InitQubit q                 -> 
-      Printf.sprintf "init %s" (term2str q)
-
-  | Unitary {u_opt; qs}       ->
-      Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
-
-  | Meas {x; m_opt; qs}             ->
-      Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)
-
-  | IfMeas {b; s1; s2}  ->
-      Printf.sprintf "if %s then %s else %s end" 
-        (term2str b) (term2str s1) (term2str s2)
-        
-  | WhileMeas {b; s}   ->
-      Printf.sprintf "while %s do %s end" 
-        (term2str b) (term2str s)
-  (* | _ -> "Unknown labeled operator" *)
-
    *)
 
 
@@ -216,6 +181,7 @@ and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
   | Choose i -> Printf.sprintf "choose %d." i
+  | ByLean -> "by_lean."
 
   (* | R_SKIP -> "r_skip."
   | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
@@ -225,8 +191,6 @@ and tactic2str (t: tactic) : string =
 
 and term2str (e: terms) : string =
     match e with
-    | Symbol x -> 
-        Printf.sprintf "%s" x
     | Fun {head; args=[Symbol x; t; t']} when head = _forall->
         Printf.sprintf "(forall (%s : %s), %s)" x (term2str t) (term2str t')
     | Fun {head; args=[Symbol x; t; e]} when head = _fun->
@@ -234,8 +198,49 @@ and term2str (e: terms) : string =
     | Fun {head; args=[f; t]} when head = _apply->
         Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
 
+
+    (* dirac notation *)
+    | Fun {head; args=[t1; t2]} when head = _plus ->
+        Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
+
     | Fun {head; args=[t1; t2]} when head = _eq ->
         Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)
+
+
+    (* program statements *)
+    | Symbol x when x = _skip ->
+        "skip"
+  
+    | Fun {head; args=[Symbol x; t]} when head = _assign ->
+        Printf.sprintf "%s := %s" x (term2str t)
+
+    | Fun {head; args=[Symbol x; t]} when head = _passign ->
+        Printf.sprintf "%s <-$ %s" x (term2str t)
+
+    | Fun {head; args=[q]} when head = _init_qubit ->
+        Printf.sprintf "init %s" (term2str q)
+        
+    | Fun {head; args=[u_opt; qs]} when head = _unitary ->
+        Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
+    
+    | Fun {head; args=[Symbol x; m_opt; qs]} when head = _meas ->
+        Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)
+
+    | Fun {head; args=[b; s1; s2]} when head = _if ->
+        Printf.sprintf "if %s then %s else %s end" 
+          (term2str b) (term2str s1) (term2str s2)
+  
+    | Fun {head; args=[b; s]} when head = _while ->
+        Printf.sprintf "while %s do %s end" 
+          (term2str b) (term2str s)
+
+    | Fun {head; args} when head = _seq ->
+        let args_str = List.map term2str args |> String.concat ";\n" in
+        Printf.sprintf "%s;\n" args_str
+
+
+    | Symbol x -> 
+        Printf.sprintf "%s" x
 
     | Fun {head; args} ->
         let args_str = List.map term2str args |> String.concat ", " in

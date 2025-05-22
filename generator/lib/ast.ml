@@ -62,21 +62,7 @@ and cqassn =
   | Add of {cq1: terms; cq2: terms}
   | UApply of {u: terms; cq: terms}
 
-(* A Statement Sequence *)
-and stmt_seq =
-  | SingleCmd of stmt
-  | (::) of stmt * stmt_seq
 
-(* Single Statements *)
-and stmt =
-  | Skip
-  | Assign of {x: string; t: terms}
-  | PAssign of {x: string; t: terms}
-  | InitQubit of      terms
-  | Unitary of        {u_opt: terms; qs: terms}
-  | Meas of           {x: string; m_opt: terms; qs: terms}
-  | IfMeas of         {b: terms; s1: terms; s2: terms}
-  | WhileMeas of      {b: terms; s: terms}
 
 
 and props =
@@ -130,6 +116,7 @@ type command =
 and tactic =
   | Sorry
   | Choose of int
+  | ByLean
 
   (* The two sided rules *)
   (* | R_SKIP
@@ -158,8 +145,39 @@ let _cterm = "CTERM"
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
 let _qreg = "QREG"
-let _prog = "PROG"
+let _stype = "STYPE"
+let _otype = "OTYPE"
+let _dtype = "DTYPE"
 
+let _prog = "PROG"
+let _assn = "ASSN"
+
+let _plus = "PLUS"
+
+
+(* and stmt_seq =
+  | SingleCmd of stmt
+  | (::) of stmt * stmt_seq
+
+and stmt =
+  | Skip
+  | Assign of {x: string; t: terms}
+  | PAssign of {x: string; t: terms}
+  | InitQubit of      terms
+  | Unitary of        {u_opt: terms; qs: terms}
+  | Meas of           {x: string; m_opt: terms; qs: terms}
+  | IfMeas of         {b: terms; s1: terms; s2: terms}
+  | WhileMeas of      {b: terms; s: terms} *)
+
+let _seq = "SEQ"
+let _skip = "SKIP"
+let _assign = "ASSIGN"
+let _passign = "PASSIGN"
+let _init_qubit = "INITQUBIT"
+let _unitary = "UNITARY"
+let _meas = "MEAS"
+let _if = "IF"
+let _while = "WHILE"
 
 let _eq = "EQ"
 
@@ -173,8 +191,26 @@ let reserved_symbols = [
   _cterm;
   _qvlist;
   _optpair;
+
   _qreg;
+  _stype;
+  _otype;
+  _dtype;
+
   _prog;
+  _assn;
+
+  _plus;
+
+  _seq;
+  _skip;
+  _assign;
+  _passign;
+  _init_qubit;
+  _unitary;
+  _meas;
+  _if;
+  _while;
   
   _eq;]
 

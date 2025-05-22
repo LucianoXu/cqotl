@@ -12,7 +12,7 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY CHOOSE
+%token SORRY CHOOSE BYLEAN
 %token R_SKIP SEQ_FRONT SEQ_BACK R_UNITARY1
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
@@ -32,11 +32,14 @@
 
 
 /* -- precedence table -- */
+%nonassoc SEMICOLON
+%nonassoc SKIP ASSIGN RNDARROW INIT UNITARY_PROG IF WHILE
+
 %nonassoc FORALL FUN
-%left PLUS
 %nonassoc MAPSTO
 %left STAR
 %nonassoc EQEQ EQ LEQ
+%left PLUS
 %left AT
 /**************************/
 
@@ -165,6 +168,7 @@ command:
 tactic:
   | SORRY PERIOD { Sorry }
   | CHOOSE n = NUM PERIOD { Choose n }
+  | BYLEAN PERIOD { ByLean }
   // | R_SKIP PERIOD { R_SKIP }
   // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
@@ -181,8 +185,26 @@ terms:
   | FUN LPAREN x = ID COLON t = terms RPAREN DARROW e = terms { Fun {head=_fun; args=[Symbol x; t; e]} }
   | f = terms AT t = terms { Fun {head=_apply; args=[f; t]} }
 
+  | t1 = terms PLUS t2 = terms { Fun {head=_plus; args=[t1; t2]} }
+
   | t1 = terms EQ t2 = terms { Fun {head=_eq; args=[t1; t2]} }
 
+
+  | SKIP                                                        { Symbol _skip }
+  | id = ID ASSIGN t = terms                                    { Fun {head=_assign; args=[Symbol id; t]} }
+  | id = ID RNDARROW t = terms                                  { Fun {head=_passign; args=[Symbol id; t]} }
+  | INIT q           = terms                                    { Fun {head=_init_qubit; args=[q]} }
+  | UNITARY_PROG u_opt = terms qs = terms                       { Fun {head=_unitary; args=[u_opt; qs]} }
+  | id = ID ASSIGN MEAS m_opt = terms qs = terms                { Fun {head=_meas; args=[Symbol id; m_opt; qs]} }
+  | IF b = terms THEN s1 = terms ELSE s2 = terms END            { Fun {head=_if; args=[b; s1; s2]} }
+  | WHILE b    = terms DO s = terms END                         { Fun {head=_while; args=[b; s]} }
+  | stmts = stmtseq                                             { Fun {head=_seq; args=stmts} }
+
 termargs:
-  | t = terms { [t]}
+  | t = terms { [t] }
   | t = terms COMMA ts = termargs { t :: ts }
+
+stmtseq:
+  | t = terms SEMICOLON { [t] }
+  | t = terms SEMICOLON ts = stmtseq { t :: ts }
+  

@@ -966,8 +966,84 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CType. %s" (term2str s) (term2str t) msg)
     end
 
+  (* SType *)
+  | Symbol sym when sym = _stype ->
+    Type (Symbol _type)
+
+  (* OType *)
+  | Fun {head; args=[t1; t2]} when head = _otype ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 when 
+        type_t1 = Symbol _ctype && type_t2 = Symbol _ctype -> Type (Symbol _type)
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as CType." (term2str s) (term2str t1) (term2str t2))
+    end
+
+  (* DType *)
+  | Fun {head; args=[r1; r2]} when head = _dtype ->
+    begin
+      match calc_type wfctx r1, calc_type wfctx r2 with
+      | Type type_r1, Type type_r2 when 
+        type_r1 = Symbol _qvlist && type_r2 = Symbol _qvlist -> Type (Symbol _type)
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as QVList." (term2str s) (term2str r1) (term2str r2))
+    end
+
   (* Prog *)
   | Symbol sym when sym = _prog -> Type (Symbol _type)
+
+
+  (* Assn *)
+  | Symbol sym when sym = _assn -> Type (Symbol _type)
+
+
+  (*** typing for program statements ***)
+  (* Skip *)
+  | Symbol sym when sym = _skip -> Type (Symbol _prog)
+
+  (* Assign *)
+  | Fun {head; args=[Symbol x; t]} when head = _assign ->
+    begin
+      match calc_type wfctx (Symbol x) with
+      | Type (Fun {head=_cvar; args=[a]}) ->
+        begin
+          match type_check wfctx t (Fun {head=_cterm; args=[a]}) with
+          | Type _ -> Type (Symbol _prog)
+          | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s and %s do not have the same classical type. %s" (term2str s) x (term2str t) msg)
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CVar." (term2str s) x)
+    end
+
+  (* PAssign *)
+  | Fun {head; args=[Symbol x; t]} when head = _passign ->
+    begin
+      match type_check wfctx (Symbol x) (Fun {head=_cvar; args=[t]}) with
+      | Type _ -> Type (Symbol _prog)
+      | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s cannot be typed as CVar[%s]. %s" (term2str s) x (term2str t) msg)
+    end
+
+  (* Init Qubit *)
+  | Fun {head; args=[qs]} when head = _init_qubit ->
+    begin
+      match calc_type wfctx qs with
+      | Type (Fun {head=_qreg; args=[_]}) -> Type (Symbol _prog)
+      | Type tt -> TypeError (Printf.sprintf "%s typing failed. %s is typed as %s instead of QReg." (term2str s) (term2str qs) (term2str tt))
+      | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as QReg. %s" (term2str s) (term2str qs) msg)
+    end
+
+  
+  (* plus *)
+  | Fun {head; args=[t1; t2]} when head = _plus ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 ->
+        begin
+          match type_t1, type_t2 with
+          | Fun {head=head1; _}, _ when head1 = _otype && type_t1 = type_t2 ->
+            Type type_t1
+          | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as QVList." (term2str s) (term2str t1) (term2str t2))
+    end
 
 
   (* Eq *)

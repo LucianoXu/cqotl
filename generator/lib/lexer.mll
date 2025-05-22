@@ -68,7 +68,8 @@ rule token = parse
     (* Tactics *)
     | "sorry"                       { SORRY }
     | "choose"                      { CHOOSE }
-    (* | "r_skip"                      { R_SKIP }
+    | "by_lean"                     { BYLEAN }
+    (* | "r_skip"                   { R_SKIP }
     | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
     | "r_unitary1"                  { R_UNITARY1 } *)
@@ -78,6 +79,17 @@ rule token = parse
     | "Type"                        { TYPE }
     | "forall"                      { FORALL }
     | "fun"                         { FUN }
+
+    | "skip"                        { SKIP }
+    | "init"                        { INIT }
+    | "unitary"                     { UNITARY_PROG }
+    | "meas"                        { MEAS }
+    | "if"                          { IF }
+    | "then"                        { THEN }
+    | "else"                        { ELSE }
+    | "while"                       { WHILE }
+    | "do"                          { DO }
+    | "end"                         { END }
 
     (*
 
@@ -117,20 +129,9 @@ rule token = parse
     *)
 
     (* Dirac notation *)
-    | "1O"                          { ONEO }
-    | "0O"                          { ZEROO }
+    (* | "1O"                          { ONEO }
+    | "0O"                          { ZEROO } *)
 
-    (* Terms *)
-    | "skip"                        { SKIP }
-    | "init"                        { INIT }
-    | "unitary"                     { UNITARY_PROG }
-    | "meas"                        { MEAS }
-    | "if"                          { IF }
-    | "then"                        { THEN }
-    | "else"                        { ELSE }
-    | "while"                       { WHILE }
-    | "do"                          { DO }
-    | "end"                         { END }
 
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)
