@@ -5,9 +5,6 @@ Authors: Iván Renison, Jam Kabeer Ali Khan
 
 import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
-import Mathlib.LinearAlgebra.TensorProduct.Basic
-import LeanVeri.Projection
-import LeanVeri.LinearMapPropositions
 
 variable {𝕜 E F : Type*} [RCLike 𝕜]
 
@@ -49,16 +46,6 @@ omit [FiniteDimensional 𝕜 E] in
 lemma addition (φ : E) (A₁ A₂ : E →ₗ[𝕜] E):
   inner 𝕜 φ ((A₁ + A₂) φ) = inner 𝕜 φ (A₁ φ) + inner 𝕜 φ (A₂ φ) := by
     rw [@LinearMap.add_apply, @inner_add_right]
-
-/-
-This lemma shows the `reflexivity` of the inner product with operators `⟨φ|(A|ψ⟩) = ⟨ψ()
--/
-lemma inner_rfl (φ : E) (ψ : E) (A : E →ₗ[𝕜] E) (h : LinearMap.isPositiveSemiDefinite A) :
-  inner 𝕜 φ (A ψ) = inner 𝕜 (A φ) ψ := by
-  rcases h with ⟨h_adj, h_pos⟩
-  rw [LinearMap.isSelfAdjoint_iff'] at h_adj
-  rw [← h_adj, @LinearMap.adjoint_inner_right]
-  exact congrFun (congrArg (inner 𝕜) (congrFun (congrArg DFunLike.coe (id (Eq.symm h_adj))) φ)) ψ
 
 end BasicProperties
 
