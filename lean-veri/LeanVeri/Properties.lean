@@ -30,11 +30,8 @@ namespace BasicProperties
 This lemma shows the `Scalar product equal 1` property `⟨φ|φ⟩ = 1`
 -/
 omit [FiniteDimensional 𝕜 E] in
-lemma scalar_product_eq_one (_ : 𝕜) (φ : E) :
-    ‖φ‖ = 1 → inner 𝕜 φ φ = 1 :=
-    by  intro H
-        refine (inner_eq_one_iff_of_norm_one ?_ ?_).mpr rfl
-        repeat assumption
+lemma scalar_product_eq_one (_ : 𝕜) (φ : E) (h: ‖φ‖ = 1) :
+     inner 𝕜 φ φ = 1 := (inner_eq_one_iff_of_norm_one h h).mpr rfl
 
 /-
 This lemma shows the `Scalar product` property `⟨φ|(c•A)|φ⟩ = c * ⟨φ|A|φ⟩`.

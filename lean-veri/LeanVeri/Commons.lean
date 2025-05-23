@@ -30,13 +30,21 @@ noncomputable def ketP : 𝕜² := (1/√2 : 𝕜) • (ket0 + ket1)
 /-- Ket minus, usually denoted as |-⟩. -/
 noncomputable def ketM : 𝕜² := (1/√2 : 𝕜) • (ket0 - ket1)
 
-/-- Ket zero times bra zero, usually denoted as |0⟩⟨0|. -/
-def ketbra0 : 𝕜² →ₗ[𝕜] 𝕜² :=
-  outerProduct 𝕜 ket0 ket0
-
 /-- Ket one times bra one, usually denoted as |1⟩⟨1|. -/
 def ketbra1 : 𝕜² →ₗ[𝕜] 𝕜² :=
   outerProduct 𝕜 ket1 ket1
+
+/-- Ket one times bra one, usually denoted as |1⟩⟨0|. -/
+def ket1bra0 : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket1 ket0
+
+/-- Ket one times bra one, usually denoted as |0⟩⟨1|. -/
+def ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket0 ket1
+
+/-- Ket zero times bra zero, usually denoted as |0⟩⟨0|. -/
+def ketbra0 : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket0 ket0
 
 /-- Ket plus times bra plus, usually denoted as |+⟩⟨+|. -/
 noncomputable def ketbraP : 𝕜² →ₗ[𝕜] 𝕜² :=
@@ -93,6 +101,7 @@ lemma isProjection_ketbraP : @LinearMap.isProjection 𝕜 𝕜² _ _ _ _ ketbraP
 lemma isProjection_ketbraM : @LinearMap.isProjection 𝕜 𝕜² _ _ _ _ ketbraM :=
   isProjection_outerProduct_self_of_norm_eq_one 𝕜 norm_ketM
 
+
 /-- ⟨0|0⟩ = 1 -/
 lemma inner_ket0_ket0 : @inner 𝕜 𝕜² _ ket0 ket0 = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ket0 norm_ket0).mpr rfl
@@ -100,6 +109,20 @@ lemma inner_ket0_ket0 : @inner 𝕜 𝕜² _ ket0 ket0 = 1 :=
 /-- ⟨1|1⟩ = 1 -/
 lemma inner_ket1_ket1 : @inner 𝕜 𝕜² _ ket1 ket1 = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ket1 norm_ket1).mpr rfl
+
+/-- ⟨0|1⟩ = 0 -/
+lemma inner_ket0_ket1 : @inner 𝕜 𝕜² _ ket0 ket1 = 0 := by
+  unfold ket0 ket1
+  simp only [PiLp.inner_apply, WithLp.equiv_symm_pi_apply, RCLike.inner_apply, Fin.sum_univ_two,
+    Fin.isValue, Matrix.cons_val_zero, map_one, mul_one, Matrix.cons_val_one,
+    Matrix.cons_val_fin_one, map_zero, mul_zero, add_zero]
+
+/-- ⟨1|0⟩ = 0 -/
+lemma inner_ket1_ket0 : @inner 𝕜 𝕜² _ ket1 ket0 = 0 := by
+  unfold ket1 ket0
+  simp only [PiLp.inner_apply, WithLp.equiv_symm_pi_apply, RCLike.inner_apply, Fin.sum_univ_two,
+    Fin.isValue, Matrix.cons_val_zero, map_zero, mul_zero, Matrix.cons_val_one,
+    Matrix.cons_val_fin_one, map_one, mul_one, add_zero]
 
 /-- ⟨+|+⟩ = 1 -/
 lemma inner_ketP_ketP : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
@@ -140,3 +163,214 @@ lemma isPositiveSemiDefinite_ketbraP : @LinearMap.isPositiveSemiDefinite 𝕜 �
 /-- |-⟩⟨-| is PSD -/
 lemma isPositiveSemiDefinite_ketbraM : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbraM :=
   isPositiveSemiDefinite_outerProduct_self 𝕜 ketM
+
+/-- ⟨+|0⟩ = 1/√2 -/
+lemma inner_ketP_ket0 : @inner 𝕜 𝕜² _ ketP ket0 = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ketP ket0
+      = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • (ket0 + ket1)) ket0                       := rfl
+    _ = @inner 𝕜 𝕜² _ (((1/√2 : 𝕜) • ket0) + ((1/√2 : 𝕜) • ket1)) ket0        := by
+      refine Inseparable.inner_eq_inner ?_ rfl; refine Inseparable.of_eq ?_
+      rw [@DistribMulAction.smul_add]
+    _ = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket0) ket0 +  @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket1) ket0  := by rw [@inner_add_left]
+    _ = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket0 +  (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket0      := by
+      rw [@inner_smul_left, @inner_smul_left, @inner_ket0_ket0, @inner_ket1_ket0, mul_zero, mul_zero]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, mul_one, add_zero]
+    _ = 1/√2 := by
+      rw [@inner_ket0_ket0, @inner_ket1_ket0, mul_zero]
+      simp only [one_div, mul_one, add_zero]
+
+/-- ⟨0|+⟩ = 1/√2 -/
+lemma inner_ket0_ketP : @inner 𝕜 𝕜² _ ket0 ketP = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ket0 ketP = @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • (ket0 + ket1))                                 := rfl
+    _                       = @inner 𝕜 𝕜² _ ket0 (((1/√2 : 𝕜) • ket0) + ((1/√2 : 𝕜) • ket1))                  := by
+      refine Inseparable.inner_eq_inner rfl ?_; refine Inseparable.of_eq ?_
+      rw [@DistribMulAction.smul_add]
+    _                       = @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • ket0) + @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • ket1) := by
+      rw [@inner_add_right]
+    _                       = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket0 +  (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket1    := by
+      repeat rw [@inner_smul_right]
+    _ = 1/√2  := by
+      rw [@inner_ket0_ket0, @inner_ket0_ket1, mul_zero, add_zero, mul_one]
+
+/-- ⟨+|1⟩ = 1/√2 -/
+lemma inner_ketP_ket1 : @inner 𝕜 𝕜² _ ketP ket1 = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ketP ket1
+      = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • (ket0 + ket1)) ket1                       := rfl
+    _ = @inner 𝕜 𝕜² _ (((1/√2 : 𝕜) • ket0) + ((1/√2 : 𝕜) • ket1)) ket1        := by
+      refine Inseparable.inner_eq_inner ?_ rfl; refine Inseparable.of_eq ?_
+      rw [@DistribMulAction.smul_add]
+    _ = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket0) ket1 +  @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket1) ket1  := by rw [@inner_add_left]
+    _ = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket1 +  (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket1      := by
+      rw [@inner_smul_left, @inner_smul_left, @inner_ket0_ket1, @inner_ket1_ket1, mul_zero, mul_zero]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, mul_one, add_zero]
+    _ = 1/√2 := by
+      rw [@inner_ket0_ket1, @inner_ket1_ket1, mul_zero]
+      simp only [one_div, mul_one, zero_add]
+
+/-- ⟨1|+⟩ = 1/√2 -/
+lemma inner_ket1_ketP : @inner 𝕜 𝕜² _ ket1 ketP = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ket1 ketP = @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • (ket0 + ket1))                                 := rfl
+    _                       = @inner 𝕜 𝕜² _ ket1 (((1/√2 : 𝕜) • ket0) + ((1/√2 : 𝕜) • ket1))                  := by
+      refine Inseparable.inner_eq_inner rfl ?_; refine Inseparable.of_eq ?_
+      rw [@DistribMulAction.smul_add]
+    _                       = @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • ket0) + @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • ket1) := by
+      rw [@inner_add_right]
+    _                       = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket0 +  (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket1    := by
+      repeat rw [@inner_smul_right]
+    _                       = 1/√2  := by
+      rw [@inner_ket1_ket0, @inner_ket1_ket1, mul_zero, zero_add, mul_one]
+
+/-- ⟨-|0⟩ = 1/√2 -/
+lemma inner_ketM_ket0 : @inner 𝕜 𝕜² _ ketM ket0 = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ketM ket0
+      = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • (ket0 - ket1)) ket0                       := rfl
+    _ = @inner 𝕜 𝕜² _ (((1/√2 : 𝕜) • ket0) - ((1/√2 : 𝕜) • ket1)) ket0        := by
+      refine Inseparable.inner_eq_inner ?_ rfl; refine Inseparable.of_eq ?_
+      rw [@smul_sub]
+    _ = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket0) ket0 -  @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket1) ket0  := by rw [@inner_sub_left]
+    _ = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket0 +  (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket0      := by
+      rw [@inner_smul_left, @inner_smul_left, @inner_ket0_ket0, @inner_ket1_ket0, mul_zero, mul_zero]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, mul_one, sub_zero, add_zero]
+    _ = 1/√2 := by
+      rw [@inner_ket0_ket0, @inner_ket1_ket0, mul_zero]
+      simp only [one_div, mul_one, add_zero]
+
+/-- ⟨0|-⟩ = 1/√2 -/
+lemma inner_ket0_ketM : @inner 𝕜 𝕜² _ ket0 ketM = 1/√2 := by
+  calc
+    @inner 𝕜 𝕜² _ ket0 ketM = @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • (ket0 - ket1))                                 := rfl
+    _                       = @inner 𝕜 𝕜² _ ket0 (((1/√2 : 𝕜) • ket0) - ((1/√2 : 𝕜) • ket1))                  := by
+      refine Inseparable.inner_eq_inner rfl ?_; refine Inseparable.of_eq ?_; rw [@smul_sub]
+    _                       = @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • ket0) - @inner 𝕜 𝕜² _ ket0 ((1/√2 : 𝕜) • ket1) := by rw [@inner_sub_right]
+
+    _                       = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket0 - (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket1    := by
+      repeat rw [@inner_smul_right]
+    _ = 1/√2  := by
+      rw [@inner_ket0_ket0, @inner_ket0_ket1, mul_zero, sub_zero, mul_one]
+
+/-- ⟨-|1⟩ = - 1/√2 -/
+lemma inner_ketM_ket1 : @inner 𝕜 𝕜² _ ketM ket1 = - (1/√2) := by
+  calc
+    @inner 𝕜 𝕜² _ ketM ket1
+      = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • (ket0 - ket1)) ket1                       := rfl
+    _ = @inner 𝕜 𝕜² _ (((1/√2 : 𝕜) • ket0) - ((1/√2 : 𝕜) • ket1)) ket1        := by
+      refine Inseparable.inner_eq_inner ?_ rfl; refine Inseparable.of_eq ?_
+      rw [@smul_sub]
+    _ = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket0) ket1 - @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • ket1) ket1  := by rw [@inner_sub_left]
+    _ = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket0 ket1 - (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket1      := by
+      rw [@inner_smul_left, @inner_smul_left, @inner_ket0_ket1, @inner_ket1_ket1, mul_zero, mul_zero]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, mul_one, add_zero]
+    _ = - (1/√2) := by
+      rw [@inner_ket0_ket1, @inner_ket1_ket1, mul_zero, @one_div_mul_eq_div, @sub_eq_neg_self]
+
+/-- ⟨1|-⟩ = - 1/√2 -/
+lemma inner_ket1_ketM : @inner 𝕜 𝕜² _ ket1 ketM = - (1/√2) := by
+  calc
+    @inner 𝕜 𝕜² _ ket1 ketM = @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • (ket0 - ket1))                                 := rfl
+    _                       = @inner 𝕜 𝕜² _ ket1 (((1/√2 : 𝕜) • ket0) - ((1/√2 : 𝕜) • ket1))                  := by
+      refine Inseparable.inner_eq_inner rfl ?_; refine Inseparable.of_eq ?_
+      rw [@smul_sub]
+    _                       = @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • ket0) - @inner 𝕜 𝕜² _ ket1 ((1/√2 : 𝕜) • ket1) := by
+      rw [@inner_sub_right]
+    _                       = (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket0 - (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ket1 ket1    := by
+      repeat rw [@inner_smul_right]
+    _                       = - (1/√2)  := by
+      rw [@inner_ket1_ket0, @inner_ket1_ket1, mul_zero, zero_sub, mul_one]
+
+/-- |0⟩⟨0| + |1⟩⟨1| = I -/
+lemma ketbra0_plus_ketbra1_id :
+  ketbra0 + ketbra1 = (LinearMap.id : 𝕜² →ₗ[𝕜] 𝕜²) := by
+  unfold ketbra0 ketbra1
+  refine LinearMap.ext_iff.mpr ?_
+  simp only [LinearMap.add_apply, Module.End.one_apply]
+  intro x
+  repeat rw [outerproduct_assoc_right]
+  simp only [PiLp.inner_apply, RCLike.inner_apply, Fin.sum_univ_two, Fin.isValue]
+  unfold ket0 ket1
+  simp only [Fin.isValue, WithLp.equiv_symm_pi_apply, Matrix.cons_val_zero, map_one, mul_one,
+    Matrix.cons_val_one, Matrix.cons_val_fin_one, map_zero, mul_zero, add_zero, zero_add]
+  ext i
+  simp
+  fin_cases i
+  · simp only [Fin.isValue, Fin.zero_eta, Matrix.cons_val_zero, mul_one, mul_zero, add_zero]
+  · simp only [Fin.isValue, Fin.mk_one, Matrix.cons_val_one, Matrix.cons_val_fin_one, mul_zero, mul_one, zero_add]
+
+/-- |+⟩⟨+| = 1/2 • (|0⟩⟨0| + |0⟩⟨1| + |1⟩⟨0| + |1⟩⟨1|) -/
+lemma ketbraP_exp : ketbraP = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+  calc
+    ketbraP
+      = outerProduct 𝕜 ketP ketP := rfl
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 + ket1)) ketP  := by nth_rw  1 [ketP]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ket0 + ket1) ketP    := by apply outerproduct_scalar_assoc_left
+    _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketP) := by
+      rw [@RCLike.ofReal_alg, outerproduct_dist_left]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ket0 ketP + (1/√2 : 𝕜) • outerProduct 𝕜 ket1 ketP := by
+      rw [@DistribMulAction.smul_add]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ket0 ((1/√2 : 𝕜) • (ket0 + ket1)) + (1/√2 : 𝕜) • outerProduct 𝕜 ket1 ((1/√2 : 𝕜) • (ket0 + ket1)) := by
+      repeat rw [ketP]
+    _ = (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 + ket1) + (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 + ket1) := by
+      rw [← smul_add]
+      repeat rw [@outerproduct_scalar_assoc_right]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, smul_add]
+    _ = (1/2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 + ket1) + (1/2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 + ket1) := by
+      have h : (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 := by
+        rw [show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
+      repeat rw [← smul_assoc, h]
+    _ = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+      repeat rw [@outerproduct_dist_right]
+      simp only [smul_add]
+      rw [← ketbra0, ← ket1bra0, ← ket0bra1, ← ketbra1]
+      abel
+
+/-- |-⟩⟨-| = 1/2 • (|0⟩⟨0| - |0⟩⟨1| - |1⟩⟨0| + |1⟩⟨1|) -/
+lemma ketbraM_exp : ketbraM = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) • ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+  calc
+    ketbraM
+      = outerProduct 𝕜 ketM ketM                          := rfl
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 - ket1)) ketM  := by nth_rw  1 [ketM]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ket0 - ket1) ketM    := by
+      apply outerproduct_scalar_assoc_left
+    _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ket0 ketM - outerProduct 𝕜 ket1 ketM) := by
+      rw [@RCLike.ofReal_alg, outerproduct_sub_dist_left]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ket0 ketM - (1/√2 : 𝕜) • outerProduct 𝕜 ket1 ketM := by
+      rw [@smul_sub]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ket0 ((1/√2 : 𝕜) • (ket0 - ket1)) - (1/√2 : 𝕜) • outerProduct 𝕜 ket1 ((1/√2 : 𝕜) • (ket0 - ket1)) := by
+      repeat rw [ketM]
+    _ = (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 - ket1) - (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 - ket1) := by
+      rw [← smul_sub]
+      repeat rw [@outerproduct_scalar_assoc_right]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal]
+      rw [@smul_sub]
+    _ = (1/2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 - ket1) - (1/2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 - ket1) := by
+      have h : (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 := by
+        rw [show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
+      repeat rw [← smul_assoc, h]
+    _ = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+      repeat rw [@outerproduct_sub_dist_right]
+      simp only [smul_sub]
+      rw [← ketbra0, ← ket1bra0, ← ket0bra1, ← ketbra1]
+      abel
+
+/-- |+⟩⟨+| = I - |-⟩⟨-| -/
+lemma outer_ketP_braP_eq_id_sub_ketM_braM :
+  ketbraP = (LinearMap.id : 𝕜² →ₗ[𝕜] 𝕜²) - ketbraM := by
+    rw [@eq_sub_iff_add_eq]
+    rw [ketbraP_exp, ketbraM_exp]
+    simp only [smul_add]
+    abel_nf
+    repeat rw [← smul_assoc]
+    repeat rw [one_div]
+    simp only [zsmul_eq_mul, Int.cast_ofNat, isUnit_iff_ne_zero, ne_eq, OfNat.ofNat_ne_zero,
+      not_false_eq_true, IsUnit.mul_inv_cancel, one_smul]
+    apply ketbra0_plus_ketbra1_id
+
+/-- |+⟩⟨+| + |-⟩⟨-| = I -/
+lemma outer_ketP_braP_add_ketM_braM_eq_id :
+  ketbraP + ketbraM = (LinearMap.id : 𝕜² →ₗ[𝕜] 𝕜²)  := by
+    rw [← @eq_sub_iff_add_eq]
+    apply outer_ketP_braP_eq_id_sub_ketM_braM
