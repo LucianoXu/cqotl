@@ -1,5 +1,6 @@
 import LeanVeri.Basic
 import LeanVeri.Commons
+import LeanVeri.Examples.Example1
 import LeanVeri.InfValPred
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct

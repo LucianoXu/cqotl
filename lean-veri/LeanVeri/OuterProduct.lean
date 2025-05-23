@@ -121,3 +121,7 @@ lemma isProjection_outerProduct_self_of_norm_eq_one {x : E} (h : ‖x‖ = 1) :
   simp only [LinearMap.coe_comp, Function.comp_apply, outerProduct_def]
   rw [inner_smul_right, inner_self_eq_norm_sq_to_K, h]
   simp
+
+lemma inner_outerProduct_eq_inner_mul_inner (x y z w : E) :
+    inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 x z * inner 𝕜 y w :=
+  sorry

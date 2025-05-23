@@ -107,6 +107,36 @@ lemma isPositiveSemiDefinite_add_of_isPositiveSemiDefinite {T S : E →ₗ[𝕜]
     rw [add_apply, inner_add_left, AddMonoidHom.map_add]
     exact Left.add_nonneg (hT.right x) (hS.right x)
 
+lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite) {c : ℝ}
+    (hc : 0 ≤ c) : ((c : 𝕜) • T).isPositiveSemiDefinite := by
+  apply And.intro
+  · rw [← isSymmetric_iff_isSelfAdjoint]
+    apply IsSymmetric.smul (RCLike.conj_ofReal c) hT.IsSymmetric
+  · intro x
+    rw [smul_apply]
+    rw [inner_smul_left]
+    rw [RCLike.conj_ofReal]
+    rw [RCLike.re_ofReal_mul]
+    exact Left.mul_nonneg hc (hT.right x)
+
+lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite' {c : 𝕜} (hc : 0 ≤ c) {T : E →ₗ[𝕜] E}
+    (hT : T.isPositiveSemiDefinite)  : (c • T).isPositiveSemiDefinite := by
+  let c' : ℝ := RCLike.re c
+  have hstarc : (starRingEnd 𝕜) c = c := by
+    rw [RCLike.conj_eq_iff_im]
+    simp [← (RCLike.le_iff_re_im.mp hc).right]
+  have hcc' : c = c' := by
+    rw [RCLike.ext_iff]
+    apply And.intro
+    · simp [c']
+    · simp only [RCLike.ofReal_im, c']
+      exact RCLike.conj_eq_iff_im.mp hstarc
+  have hc' : 0 ≤ c' := by
+    rw [← @RCLike.zero_re' 𝕜]
+    exact (RCLike.le_iff_re_im.mp hc).left
+  rw [hcc']
+  exact isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite hT hc'
+
 lemma isPositiveSemiDefinite.sub_of_LoewnerOrder {T S : E →ₗ[𝕜] E} (h : T.LoewnerOrder S) :
     (S - T).isPositiveSemiDefinite := by
   apply And.intro
