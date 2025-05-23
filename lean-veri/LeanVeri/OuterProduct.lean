@@ -122,6 +122,9 @@ lemma isProjection_outerProduct_self_of_norm_eq_one {x : E} (h : ‖x‖ = 1) :
   rw [inner_smul_right, inner_self_eq_norm_sq_to_K, h]
   simp
 
+omit [FiniteDimensional 𝕜 E] in
 lemma inner_outerProduct_eq_inner_mul_inner (x y z w : E) :
-    inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 x z * inner 𝕜 y w :=
-  sorry
+    inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 z y * inner 𝕜 x w := by
+  repeat rw [outerProduct_def]
+  rw [@inner_smul_left]
+  rw [@inner_conj_symm]

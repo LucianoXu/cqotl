@@ -6,6 +6,8 @@ import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
 import Mathlib.Analysis.InnerProductSpace.Completion
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.InnerProductSpace.Orthonormal
+import Mathlib.Analysis.InnerProductSpace.Projection
 /-!
 Some vectors and linear maps that are commonly used in quantum computing.
 -/
@@ -375,5 +377,5 @@ lemma ketbraP_add_ketbraM_eq_one :
     apply ketbraP_eq_one_sub_ketbraM
 
 lemma exist_smul_ketP_of_inner_ketbraM_eq_zero (x : 𝕜²) (h : inner 𝕜 (ketbraM x) x = 0) :
-    ∃c : 𝕜, x = c • ketP :=
+    ∃c : 𝕜, x = c • ketP := by
   sorry
