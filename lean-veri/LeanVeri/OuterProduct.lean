@@ -1,6 +1,6 @@
 /-
-Copyright (c) 2025 Iván Renison. All rights reserved.
-Authors: Iván Renison
+Copyright (c) 2025 Iván Renison, Jam Khan. All rights reserved.
+Authors: Iván Renison, Jam Khan
 -/
 import LeanVeri.LinearMapPropositions
 

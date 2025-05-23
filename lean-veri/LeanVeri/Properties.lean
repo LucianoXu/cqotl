@@ -6,6 +6,12 @@ Authors: Iván Renison, Jam Kabeer Ali Khan
 import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
 
+/-!
+This file formalizes the basic properties of the quantum computing
+operations based on the lemma A.7 and lemma A.8 of the LICS2025 paper:
+Complete Quantum Relational Hoare Logics from Optimal Transport Duality
+-/
+
 variable {𝕜 E F : Type*} [RCLike 𝕜]
 
 variable? [HilbertSpace 𝕜 E] => [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E]
