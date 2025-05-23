@@ -1,7 +1,9 @@
 import LeanVeri.Basic
+import LeanVeri.Commons
 import LeanVeri.InfValPred
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
 import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
+import LeanVeri.Properties
 import LeanVeri.Sum
