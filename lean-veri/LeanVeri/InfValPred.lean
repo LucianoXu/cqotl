@@ -15,7 +15,9 @@ maps certain subspaces to infinite.
 /-- Infinite value predicate. -/
 structure InfValPred (𝕜 E : Type*) [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
     [FiniteDimensional 𝕜 E] where
+  /-- Positive semi definite operator for the values that are not maped to infinity. -/
   P : E →ₗ[𝕜] E
+  /-- Projection corresponding to the subspace that is maped to infinity. -/
   X : E →ₗ[𝕜] E
   PisPos : P.isPositiveSemiDefinite
   XisProj : X.isProjection
@@ -140,7 +142,10 @@ noncomputable instance HSMul : HSMul ℝ≥0∞ (InfValPred 𝕜 E) (InfValPred 
             exact smul_eq_zero.mpr (Or.inr A.compPX)
         }
 
-/-- Analog to `inner 𝕜 (T x) x` for positive semi definite operator `T`. -/
+/--
+Analog to `inner 𝕜 (T x) x` for positive semi definite operator `T`.
+Sometimes also denoted as `⟨x | T | x⟩`.
+-/
 def inner_app_self (A : InfValPred 𝕜 E) (x : E) : ℝ≥0∞ :=
   if inner 𝕜 (A.X x) x = 0
     then some ⟨RCLike.re (inner 𝕜 (A.P x) x), A.PisPos.right x⟩
