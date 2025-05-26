@@ -9,11 +9,19 @@ type normal_frame = {
 }
 
 type proof_frame = {
-  wfctx: wf_ctx;
+  (* The environment for the whole proof *)
+  env : envItem list;
   proof_name: string;
   proof_prop: terms;
-  goals: terms list;
+  goals: (envItem list * terms) list;
 }
+
+let get_pf_wfctx (pf : proof_frame) : wf_ctx =
+  match pf.goals with
+  | [] -> env2wfctx pf.env
+  | (ctx, _)::_ -> 
+      {env = pf.env; ctx = ctx}
+
 
 type frame = 
   | NormalFrame of normal_frame
@@ -24,7 +32,7 @@ type frame =
 let get_frame_wfctx (f: frame) : wf_ctx =
   match f with
   | NormalFrame {env} -> env2wfctx env
-  | ProofFrame {wfctx; _} -> wfctx
+  | ProofFrame pf -> get_pf_wfctx pf
 
 let add_envItem (f: normal_frame) (item: envItem) : frame =
   NormalFrame {env = item::f.env}
@@ -36,15 +44,15 @@ let add_envItem (f: normal_frame) (item: envItem) : frame =
 
 let open_proof (f: normal_frame) (name: string) (prop: terms) : frame =
   ProofFrame {
-    wfctx = env2wfctx f.env;
+    env = f.env;
     proof_name = name;
     proof_prop = prop;
-    goals = [prop]
+    goals = [([], prop)]
   }
 
 let close_proof (f: proof_frame) : frame =
   NormalFrame {
-    env = (Definition {name = f.proof_name; t=f.proof_prop; e=Opaque}) :: f.wfctx.env
+    env = (Definition {name = f.proof_name; t=f.proof_prop; e=Opaque}) :: f.env
   }
 
 let discharge_first_goal (f: proof_frame) : proof_frame =
@@ -52,19 +60,20 @@ let discharge_first_goal (f: proof_frame) : proof_frame =
   | [] -> f
   | _ :: tl ->
       let new_frame = {
-        wfctx = f.wfctx;
+        env = f.env;
         proof_name = f.proof_name;
         proof_prop = f.proof_prop;
         goals = tl
       } in
       new_frame
 
+(** Add a new goal to the proof_frame with empty local context. *)
 let add_goal (f: proof_frame) (goal: terms) : proof_frame =
   let new_frame = {
-        wfctx = f.wfctx;
+        env = f.env;
         proof_name = f.proof_name;
         proof_prop = f.proof_prop;
-        goals = goal::f.goals
+        goals = ([], goal)::f.goals
       } in
   new_frame
 
@@ -116,7 +125,7 @@ let goals2str (f: proof_frame): string =
   | _ ->
     let total = List.length f.goals in
     let goals_str = List.mapi 
-      (fun i p -> Printf.sprintf "(%d/%d) %s" (i + 1) total (term2str p))
+      (fun i (_, p) -> Printf.sprintf "(%d/%d) %s" (i + 1) total (term2str p))
       f.goals
     in
     String.concat "\n\n" goals_str
@@ -129,7 +138,7 @@ let frame2str (f: frame): string =
       let env_str = env2str env in
         Printf.sprintf "%s" env_str
   | ProofFrame f ->
-    let env_str = wfctx2str f.wfctx in
+    let env_str = wfctx2str (get_pf_wfctx f) in
     let proof_mode_str = Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode]\n\n%s" (goals2str f)
     in
       Printf.sprintf "%s%s" env_str proof_mode_str
@@ -336,11 +345,13 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         begin
           match tac with
           | Sorry -> eval_tac_sorry proof_f
+          | Intro v -> eval_tac_intro proof_f v
           | Choose i -> eval_tac_choose proof_f i
           | ByLean -> eval_tac_by_lean proof_f
           | Simpl -> eval_tac_simpl proof_f
-          (* | R_SKIP -> eval_tac_R_SKIP proof_f
-          | SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
+          | R_SKIP -> eval_tac_R_SKIP proof_f
+
+          (*| SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
           | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
           | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f *)
           (* | _ -> raise (Failure "Tactic not implemented yet") *)
@@ -362,12 +373,29 @@ and eval_tac_sorry (f: proof_frame) : tactic_result =
       let new_frame = discharge_first_goal f in
       Success (ProofFrame new_frame)
 
+and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | hd :: tl ->
+      (* Check the application condition *)
+      match hd with
+      | (ctx, Fun {head; args=[Symbol x; t; t']}) when head = _forall ->
+        let name = fresh_name_for_ctx (get_pf_wfctx f) v in
+        let new_frame = {
+          env = f.env;
+          proof_name = f.proof_name;
+          proof_prop = f.proof_prop;
+          goals = (Assumption {name; t}::ctx, subst t' x (Symbol name)) :: tl;
+        } in
+        Success (ProofFrame new_frame)
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
 and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
   if i < 1 || i > List.length f.goals then
     TacticError (Printf.sprintf "The index %d is out of range." i)
   else
     Success (ProofFrame {
-      wfctx = f.wfctx;
+      env = f.env;
       proof_name = f.proof_name;
       proof_prop = f.proof_prop;
       goals = move_to_front f.goals i;
@@ -382,16 +410,33 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
 and eval_tac_simpl (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
-  | hd :: ls ->
+  | (ctx, hd) :: ls ->
       let new_goal = simpl hd in
       let new_frame = {
-        wfctx = f.wfctx;
+        env = f.env;
         proof_name = f.proof_name;
         proof_prop = f.proof_prop;
-        goals = new_goal :: ls;
+        goals = (ctx, new_goal) :: ls;
       } in
       Success (ProofFrame new_frame)
 
+and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (_, hd) :: _ ->
+      (* Check the application condition *)
+      match hd with
+      | Fun {head=head; args=[pre; s1; s2; post]} when 
+        (
+          head = _judgement && 
+          s1 = Fun {head=_seq; args=[Symbol _skip]} &&
+          s2 = Fun {head=_seq; args=[Symbol _skip]} &&
+          pre = post
+        ) ->
+        let new_frame = discharge_first_goal f in
+        (* Add the proof to the frame. *)
+        Success (ProofFrame new_frame)
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
 
 let get_status (p: prover) (eval_res: eval_result) : string =

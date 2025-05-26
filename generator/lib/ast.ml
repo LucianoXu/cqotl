@@ -115,9 +115,12 @@ type command =
 
 and tactic =
   | Sorry
+  | Intro of string
   | Choose of int
   | ByLean
   | Simpl
+
+  | R_SKIP
 
   (* The two sided rules *)
   (* | R_SKIP
@@ -143,18 +146,44 @@ let _apply = "APPLY"
 let _ctype = "CTYPE"
 let _cvar = "CVAR"
 let _cterm = "CTERM"
+let _set = "SET"
+let _bit = "BIT"
+
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
 let _qreg = "QREG"
 let _stype = "STYPE"
+let _ktype = "KTYPE"
+let _btype = "BTYPE"
 let _otype = "OTYPE"
 let _dtype = "DTYPE"
 
+(** The type for a single program statement. *)
+let _progstt = "PROGSTT"
+
+(** The type for programs. *)
 let _prog = "PROG"
 let _assn = "ASSN"
 
+let _pair = "PAIR"
+
+let _ket = "KET"
+let _bra = "BRA"
+let _adj = "ADJ"
 let _zeroo = "ZEROO"
+let _oneo = "ONEO"
 let _plus = "PLUS"
+let _sum = "SUM"
+
+let _uset = "USET"
+
+let _true = "true"
+let _false = "false"
+let _eqeq = "EQEQ"
+let _wedge = "WEDGE"
+let _vee = "VEE"
+let _not = "NOT"
+let _imply = "IMPLY"
 
 
 (* and stmt_seq =
@@ -182,6 +211,7 @@ let _if = "IF"
 let _while = "WHILE"
 
 let _eq = "EQ"
+let _judgement = "JUDGEMENT"
 
 let reserved_symbols = [
   _type;
@@ -191,6 +221,8 @@ let reserved_symbols = [
   _ctype;
   _cvar;
   _cterm;
+  _bit;
+
   _qvlist;
   _optpair;
 
@@ -199,11 +231,30 @@ let reserved_symbols = [
   _otype;
   _dtype;
 
+  _progstt;
   _prog;
   _assn;
 
+  _pair;
+
+  _ket;
+  _bra;
+  _adj;
   _zeroo;
+  _oneo;
   _plus;
+  _sum;
+
+  _uset;
+
+  _true;
+  _false;
+  _eqeq;
+  _wedge;
+  _vee;
+  _not;
+  _imply;
+
 
   _seq;
   _skip;
@@ -215,7 +266,8 @@ let reserved_symbols = [
   _if;
   _while;
   
-  _eq;]
+  _eq;
+  _judgement;]
 
 
 
@@ -259,18 +311,20 @@ let new_id =
     counter := id + 1;
     id
 
-(** Generates a fresh symbol name with a given prefix *)
-let fresh_name (t : terms) (prefix : string) : string =
-  let t_symbols = get_symbols t in
-
-  if not (List.mem prefix t_symbols) then 
+let fresh_name (symbol_ls: string list) (prefix : string) : string =
+  if not (List.mem prefix symbol_ls) then 
     prefix
   else
     let rec find_fresh id =
       let candidate = prefix ^ string_of_int id in
-      if List.mem candidate t_symbols then
+      if List.mem candidate symbol_ls then
         find_fresh (id + 1)
       else
         candidate
     in
     find_fresh 0
+
+(** Generates a fresh symbol name with a given prefix *)
+let fresh_name_for_term (t : terms) (prefix : string) : string =
+  let t_symbols = get_symbols t in
+  fresh_name t_symbols prefix

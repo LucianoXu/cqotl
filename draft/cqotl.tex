@@ -40,6 +40,7 @@ This section introduces the typing system of the prover, which includes the type
 
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
+\newcommand{\cset}[1]{\ensuremath{\textsf{Set}(#1)}}
 \newcommand{\bit}{\textsf{Bit}}
 \newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
@@ -54,7 +55,7 @@ This section introduces the typing system of the prover, which includes the type
     \begin{align*}
         t ::=\ & \mid x \mid \Type \mid \forall (x : t). t \mid \lambda (x : t). t \mid t\ t\\
         \\
-        & \mid \CType \mid \cvar{t} \mid \CTerm{t} \\
+        & \mid \CType \mid \cvar{t} \mid \CTerm{t} \mid \cset{t} \mid \bit \\
         & \mid \qvlist \mid \optpair{t} \\
         & \mid \qreg{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
         & \mid \prog \mid \assn \\
@@ -187,6 +188,11 @@ The typing rules for type terms are as follows.
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
     \\
     \\
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \cset{T} : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
+    \\
+    \\
     \frac{\WF{\Gamma}}{\Gamma \vdash \qvlist : \Type}
     \qquad
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \optpair{T} : \Type}\\
@@ -207,6 +213,24 @@ The typing rules for type terms are as follows.
     \\
     \frac{\Gamma \vdash t_1 : T \quad \Gamma \vdash t_2 : T}{\Gamma \vdash t_1 = t_2 : \Type}
 \end{gather*}
+
+Typing rules for bit terms
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \true : \CTerm{\bit}}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \false : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{T} \quad \Gamma \vdash t_2 : \CTerm{T}}{\Gamma \vdash t_1 == t_2 : \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \wedge t_2 : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \vee t_2 : \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t : \CTerm{\bit}}{\Gamma \vdash \neg t : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \to t_2 : \CTerm{\bit}} \\
+\end{gather*}
+
 -----------
 \begin{gather*}
     % \frac{\WF{\Gamma}}{\Gamma \vdash \cAssn : \Type}

@@ -180,12 +180,13 @@ and command2str (c: command) : string =
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | Intro v -> Printf.sprintf "intro %s." v
   | Choose i -> Printf.sprintf "choose %d." i
   | ByLean -> "by_lean."
   | Simpl -> "simpl."
 
-  (* | R_SKIP -> "r_skip."
-  | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
+  | R_SKIP -> "r_skip."
+   (* | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
   | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
   | R_UNITARY1 -> "r_unitary1." *)
   (* | _ -> "Unknown tactic" *)
@@ -199,17 +200,49 @@ and term2str (e: terms) : string =
     | Fun {head; args=[f; t]} when head = _apply->
         Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
 
+    (* pair *)
+    | Fun {head; args=[t1; t2]} when head = _pair ->
+        Printf.sprintf "(%s, %s)" (term2str t1) (term2str t2)
 
     (* dirac notation *)
+    | Fun {head; args =[t]} when head = _ket ->
+        Printf.sprintf "|%s>" (term2str t)
+    | Fun {head; args=[t]} when head = _bra ->
+        Printf.sprintf "<%s|" (term2str t)
+    | Fun {head; args=[t]} when head = _adj ->
+        Printf.sprintf "(%s^D)" (term2str t)
+
     | Fun {head; args=[t1; t2]} when head = _zeroo ->
         Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
+    | Fun {head; args=[t]} when head = _oneo ->
+        Printf.sprintf "1O[%s]" (term2str t)
 
     | Fun {head; args=[t1; t2]} when head = _plus ->
         Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
 
 
+    | Fun {head; args=[t1; t2]} when head = _eqeq ->
+        Printf.sprintf "(%s == %s)" (term2str t1) (term2str t2)
+
+    | Fun {head; args=[t1; t2]} when head = _wedge ->
+        Printf.sprintf "(%s /\\ %s)" (term2str t1) (term2str t2)
+
+    | Fun {head; args=[t1; t2]} when head = _vee ->
+        Printf.sprintf "(%s \\/ %s)" (term2str t1) (term2str t2)
+
+    | Fun {head; args=[t]} when head = _not ->
+        Printf.sprintf "(~ %s)" (term2str t)
+
+    | Fun {head; args=[t1; t2]} when head = _imply ->
+        Printf.sprintf "(%s -> %s)" (term2str t1) (term2str t2)
+
+
     | Fun {head; args=[t1; t2]} when head = _eq ->
         Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)
+
+    | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
+        Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
+          (term2str pre) (term2str s1) (term2str s2) (term2str post)
 
 
     (* program statements *)
@@ -241,7 +274,7 @@ and term2str (e: terms) : string =
 
     | Fun {head; args} when head = _seq ->
         let args_str = List.map term2str args |> String.concat ";\n" in
-        Printf.sprintf "%s;\n" args_str
+        Printf.sprintf "%s;" args_str
 
 
     | Symbol x -> 

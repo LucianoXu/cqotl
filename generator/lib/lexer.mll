@@ -25,6 +25,9 @@ rule token = parse
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
+    | "\\/"                         { VEE }
+    | "/\\"                         { WEDGE }
+    | "->"                          { ARROW }
     | "=>"                          { DARROW }
     | "@1"                          { AT1 }
     | "@2"                          { AT2 }
@@ -46,13 +49,15 @@ rule token = parse
     | "~"                           { TILDE }
     | "{"                           { LBRACE }
     | "}"                           { RBRACE }
-    | "<"                           { LANGLE }
-    | ">"                           { RANGLE }
     | "+"                           { PLUS }
     | "("                           { LPAREN }
     | ")"                           { RPAREN }
     | "*"                           { STAR }
     | "@"                           { AT }
+    | "|"                           { VBAR }
+    | ">"                           { RANGLE }
+    | "<"                           { LANGLE }
+    | "^D"                          { ADJ }
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -67,11 +72,12 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "intro"                       { INTRO }
     | "choose"                      { CHOOSE }
     | "by_lean"                     { BYLEAN }
-    | "simpl"                      { SIMPL }
-    (* | "r_skip"                   { R_SKIP }
-    | "seq_front"                   { SEQ_FRONT }
+    | "simpl"                       { SIMPL }
+    | "r_skip"                      { R_SKIP }
+    (* | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
     | "r_unitary1"                  { R_UNITARY1 } *)
 
@@ -93,7 +99,7 @@ rule token = parse
     | "end"                         { END }
 
     | "0O"                          { ZEROO }
-
+    | "1O"                          { ONEO }
     (*
 
     (* Types *)
@@ -130,10 +136,6 @@ rule token = parse
     (* eq = *)
 
     *)
-
-    (* Dirac notation *)
-    (* | "1O"                          { ONEO } *)
-
 
     | id as v                       { ID v }
     (* Does it mean that only one-digit number is parsed? *)

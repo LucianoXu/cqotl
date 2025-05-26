@@ -6,13 +6,13 @@
 %token <int> NUM
 
 (* character symbols *)
-%token DARROW AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE LANGLE RANGLE PLUS LPAREN RPAREN STAR AT
+%token VEE WEDGE ARROW DARROW AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR AT VBAR RANGLE LANGLE ADJ
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY CHOOSE BYLEAN SIMPL
+%token SORRY CHOOSE INTRO BYLEAN SIMPL
 %token R_SKIP SEQ_FRONT SEQ_BACK R_UNITARY1
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
@@ -33,15 +33,20 @@
 
 
 /* -- precedence table -- */
-%nonassoc SEMICOLON
-%nonassoc SKIP ASSIGN RNDARROW INIT UNITARY_PROG IF WHILE
 
 %nonassoc FORALL FUN
-%nonassoc MAPSTO
+%left VEE
+%left WEDGE
+%nonassoc MAPSTO 
+%right ARROW
+%nonassoc TILDE LBRACE RBRACE
+%nonassoc SEMICOLON
+%nonassoc SKIP ASSIGN RNDARROW INIT UNITARY_PROG MEAS IF WHILE
 %left STAR
 %nonassoc EQEQ EQ LEQ
 %left PLUS
 %left AT
+%nonassoc LPAREN RPAREN
 /**************************/
 
 %start command_list
@@ -168,10 +173,11 @@ command:
 
 tactic:
   | SORRY PERIOD { Sorry }
+  | INTRO v = ID PERIOD { Intro v}
   | CHOOSE n = NUM PERIOD { Choose n }
   | BYLEAN PERIOD { ByLean }
   | SIMPL PERIOD { Simpl }
-  // | R_SKIP PERIOD { R_SKIP }
+  | R_SKIP PERIOD { R_SKIP }
   // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
   // | R_UNITARY1 PERIOD { R_UNITARY1 }
@@ -187,9 +193,31 @@ terms:
   | FUN LPAREN x = ID COLON t = terms RPAREN DARROW e = terms { Fun {head=_fun; args=[Symbol x; t; e]} }
   | f = terms AT t = terms { Fun {head=_apply; args=[f; t]} }
 
+  (* pair *)
+  | LPAREN t1 = terms COMMA t2 = terms RPAREN { Fun {head=_pair; args=[t1; t2]} }
+
+  (* 0O[T] or 0O[T1, T2] *)
+  | VBAR t = terms RANGLE { Fun {head=_ket; args=[t]} }
+  | LANGLE t = terms VBAR { Fun {head=_bra; args=[t]} }
+  | t = terms ADJ { Fun {head=_adj; args=[t]} }
+
+  | ZEROO LBRACK t = terms RBRACK { Fun {head=_zeroo; args=[t; t]} }
+  | ZEROO LBRACK t1 = terms COMMA t2 = terms RBRACK { Fun {head=_zeroo; args=[t1; t2]} }
+  | ONEO LBRACK t = terms RBRACK { Fun {head=_oneo; args=[t]} }
+
   | t1 = terms PLUS t2 = terms { Fun {head=_plus; args=[t1; t2]} }
 
+  | t1 = terms EQEQ t2 = terms { Fun {head=_eqeq; args=[t1; t2]} }
+  | t1 = terms WEDGE t2 = terms { Fun {head=_wedge; args=[t1; t2]} }
+  | t1 = terms VEE t2 = terms { Fun {head=_vee; args=[t1; t2]} }
+  | TILDE t = terms { Fun {head=_not; args=[t]} }
+  | t1 = terms ARROW t2 = terms { Fun {head=_imply; args=[t1; t2]} }
+
+
   | t1 = terms EQ t2 = terms { Fun {head=_eq; args=[t1; t2]} }
+
+  | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE
+    { Fun {head=_judgement; args=[pre; s1; s2; post]} }
 
 
   | SKIP                                                        { Symbol _skip }
@@ -202,9 +230,6 @@ terms:
   | WHILE b    = terms DO s = terms END                         { Fun {head=_while; args=[b; s]} }
   | stmts = stmtseq                                             { Fun {head=_seq; args=stmts} }
 
-  (* 0O[T] or 0O[T1, T2] *)
-  | ZEROO LBRACK t = terms RBRACK { Fun {head=_zeroo; args=[t; t]} }
-  | ZEROO LBRACK t1 = terms COMMA t2 = terms RBRACK { Fun {head=_zeroo; args=[t1; t2]} }
 
 termargs:
   | t = terms { [t] }
