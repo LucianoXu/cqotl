@@ -8,3 +8,4 @@ import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties
 import LeanVeri.Sum
+import LeanVeri.Trace
