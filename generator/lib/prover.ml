@@ -347,10 +347,15 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | Sorry -> eval_tac_sorry proof_f
           | Intro v -> eval_tac_intro proof_f v
           | Choose i -> eval_tac_choose proof_f i
+          | Split -> eval_tac_split proof_f
           | ByLean -> eval_tac_by_lean proof_f
           | Simpl -> eval_tac_simpl proof_f
+
           | R_SKIP -> eval_tac_R_SKIP proof_f
           | R_SEQ (i, t) -> eval_tac_R_SEQ proof_f i t
+          | R_INITQ -> eval_tac_R_INITQ proof_f
+
+          | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
 
           (*| SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
           | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
@@ -401,6 +406,30 @@ and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
       proof_prop = f.proof_prop;
       goals = move_to_front f.goals i;
     })
+
+and eval_tac_split (f: proof_frame) : tactic_result =
+    match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    let wfctx = get_pf_wfctx f in
+    match hd with
+    | Fun {head; args=[t1; t2]} when head=_wedge ->
+      begin
+        match 
+          type_check wfctx t1 (Symbol _type), 
+          type_check wfctx t2 (Symbol _type) with
+        | Type _, Type _ ->
+          let new_frame = {
+            env = f.env;
+            proof_name = f.proof_name;
+            proof_prop = f.proof_prop;
+            goals = (ctx, t1) :: (ctx, t2) :: tl;
+          }
+          in 
+          Success (ProofFrame new_frame)
+        | _ -> TacticError (Printf.sprintf "splic tactic cannot apply here. The two terms %s and %s are not typed as Type." (term2str t1) (term2str t2))
+      end
+    | _ -> TacticError "split tactic cannot apply here."
 
 and eval_tac_by_lean (f: proof_frame) : tactic_result =
   (*** IMPLEMENT THE CODE TO GET LEAN CODE FOR THE FIRST GOAL FROM THE proof_frame *)
@@ -485,6 +514,157 @@ and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
           Success (ProofFrame new_frame)
 
         | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+(** 
+  r_initq
+
+  phi /\ (true -> |0><0|_(q,q)) <= psi
+  B <= Sum i in USet, |i><0|_(q,q) A |0><i|_(q,q)
+  -----------------------------------------------
+  { phi | B } q := |0>; ~ skip; { psi | A }
+*)
+and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+      (* Check the application condition *)
+      match hd with
+      | Fun {head=head; args=[
+          Fun {head=head_pre; args=[phi; a]}; 
+          Fun {head=head_s1; args=[stt1]}; 
+          Fun {head=head_s2; args=[stt2]}; 
+          Fun {head=head_post; args=[psi; b]}]} when 
+        (
+          head = _judgement && 
+          head_s1 = _seq &&
+          head_s2 = _seq &&
+          head_pre = _vbar &&
+          head_post = _vbar
+        ) ->
+        (* the function to calculate the new frame *)
+        let aux q : tactic_result =
+        begin
+          match calc_type (get_pf_wfctx f) q with
+          | Type (Fun {head=head_type_q; args=[type_q]}) when head_type_q = _qreg ->
+            (* Goal1: phi /\ (true -> |0><0|_(q,q)) <= psi *)
+            let goal1 = Fun {
+              head = _entailment;
+              args =[
+                Fun {
+                  head = _wedge;
+                  args = [
+                    phi;
+                    Fun {
+                      head = _imply;
+                      args = [
+                        Symbol _true;
+                        labelled_proj (Symbol _false) q
+                      ]
+                    }
+                  ]
+                };
+                psi
+              ]
+            }
+            in
+            (* Goal2: B <= SUM[USET[T], fun (i : CTerm[T]) => |i><0|_(q,q) A |0><i|_(q,q)] *)
+            let name = fresh_name_for_ctx (get_pf_wfctx f) "i" in
+            let goal2 = Fun {
+              head = _entailment;
+              args = [
+                b;
+                Fun {
+                  head = _sum;
+                  args = [
+                    (* the set USET[T] *)
+                    Fun {
+                      head = _uset;
+                      args = [type_q];
+                    };
+                    (* the function *)
+                    Fun {
+                      head = _fun;
+                      args = [
+                        Symbol name;
+                        (* CTerm[T] *)
+                        Fun {
+                          head = _cterm;
+                          args = [type_q];
+                        };
+                        (* |i><0|_(q,q) A |0><i|_(q,q) *)
+                        Fun {
+                          head = _apply;
+                          args = [
+                            labelled_ketbra (Symbol name) (Symbol _false) q;
+                            Fun {
+                              head = _apply;
+                              args = [
+                                a;
+                                labelled_ketbra (Symbol _false) (Symbol name) q;
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+            in
+            let new_frame = {
+              env = f.env;
+              proof_name = f.proof_name;
+              proof_prop = f.proof_prop;
+              goals = (ctx, goal1) :: (ctx, goal2) :: tl;
+            }
+            in 
+            Success (ProofFrame new_frame)
+
+          (* if q is not well typed as qreg *)
+          | _ -> TacticError (Printf.sprintf "%s is not typed as QReg." (term2str q))
+          end
+          in
+          (* case on which side has the init *)
+          begin
+            match stt1, stt2 with
+            | Fun {head=head1; args=[q]}, Symbol sym2 when head1 = _init_qubit && sym2 = _skip -> aux q
+            | Symbol sym1, Fun {head=head2; args=[q]} when head2 = _init_qubit && sym1 = _skip -> aux q
+            | _ -> TacticError (Printf.sprintf "The tactic must apply on [init q; ~ skip;] or [skip; ~ init q;]")
+          end
+
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+      let wfctx = get_pf_wfctx f in
+      (* Check the application condition *)
+      match hd with
+      | Fun {head; args=[a; b]} when head = _entailment ->
+        begin
+          match 
+            type_check wfctx a (Symbol _cqproj), 
+            type_check wfctx b (Symbol _cqproj) with
+          | Type _, Type _ -> 
+            begin
+              match cq_entailment_destruct hd with
+              | Some p -> 
+                let new_frame = {
+                  env = f.env;
+                  proof_name = f.proof_name;
+                  proof_prop = f.proof_prop;
+                  goals = (ctx, p) :: tl;
+                } in
+                Success (ProofFrame new_frame)
+              | None -> TacticError "cq_entail tactic cannot apply here. cq-projector are not in normal form."
+            end
+          | _ -> TacticError "cq_entail tactic cannot apply here. cq-projector are not well typed."
+        end
+      | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
+
+
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

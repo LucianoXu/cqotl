@@ -117,11 +117,15 @@ and tactic =
   | Sorry
   | Intro of string
   | Choose of int
+  | Split
   | ByLean
   | Simpl
 
   | R_SKIP
   | R_SEQ of int * terms
+  | R_INITQ
+
+  | CQ_ENTAIL
 
   (* The two sided rules *)
   (* | R_SKIP
@@ -164,9 +168,11 @@ let _progstt = "PROGSTT"
 
 (** The type for programs. *)
 let _prog = "PROG"
+let _cqproj = "CQPROJ"
 let _assn = "ASSN"
 
 let _pair = "PAIR"
+let _list = "LIST"
 
 let _ket = "KET"
 let _bra = "BRA"
@@ -178,6 +184,8 @@ let _sum = "SUM"
 
 let _uset = "USET"
 
+let _subscript = "SUBSCRIPT"
+
 let _true = "true"
 let _false = "false"
 let _eqeq = "EQEQ"
@@ -185,6 +193,8 @@ let _wedge = "WEDGE"
 let _vee = "VEE"
 let _not = "NOT"
 let _imply = "IMPLY"
+
+let _vbar = "VBAR"
 
 
 (* and stmt_seq =
@@ -212,6 +222,7 @@ let _if = "IF"
 let _while = "WHILE"
 
 let _eq = "EQ"
+let _entailment = "ENTAILMENT"
 let _judgement = "JUDGEMENT"
 
 let reserved_symbols = [
@@ -234,6 +245,7 @@ let reserved_symbols = [
 
   _progstt;
   _prog;
+  _cqproj;
   _assn;
 
   _pair;
@@ -246,6 +258,8 @@ let reserved_symbols = [
   _plus;
   _sum;
 
+  _subscript;
+
   _uset;
 
   _true;
@@ -256,6 +270,7 @@ let reserved_symbols = [
   _not;
   _imply;
 
+  _vbar;
 
   _seq;
   _skip;
@@ -268,6 +283,7 @@ let reserved_symbols = [
   _while;
   
   _eq;
+  _entailment;
   _judgement;]
 
 
@@ -329,3 +345,46 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
+
+let labelled_ketbra (bket: terms) (bbra: terms) (qs: terms) : terms =
+  Fun {
+      head = _subscript;
+      args = [
+        Fun {
+          head = _apply;
+          args = [
+            Fun {head = _ket; args = [bket]};
+            Fun {head = _bra; args = [bbra]};
+          ]
+        };
+        Fun {
+          head = _pair;
+          args = [qs; qs]
+        }
+      ]
+    }
+
+(* Some wrappers for often used expressions *)
+let labelled_proj (b: terms) (qs : terms) : terms =
+  labelled_ketbra b b qs
+
+let imply_type (p: terms) (q : terms) : terms =
+  let t_symbols = get_symbols p @ get_symbols q in
+  let name = fresh_name t_symbols "x" in
+  Fun {
+        head = _forall;
+        args = [
+          Symbol name;
+          p;
+          q;
+        ]
+      }
+
+let bitterm_to_type (p: terms) : terms =
+  Fun {
+    head = _eq;
+    args = [
+      p;
+      Symbol _true;
+    ]
+  }

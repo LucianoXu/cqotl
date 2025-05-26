@@ -6,14 +6,15 @@
 %token <int> NUM
 
 (* character symbols *)
-%token VEE WEDGE ARROW DARROW AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR AT VBAR RANGLE LANGLE ADJ
+%token VEE WEDGE ARROW DARROW AT1 AT2 COLON COMMA PERIOD MAPSTO PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR AT VBAR RANGLE LANGLE ADJ UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY CHOOSE INTRO BYLEAN SIMPL
-%token R_SKIP R_SEQ R_UNITARY1
+%token SORRY INTRO CHOOSE SPLIT BYLEAN SIMPL
+%token R_SKIP R_SEQ R_INITQ R_UNITARY1 
+%token CQ_ENTAIL
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
 
@@ -35,6 +36,7 @@
 /* -- precedence table -- */
 
 %nonassoc FORALL FUN
+%nonassoc VBAR
 %left VEE
 %left WEDGE
 %nonassoc MAPSTO 
@@ -46,6 +48,7 @@
 %nonassoc EQEQ EQ LEQ
 %left PLUS
 %left AT
+%nonassoc UNDERSCORE
 %nonassoc LPAREN RPAREN
 /**************************/
 
@@ -168,6 +171,7 @@ command:
   | PAUSE PERIOD { Pause }
   | PROVE x = ID COLON p = terms PERIOD { Prove {x; p} }
   | QED PERIOD { QED }
+
   | t = tactic { Tactic t }
 
 
@@ -175,10 +179,13 @@ tactic:
   | SORRY PERIOD { Sorry }
   | INTRO v = ID PERIOD { Intro v}
   | CHOOSE n = NUM PERIOD { Choose n }
+  | SPLIT PERIOD { Split }
   | BYLEAN PERIOD { ByLean }
   | SIMPL PERIOD { Simpl }
   | R_SKIP PERIOD { R_SKIP }
   | R_SEQ n = NUM t = terms PERIOD { R_SEQ (n, t) }
+  | R_INITQ PERIOD { R_INITQ }
+  | CQ_ENTAIL PERIOD { CQ_ENTAIL }
   // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
   // | R_UNITARY1 PERIOD { R_UNITARY1 }
@@ -196,6 +203,7 @@ terms:
 
   (* pair *)
   | LPAREN t1 = terms COMMA t2 = terms RPAREN { Fun {head=_pair; args=[t1; t2]} }
+  | LBRACK ts = termargs RBRACK { Fun {head=_list; args=ts} }
 
   (* 0O[T] or 0O[T1, T2] *)
   | VBAR t = terms RANGLE { Fun {head=_ket; args=[t]} }
@@ -214,8 +222,12 @@ terms:
   | TILDE t = terms { Fun {head=_not; args=[t]} }
   | t1 = terms ARROW t2 = terms { Fun {head=_imply; args=[t1; t2]} }
 
+  | t1 = terms UNDERSCORE t2 = terms { Fun {head=_subscript; args=[t1; t2]} }
+  
+  | t1 = terms VBAR t2 = terms { Fun {head=_vbar; args=[t1; t2]}}
 
   | t1 = terms EQ t2 = terms { Fun {head=_eq; args=[t1; t2]} }
+  | t1 = terms LEQ t2 = terms { Fun {head=_entailment; args=[t1; t2]} }
 
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE
     { Fun {head=_judgement; args=[pre; s1; s2; post]} }

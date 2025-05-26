@@ -26,14 +26,17 @@ let get_first_elements lst n =
     in
     aux [] 0 lst
 
+(* get_last_elements : 'a list -> int -> 'a list *)
 let get_last_elements lst n =
-  if n <= 0 then 
-    []
+  if n <= 0 then
+    []                                     (* edge-case: non-positive n *)
   else
-    let rec aux acc = function
-      | [] -> List.rev acc
-      | x :: xs ->
-          if List.length acc < n then aux (x :: acc) xs
-          else aux (x :: List.tl acc) xs
+    let len = List.length lst in           (* O(L) pass to know the size *)
+    let rec drop k l =                     (* drop (len-n) elements *)
+      if k <= 0 then l
+      else
+        match l with
+        | []      -> []                    (* n > len ⇒ whole list returned *)
+        | _ :: xs -> drop (k - 1) xs
     in
-    aux [] lst
+    drop (len - n) lst
