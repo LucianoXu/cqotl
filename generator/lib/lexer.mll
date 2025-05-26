@@ -14,7 +14,7 @@
 
 let whitespace  = [' ' '\t']
 let digit       = ['0'-'9']
-let number      = ['1'-'9'] (digit*)
+let number      = '0' | ['1'-'9' '-'] (digit*)
 let alpha       = ['a'-'z' 'A'-'Z' '_']
 (* let id          = alpha (alpha | digit | '_')* *)
 let id          = alpha (alpha | digit)*
@@ -22,6 +22,8 @@ let id          = alpha (alpha | digit)*
 rule token = parse
     | '\n'                          { newline lexbuf; token lexbuf }
     | whitespace                    { token lexbuf }
+    | number as n                    { NUM (int_of_string n) }
+
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
@@ -77,6 +79,7 @@ rule token = parse
     | "by_lean"                     { BYLEAN }
     | "simpl"                       { SIMPL }
     | "r_skip"                      { R_SKIP }
+    | "r_seq"                       { R_SEQ }
     (* | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
     | "r_unitary1"                  { R_UNITARY1 } *)
@@ -138,8 +141,6 @@ rule token = parse
     *)
 
     | id as v                       { ID v }
-    (* Does it mean that only one-digit number is parsed? *)
-    | number as n                    { NUM (int_of_string n) }
     | eof                           { EOF }
 
     | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}

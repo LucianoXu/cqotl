@@ -186,6 +186,7 @@ and tactic2str (t: tactic) : string =
   | Simpl -> "simpl."
 
   | R_SKIP -> "r_skip."
+  | R_SEQ (n, t) -> Printf.sprintf "r_seq %d %s." n (term2str t)
    (* | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
   | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
   | R_UNITARY1 -> "r_unitary1." *)

@@ -350,6 +350,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | ByLean -> eval_tac_by_lean proof_f
           | Simpl -> eval_tac_simpl proof_f
           | R_SKIP -> eval_tac_R_SKIP proof_f
+          | R_SEQ (i, t) -> eval_tac_R_SEQ proof_f i t
 
           (*| SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
           | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
@@ -438,6 +439,52 @@ and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
+and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
+  let empty_to_skip ls = match ls with 
+    | [] -> [Symbol _skip]
+    | lst -> lst
+  in
+  (* Check the intermediate assertion t *)
+  match type_check (get_pf_wfctx f) t (Symbol _assn) with
+  | TypeError msg -> TacticError (Printf.sprintf "%s is not typed as an assertion. %s" (term2str t) msg)
+  | Type _ ->
+    match f.goals with
+    | [] -> TacticError "Nothing to prove."
+    | (ctx, hd) :: tl ->
+        (* Check the application condition *)
+        match hd with
+        | Fun {head=head; args=[pre; Fun {args=args1; _}; Fun {args=args2; _}; post]} when 
+          (
+            head = _judgement
+          ) ->
+          (* Calculate the maximum length of sequential composition *)
+          let i1, i2 = 
+            if n >= 0 then n, n
+            else (List.length args1 + n, List.length args2 + n)
+          in
+          let seq1_first = get_first_elements args1 i1 |> empty_to_skip in
+          let seq1_second = get_last_elements args1 (List.length args1 - i1) |> empty_to_skip in
+          let seq2_first = get_first_elements args2 i2 |> empty_to_skip in
+          let seq2_second = get_last_elements args2 (List.length args2 - i2) |> empty_to_skip in
+
+          (* Construct the new goal *)
+          let new_goal1 = Fun {
+            head = _judgement;
+            args = [pre; Fun {head=_seq; args=seq1_first}; Fun {head=_seq; args=seq2_first}; t]
+          } in
+          let new_goal2 = Fun {
+            head = _judgement;
+            args = [t; Fun {head=_seq; args=seq1_second}; Fun {head=_seq; args=seq2_second}; post]
+          } in
+          let new_frame = {
+            env = f.env;
+            proof_name = f.proof_name;
+            proof_prop = f.proof_prop;
+            goals = (ctx, new_goal1) :: (ctx, new_goal2) :: tl;
+          } in
+          Success (ProofFrame new_frame)
+
+        | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

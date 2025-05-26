@@ -121,6 +121,7 @@ and tactic =
   | Simpl
 
   | R_SKIP
+  | R_SEQ of int * terms
 
   (* The two sided rules *)
   (* | R_SKIP
