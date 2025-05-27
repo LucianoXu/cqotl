@@ -283,6 +283,20 @@ lemma inner_ket1_ketM : @inner 𝕜 𝕜² _ ket1 ketM = - (1/√2) := by
     _ = - (1/√2) := by
       rw [inner_ket1_ket0, inner_ket1_ket1, mul_zero, zero_sub, mul_one]
 
+lemma inner_ketM_ketP : @inner 𝕜 𝕜² _ ketM ketP = 0 := by
+  calc
+    @inner 𝕜 𝕜² _ ketM ketP
+      = @inner 𝕜 𝕜² _ ((1/√2 : 𝕜) • (ket0 - ket1)) ((1/√2 : 𝕜) • (ket0 + ket1)) := rfl
+    _ = starRingEnd 𝕜 (1/√2 : 𝕜) * (1/√2 : 𝕜) * @inner 𝕜 𝕜² _ ((ket0 - ket1)) ((ket0 + ket1)) := by rw [inner_smul_left, inner_smul_right, mul_assoc]
+    _ = (1/2) * @inner 𝕜 𝕜² _ (ket0 - ket1) (ket0 + ket1) := by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]
+    _ = (1/2) * (@inner 𝕜 𝕜² _ ket0 (ket0 + ket1) - @inner 𝕜 𝕜² _ ket1 (ket0 + ket1)) := by rw [inner_sub_left]
+    _ = (1/2) * (@inner 𝕜 𝕜² _ ket0 ket0 + @inner 𝕜 𝕜² _ ket0 ket1 - (@inner 𝕜 𝕜² _ ket1 ket0 + @inner 𝕜 𝕜² _ ket1 ket1)) := by repeat rw [inner_add_right]
+    _ = (1/2) * (1 + 0 - (0 + 1)) := by rw [inner_ket0_ket0, inner_ket0_ket1, inner_ket1_ket0, inner_ket1_ket1]
+    _ = 0 := by ring
+
+lemma inner_ketP_ketM : @inner 𝕜 𝕜² _ ketP ketM = 0 :=
+  inner_eq_zero_symm.mp inner_ketM_ketP
+
 /-- |0⟩⟨0| + |1⟩⟨1| = I -/
 lemma ketbra0_add_ketbra1_eq_one :
   ketbra0 + ketbra1 = (1 : 𝕜² →ₗ[𝕜] 𝕜²) := by
@@ -379,3 +393,40 @@ lemma ketbraP_add_ketbraM_eq_one :
 lemma exist_smul_ketP_of_inner_ketbraM_eq_zero (x : 𝕜²) (h : inner 𝕜 (ketbraM x) x = 0) :
     ∃c : 𝕜, x = c • ketP := by
   sorry
+
+def stBasis_val : Fin 2 → 𝕜²
+  | 0 => ket0
+  | 1 => ket1
+
+lemma Orthonormal_stBasis_val : Orthonormal 𝕜 (E := 𝕜²) stBasis_val := by
+  apply And.intro
+  · intro i
+    fin_cases i
+    · exact norm_ket0
+    · exact norm_ket1
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp only [ne_eq, not_true_eq_false] at hij
+    · simp only [stBasis_val, Fin.sum_univ_two, Fin.isValue]
+      exact inner_ket0_ket1
+    · simp only [stBasis_val, Fin.sum_univ_two, Fin.isValue]
+      exact inner_ket1_ket0
+
+noncomputable def stBasis : Basis (Fin 2) 𝕜 𝕜² :=
+  basisOfOrthonormalOfCardEqFinrank Orthonormal_stBasis_val finrank_euclideanSpace_fin.symm
+
+lemma stBasis_eq_stBasis_val : (stBasis : Fin 2 → 𝕜²) = stBasis_val := by
+  apply funext_iff.mpr
+  intro i
+  simp [stBasis]
+
+lemma Orthonormal_stBasis : Orthonormal 𝕜 (E := 𝕜²) stBasis := by
+  rw [stBasis_eq_stBasis_val]
+  exact Orthonormal_stBasis_val
+
+noncomputable def stOrthonormalBasis : OrthonormalBasis (Fin 2) 𝕜 𝕜² :=
+  stBasis.toOrthonormalBasis (E := 𝕜²) Orthonormal_stBasis
+
+lemma stOrthonormalBasis_eq_stBasis_val :
+    (stOrthonormalBasis (𝕜 := 𝕜) : Fin 2 → 𝕜²) = stBasis_val := by
+  simp only [stOrthonormalBasis, Basis.coe_toOrthonormalBasis]
+  exact stBasis_eq_stBasis_val
