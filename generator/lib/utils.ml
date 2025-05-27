@@ -26,7 +26,7 @@ let get_first_elements lst n =
     in
     aux [] 0 lst
 
-(* get_last_elements : 'a list -> int -> 'a list *)
+(** get_last_elements : 'a list -> int -> 'a list *)
 let get_last_elements lst n =
   if n <= 0 then
     []                                     (* edge-case: non-positive n *)
@@ -40,3 +40,35 @@ let get_last_elements lst n =
         | _ :: xs -> drop (k - 1) xs
     in
     drop (len - n) lst
+
+(** check whether all elements are unique in the list. *)
+let all_unique lst =
+  let rec aux seen = function
+    | [] -> true
+    | x :: xs ->
+        if List.mem x seen then false
+        else aux (x :: seen) xs
+  in
+  aux [] lst
+
+(** Check whether two lists do not have the same element. *)
+let list_disjoint lst1 lst2 =
+  let rec aux = function
+    | [] -> true
+    | x :: xs ->
+        if List.mem x lst2 then false
+        else aux xs
+  in
+  aux lst1
+
+(** Remove all elemnets of lst1 that appear in lst2 and return the result. *)
+let list_remove lst1 lst2 =
+  let rec aux acc = function
+    | [] -> List.rev acc
+    | x :: xs ->
+        if List.mem x lst2 then aux acc xs
+        else aux (x :: acc) xs
+  in
+  aux [] lst1
+  
+

@@ -809,7 +809,7 @@ let rec eval_list (p: prover) (cmds: command list) : eval_result
 
 open Ast
 open Pretty_printer
-(* open Utils *)
+open Utils
 
 
 
@@ -994,12 +994,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
       (* labelled dirac notation multiplication *)
-      | Type (Fun {head; args=[u; v]}) when head = _dtype ->
+      | Type (Fun {head; args=[Fun{args=s1; _}; Fun{args=s1'; _}]}) when head = _dtype ->
         begin
           match calc_type wfctx t2 with
-          | Type (Fun {head; args=[_; _]}) when head = _dtype -> 
-            (* temporary implemnetation *)
-            Type (Fun {head=_dtype; args=[u; v]})
+          | Type (Fun {head; args=[Fun{args=s2; _}; Fun{args=s2'; _}]}) when head = _dtype -> 
+            let s2_sub_s1' = list_remove s2 s1' in
+            let s1'_sub_s2 = list_remove s1' s2 in
+            if list_disjoint s1 s2_sub_s1' && list_disjoint s2' s1'_sub_s2 then
+              Type (Fun 
+              {head=_dtype; 
+              args=[
+                Fun {head=_list; args=s1 @ s2_sub_s1'}; 
+                Fun {head=_list; args=s2' @ s1'_sub_s2}
+              ];
+            })
+            else
+              TypeError (Printf.sprintf "%s typing failed. quantum vairbale lists are not disjoint." (term2str s))
+
           | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as DType." (term2str s) (term2str t2))
         end
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
@@ -1249,17 +1260,28 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
   (* list of qreg *)
   | Fun {head; args} when head = _pair ->
-    let rec aux args =
-      begin
-      match args with
-      | [] -> Type (Symbol _qvlist)
-      | hd :: tl ->
-        match calc_type wfctx hd with
-        | Type (Fun {head; _}) when head = _qreg ->
-          aux tl
-        | _ -> TypeError (Printf.sprintf "%s cannot be typd as QReg." (term2str hd))
-      end
-    in aux args
+    let symbols = get_qvlist s in
+    begin
+      match symbols with 
+      (* check whether calculate qvlist can work *)
+      | TermError msg -> TypeError (Printf.sprintf "%s typing failed. %s" (term2str s) msg)
+      | TermList symbols ->
+        (* check whether all qreg are unique *)
+        if not (all_unique symbols) then
+          TypeError (Printf.sprintf "%s typing failed. It contains duplicate quantum variables." (term2str s))
+        else
+          let rec aux args =
+            begin
+            match args with
+            | [] -> Type (Symbol _qvlist)
+            | hd :: tl ->
+              match calc_type wfctx hd with
+              | Type (Fun {head; _}) when head = _qreg ->
+                aux tl
+              | _ -> TypeError (Printf.sprintf "%s cannot be typd as QReg." (term2str hd))
+            end
+          in aux args
+    end
 
 
   (**************************************)
@@ -1487,6 +1509,20 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           end
         | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
       end
+
+  (* guarded quantum operator *)
+  | Fun {head; args=[t1; t2]} when head = _guarded ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 ->
+        begin
+          match type_t1, type_t2 with
+          | _, Fun {head=head2; _} when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && head2 = _dtype ->
+            Type type_t2
+          | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CTerm[Bit] or %s is not typed as DType." (term2str s) (term2str t1) (term2str t2))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
+    end
 
   (* vbar (cq-assertion) *)
   | Fun {head; args=[t1; t2]} when head = _vbar ->

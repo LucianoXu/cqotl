@@ -223,6 +223,8 @@ terms:
   | t1 = terms ARROW t2 = terms { Fun {head=_imply; args=[t1; t2]} }
 
   | t1 = terms UNDERSCORE t2 = terms { Fun {head=_subscript; args=[t1; t2]} }
+
+  | t1 = terms MAPSTO t2 = terms { Fun {head=_guarded; args=[t1; t2]} }
   
   | t1 = terms VBAR t2 = terms { Fun {head=_vbar; args=[t1; t2]}}
 

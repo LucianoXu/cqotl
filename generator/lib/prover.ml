@@ -519,7 +519,7 @@ and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
   r_initq
 
   phi /\ (true -> |0><0|_(q,q)) <= psi
-  B <= Sum i in USet, |i><0|_(q,q) A |0><i|_(q,q)
+  Sum i in USet, |i><0|_(q,q) A |0><i|_(q,q) <= B 
   -----------------------------------------------
   { phi | B } q := |0>; ~ skip; { psi | A }
 *)
@@ -572,7 +572,6 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
             let goal2 = Fun {
               head = _entailment;
               args = [
-                b;
                 Fun {
                   head = _sum;
                   args = [
@@ -608,7 +607,8 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
                       ]
                     }
                   ]
-                }
+                };
+                b;
               ]
             }
             in

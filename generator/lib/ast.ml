@@ -194,6 +194,8 @@ let _vee = "VEE"
 let _not = "NOT"
 let _imply = "IMPLY"
 
+let _guarded = "GUARDED"
+
 let _vbar = "VBAR"
 
 

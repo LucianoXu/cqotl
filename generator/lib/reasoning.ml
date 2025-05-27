@@ -9,15 +9,22 @@ let simpl (t : terms) : terms =
 
 (* destruct the cq-assertion entailment *)
 let cq_entailment_destruct (t : terms) : terms option = 
+  (* get /\_{i: cj -> bi} Pi *)
   let rec aux_i cj qj t : terms option =
     match t with
     (* boundary case: bi -> pi *)
     | Fun {head; args=[bi; pi]} when head = _imply -> 
-      (* (cj -> bi) -> pi <= qj *)
       Some (
-        imply_type 
-          (imply_type (bitterm_to_type cj) (bitterm_to_type bi))
-          (Fun {head=_entailment; args=[pi; qj]})
+        Fun {
+          head = _guarded;
+          args = [
+            Fun {
+              head = _imply;
+              args = [cj; bi]
+            };
+            pi;
+          ]
+        }
       )
     | Fun {head; args=[phi1; phi2]} when head = _wedge ->
       begin
@@ -34,7 +41,11 @@ let cq_entailment_destruct (t : terms) : terms option =
     | Fun {head; args=[cj; qj]} when head = _imply -> 
       begin
         match aux_i cj qj t with
-        | Some p -> Some (imply_type (bitterm_to_type cj) p)
+        | Some p -> Some (
+          imply_type 
+          (bitterm_to_type cj) 
+          (Fun {head=_entailment; args=[p; qj]})
+        )
         | None -> None
       end
     | Fun {head; args=[psi1; psi2]} when head = _wedge ->
