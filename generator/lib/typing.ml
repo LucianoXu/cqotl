@@ -920,7 +920,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           match calc_type new_wfctx e with
           | Type type_e -> 
             let sym = fresh_name_for_term type_e x in
-            Type (Fun {head=_forall; args=[Symbol sym; t; subst type_e x (Symbol sym)]})
+            Type (Fun {head=_forall; args=[Symbol sym; t; substitute type_e x (Symbol sym)]})
           | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str e) msg)
         end
       | TypeError _ ->
@@ -936,7 +936,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
         begin
           match type_check wfctx t2 forall_t with
           | Type _ ->
-            Type (subst forall_t' x t2)
+            Type (substitute forall_t' x t2)
           | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as a valid argument. %s" (term2str s) (term2str t2) msg)
         end
       (* scalar multiplication *)

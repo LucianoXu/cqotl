@@ -291,19 +291,19 @@ let reserved_symbols = [
 
 
 (** return the substitution result t\[v/x\] *)
-let rec subst (t : terms) (x: string) (v: terms) : terms =
+let rec substitute (t : terms) (x: string) (v: terms) : terms =
   match t with
   | Symbol y -> if x = y then v else t
   | Fun {head; args=[Symbol x'; forall_t; forall_t']} when head = _forall && x' = x ->
-      let new_forall_t = subst forall_t x v in
+      let new_forall_t = substitute forall_t x v in
       Fun {head; args=[Symbol x'; new_forall_t; forall_t']}
 
   | Fun {head; args=[Symbol x'; fun_t; fun_e]} when head = _fun && x' = x ->
-      let new_fun_t = subst fun_t x v in
+      let new_fun_t = substitute fun_t x v in
       Fun {head; args=[Symbol x'; new_fun_t; fun_e]}
 
   | Fun {head; args} ->
-      let args' = List.map (fun arg -> subst arg x v) args in
+      let args' = List.map (fun arg -> substitute arg x v) args in
       Fun {head; args = args'}
 
   | Opaque -> Opaque
@@ -347,46 +347,3 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
-
-let labelled_ketbra (bket: terms) (bbra: terms) (qs: terms) : terms =
-  Fun {
-      head = _subscript;
-      args = [
-        Fun {
-          head = _apply;
-          args = [
-            Fun {head = _ket; args = [bket]};
-            Fun {head = _bra; args = [bbra]};
-          ]
-        };
-        Fun {
-          head = _pair;
-          args = [qs; qs]
-        }
-      ]
-    }
-
-(* Some wrappers for often used expressions *)
-let labelled_proj (b: terms) (qs : terms) : terms =
-  labelled_ketbra b b qs
-
-let imply_type (p: terms) (q : terms) : terms =
-  let t_symbols = get_symbols p @ get_symbols q in
-  let name = fresh_name t_symbols "x" in
-  Fun {
-        head = _forall;
-        args = [
-          Symbol name;
-          p;
-          q;
-        ]
-      }
-
-let bitterm_to_type (p: terms) : terms =
-  Fun {
-    head = _eq;
-    args = [
-      p;
-      Symbol _true;
-    ]
-  }

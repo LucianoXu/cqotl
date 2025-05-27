@@ -391,7 +391,7 @@ and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
           env = f.env;
           proof_name = f.proof_name;
           proof_prop = f.proof_prop;
-          goals = (Assumption {name; t}::ctx, subst t' x (Symbol name)) :: tl;
+          goals = (Assumption {name; t}::ctx, substitute t' x (Symbol name)) :: tl;
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
@@ -441,7 +441,14 @@ and eval_tac_simpl (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: ls ->
-      let new_goal = simpl hd in
+      (* create the typing function *)
+      let typing t =
+        let wfctx = get_pf_wfctx f in
+        match calc_type wfctx t with
+        | Type type_t -> Some type_t
+        | TypeError _ -> None
+      in
+      let new_goal = simpl typing hd in
       let new_frame = {
         env = f.env;
         proof_name = f.proof_name;

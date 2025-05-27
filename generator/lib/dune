@@ -15,6 +15,7 @@
   parser               
   lexer
   parser_utils
+  ast_transform
   typing
   reasoning
   prover)

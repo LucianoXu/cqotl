@@ -29,6 +29,7 @@ rule token = parse
     (* Symbols *)
     | "\\/"                         { VEE }
     | "/\\"                         { WEDGE }
+    | "-->"                         { LONGARROW }
     | "->"                          { ARROW }
     | "=>"                          { DARROW }
     | "@1"                          { AT1 }
@@ -37,6 +38,7 @@ rule token = parse
     | ","                           { COMMA }
     | "."                           { PERIOD }
     | "|->"                         { MAPSTO }
+    | "|-"                          { VDASH }
     | "+cq"                         { PLUSCQ }
     | "<-$"                         { RNDARROW }
     | ":="                          { ASSIGN }

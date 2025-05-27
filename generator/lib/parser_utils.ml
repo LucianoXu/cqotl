@@ -1,4 +1,5 @@
 open Ast
+open Ast_transform
 module I  = Parser.MenhirInterpreter
 
 exception SyntaxError of string
@@ -74,3 +75,17 @@ let parse_top_inc (input : string) : inc_parse_result =
   let best0 = empty_best checkpoint in
   (* Drive the incremental parser loop until completion *)
   loop lexbuf checkpoint best0
+
+
+let parse_terms (input : string) : terms =
+  let lexbuf = Lexing.from_string input in
+  try Parser.terms_eof Lexer.token lexbuf with
+  | Parser.Error -> failwith "Syntax error"
+  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg)
+
+let parse_rw_rule (input : string) : rewriting_rule
+  =
+  let lexbuf = Lexing.from_string input in
+  try Parser.rewriting_rule_eof Lexer.token lexbuf with
+  | Parser.Error -> failwith "Syntax error in rewriting rule"
+  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg)

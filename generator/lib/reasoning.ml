@@ -1,11 +1,26 @@
 
 open Ast
-(* open Pretty_printer
-open Typing
-open Utils *)
+open Ast_transform
+open Utils 
+open Parser_utils
 
-let simpl (t : terms) : terms =
-  t
+(* open Typing *)
+
+(** the term rewriting rules in *)
+let simpl_rules = [
+  parse_rw_rule "true -> false --> false";
+  parse_rw_rule "true |-> A --> A";
+  parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 0O[T, T]_q";
+  parse_rw_rule "true -> true --> true";
+]
+
+
+let simpl (typing: terms -> terms option) (t : terms) : terms =
+  let simpl_transforms = List.map (fun r -> apply_rewriting_rule_all r typing) simpl_rules
+  in
+  (* apply_rewriting_rule  *)
+  repeat_transforms simpl_transforms t
+
 
 (* destruct the cq-assertion entailment *)
 let cq_entailment_destruct (t : terms) : terms option = 

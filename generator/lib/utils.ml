@@ -72,3 +72,46 @@ let list_remove lst1 lst2 =
   aux [] lst1
   
 
+(* Some wrappers for often used expressions *)
+open Ast
+let labelled_ketbra (bket: terms) (bbra: terms) (qs: terms) : terms =
+  Fun {
+      head = _subscript;
+      args = [
+        Fun {
+          head = _apply;
+          args = [
+            Fun {head = _ket; args = [bket]};
+            Fun {head = _bra; args = [bbra]};
+          ]
+        };
+        Fun {
+          head = _pair;
+          args = [qs; qs]
+        }
+      ]
+    }
+
+let labelled_proj (b: terms) (qs : terms) : terms =
+  labelled_ketbra b b qs
+
+let imply_type (p: terms) (q : terms) : terms =
+  let t_symbols = get_symbols p @ get_symbols q in
+  let name = fresh_name t_symbols "x" in
+  Fun {
+        head = _forall;
+        args = [
+          Symbol name;
+          p;
+          q;
+        ]
+      }
+
+let bitterm_to_type (p: terms) : terms =
+  Fun {
+    head = _eq;
+    args = [
+      p;
+      Symbol _true;
+    ]
+  }
