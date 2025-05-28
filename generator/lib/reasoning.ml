@@ -107,7 +107,7 @@ let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t :
     
 
 let simpl_entail_rules = [
-  (* Simplification of partial order. *)
+  parse_rw_rule "psi | A <= phi | B --> (phi <= psi) /\\ (A <= B)";
   parse_rw_rule "A_q <= B_q --> (A <= B)";
   parse_rw_rule "0O[T1, T2] <= A --> true = true";
 ]

@@ -111,23 +111,33 @@ let rwrule2str (r: rewriting_rule) : string =
   
 
 
+let rec term_fresh_name (boundvars: string list) (t: terms) : terms =
+    match t with
+    | Symbol x when is_var x && not (List.mem x boundvars) -> Symbol ("$" ^ x)  (* prepend '$' to variable names *)
+    | Symbol x -> Symbol x  (* keep other symbols unchanged *)
+    | Fun {head; args = [Symbol v; t; s]} when head = _forall || head = _fun ->
+        let fresh_t = term_fresh_name boundvars t in
+        let fresh_s = term_fresh_name (v::boundvars) s in
+        Fun {head; args = [Symbol v; fresh_t; fresh_s]}  (* keep the variable name, but prepend '$' *)
+    | Fun {head; args} ->
+        let args' = List.map (term_fresh_name boundvars) args in
+        Fun {head; args = args'}
+    | Opaque -> Opaque
+
+
+(** Apply the substitution. Modify the variable name so that they will never conflict with values in the substitution. *)
+let apply_subst_unique_var (s: subst) (t: terms) : terms =
+  let new_s = List.map (fun (x, v) -> ("$" ^ x, v)) s in
+  let new_t = term_fresh_name [] t in
+  apply_subst new_s new_t
 
 
 (** Add a '$' symbol before all variables of the rule *)
 let rwrule_fresh_name (rule: rewriting_rule) : rewriting_rule =
-  let rec aux t =
-    match t with
-    | Symbol x when is_var x -> Symbol ("$" ^ x)  (* prepend '$' to variable names *)
-    | Symbol x -> Symbol x  (* keep constants unchanged *)
-    | Fun {head; args} ->
-        let args' = List.map aux args in
-        Fun {head; args = args'}
-    | Opaque -> Opaque
-  in
   {
-    lhs = aux rule.lhs;
-    rhs = aux rule.rhs;
-    typings = List.map (fun (t1, t2) -> (aux t1, aux t2)) rule.typings;
+    lhs = term_fresh_name [] rule.lhs;
+    rhs = term_fresh_name [] rule.rhs;
+    typings = List.map (fun (t1, t2) -> (term_fresh_name [] t1, term_fresh_name [] t2)) rule.typings;
   }
   
 

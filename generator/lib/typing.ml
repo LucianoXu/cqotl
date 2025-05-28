@@ -1357,9 +1357,9 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
             match t' with
             | Symbol sym when sym = _stype -> 
                 Type t'
-            | Fun {head; _} when head = _ktype || head = _btype || head = _otype ->
+            | Fun {head; _} when head = _ktype || head = _btype || head = _otype || head = _dtype ->
                 Type t'
-            | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not a function to SType, KType, BType or OType." (term2str s) (term2str f))
+            | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not a function to SType, KType, BType, OType or DType." (term2str s) (term2str f))
           end
           | _ -> TypeError (Printf.sprintf "%s typing failed. set %s and index %s have inconsistent types." (term2str s) (term2str s') v)
         end

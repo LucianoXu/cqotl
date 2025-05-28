@@ -123,9 +123,10 @@ and tactic =
   | Simpl
 
   | R_SKIP
-  | R_SEQ of int * terms
+  | R_SEQ of int * int * terms
   | R_INITQ
 
+  | JUDGE_SWAP
   | CQ_ENTAIL
   (* This tactic will fix a global quantum register order and try to transform all labelled Dirac notation into plain Dirac notation for the current goal. *)
   | DIRAC

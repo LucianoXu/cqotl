@@ -84,10 +84,12 @@ rule token = parse
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
     | "simpl"                       { SIMPL }
+
     | "r_skip"                      { R_SKIP }
     | "r_seq"                       { R_SEQ }
     | "r_initq"                     { R_INITQ }
     
+    | "judge_swap"                  { JUDGE_SWAP }
     | "cq_entail"                   { CQ_ENTAIL }
     | "dirac"                       { DIRAC }
     | "simpl_entail"                { SIMPL_ENTAIL }
@@ -154,10 +156,10 @@ rule token = parse
     | id as v                       { ID v }
     | eof                           { EOF }
 
-    | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}
+    | _                             { UNEXPECTED }
 
 and comment = parse
     | "*)"                     { () }  (* End of comment *)
-    | eof                      { raise (Error "Unterminated comment") }
+    | eof                      { () }
     | '\n'                     { newline lexbuf; comment lexbuf }
     | _                        { comment lexbuf }  (* Skip any other character *)

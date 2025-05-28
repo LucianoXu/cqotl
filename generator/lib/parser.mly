@@ -15,7 +15,7 @@
 (* token for tactics *)
 %token SORRY REFL INTRO CHOOSE SPLIT BYLEAN SIMPL
 %token R_SKIP R_SEQ R_INITQ R_UNITARY1 
-%token CQ_ENTAIL DIRAC SIMPL_ENTAIL
+%token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
 
@@ -33,20 +33,24 @@
 
 %token EOF
 
+(* token for unexpected input *)
+%token UNEXPECTED
+
 
 /* -- precedence table -- */
 
 %nonassoc FORALL FUN
+%nonassoc EQ LEQ
 %nonassoc VBAR
+%nonassoc MAPSTO 
 %left VEE
 %left WEDGE
-%nonassoc MAPSTO 
 %right ARROW
 %nonassoc TILDE LBRACE RBRACE
 %nonassoc SEMICOLON
 %nonassoc SKIP ASSIGN RNDARROW INIT UNITARY_PROG MEAS IF WHILE
 %left STAR
-%nonassoc EQEQ EQ LEQ
+%nonassoc EQEQ
 %left PLUS
 %left AT
 %nonassoc UNDERSCORE
@@ -101,9 +105,10 @@ tactic:
   | SIMPL PERIOD { Simpl }
 
   | R_SKIP PERIOD { R_SKIP }
-  | R_SEQ n = NUM t = terms PERIOD { R_SEQ (n, t) }
+  | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
   | R_INITQ PERIOD { R_INITQ }
 
+  | JUDGE_SWAP PERIOD { JUDGE_SWAP }
   | CQ_ENTAIL PERIOD { CQ_ENTAIL }
   | DIRAC PERIOD { DIRAC }
   | SIMPL_ENTAIL PERIOD { SIMPL_ENTAIL }

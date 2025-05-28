@@ -1,8 +1,10 @@
 open Ast
+open Ast_transform
 open Pretty_printer
 open Typing
 open Reasoning
 open Utils
+open Parser_utils
 
 type normal_frame = {
   env: envItem list;
@@ -353,9 +355,10 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | Simpl -> eval_tac_simpl proof_f
 
           | R_SKIP -> eval_tac_R_SKIP proof_f
-          | R_SEQ (i, t) -> eval_tac_R_SEQ proof_f i t
+          | R_SEQ (n1, n2, t) -> eval_tac_R_SEQ proof_f n1 n2 t
           | R_INITQ -> eval_tac_R_INITQ proof_f
 
+          | JUDGE_SWAP -> eval_tac_JUDGE_SWAP proof_f
           | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
           | DIRAC -> eval_tac_DIRAC proof_f
           | SIMPL_ENTAIL -> eval_tac_SIMPL_ENTAIL proof_f
@@ -491,7 +494,7 @@ and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
-and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
+and eval_tac_R_SEQ (f: proof_frame) (n1: int) (n2: int) (t : terms): tactic_result =
   let empty_to_skip ls = match ls with 
     | [] -> [Symbol _skip]
     | lst -> lst
@@ -510,10 +513,15 @@ and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
             head = _judgement
           ) ->
           (* Calculate the maximum length of sequential composition *)
-          let i1, i2 = 
-            if n >= 0 then n, n
-            else (List.length args1 + n, List.length args2 + n)
+          let i1 = 
+            if n1 >= 0 then n1
+            else List.length args1 + n1
           in
+          let i2 =
+            if n2 >= 0 then n2
+            else List.length args2 + n2
+          in
+
           let seq1_first = get_first_elements args1 i1 |> empty_to_skip in
           let seq1_second = get_last_elements args1 (List.length args1 - i1) |> empty_to_skip in
           let seq2_first = get_first_elements args2 i2 |> empty_to_skip in
@@ -541,11 +549,11 @@ and eval_tac_R_SEQ (f: proof_frame) (n: int) (t : terms): tactic_result =
 (** 
   r_initq
 
-  phi /\ (true -> |0><0|_(q,q)) <= psi
-  Sum i in USet, |i><0|_(q,q) A |0><i|_(q,q) <= B 
+  ( psi | (Sum i in USet, |i><0|_(q,q) A |0><i|_(q,q)) <= (phi /\ (true -> |0><0|_(q,q))) | B 
   -----------------------------------------------
   { phi | B } q := |0>; ~ skip; { psi | A }
 *)
+
 and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
@@ -553,10 +561,10 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
       (* Check the application condition *)
       match hd with
       | Fun {head=head; args=[
-          Fun {head=head_pre; args=[phi; a]}; 
+          Fun {head=head_pre; args=[phi; b]}; 
           Fun {head=head_s1; args=[stt1]}; 
           Fun {head=head_s2; args=[stt2]}; 
-          Fun {head=head_post; args=[psi; b]}]} when 
+          Fun {head=head_post; args=[psi; a]}]} when 
         (
           head = _judgement && 
           head_s1 = _seq &&
@@ -569,77 +577,26 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
         begin
           match calc_type (get_pf_wfctx f) q with
           | Type (Fun {head=head_type_q; args=[type_q]}) when head_type_q = _qreg ->
-            (* Goal1: phi /\ (true -> |0><0|_(q,q)) <= psi *)
-            let goal1 = Fun {
-              head = _entailment;
-              args =[
-                Fun {
-                  head = _wedge;
-                  args = [
-                    phi;
-                    Fun {
-                      head = _imply;
-                      args = [
-                        Symbol _true;
-                        labelled_proj (Symbol _false) q
-                      ]
-                    }
-                  ]
-                };
-                psi
-              ]
-            }
-            in
-            (* Goal2: B <= SUM[USET[T], fun (i : CTerm[T]) => |i><0|_(q,q) A |0><i|_(q,q)] *)
             let name = fresh_name_for_ctx (get_pf_wfctx f) "i" in
-            let goal2 = Fun {
-              head = _entailment;
-              args = [
-                Fun {
-                  head = _sum;
-                  args = [
-                    (* the set USET[T] *)
-                    Fun {
-                      head = _uset;
-                      args = [type_q];
-                    };
-                    (* the function *)
-                    Fun {
-                      head = _fun;
-                      args = [
-                        Symbol name;
-                        (* CTerm[T] *)
-                        Fun {
-                          head = _cterm;
-                          args = [type_q];
-                        };
-                        (* |i><0|_(q,q) A |0><i|_(q,q) *)
-                        Fun {
-                          head = _apply;
-                          args = [
-                            labelled_ketbra (Symbol name) (Symbol _false) q;
-                            Fun {
-                              head = _apply;
-                              args = [
-                                a;
-                                labelled_ketbra (Symbol _false) (Symbol name) q;
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                };
-                b;
-              ]
-            }
+            let goal_template = parse_terms (Printf.sprintf "
+            psi | SUM[USET[T], fun (%s : CTERM[T]) => (|%s>@<false|)_(q,q) @ A @ (|false>@<%s|)_(q,q)] 
+            <= (phi /\\ (true -> (|false> @ <false|)_(q,q))) | B" name name name)
             in
+            let s = [
+              ("phi", phi);
+              ("psi", psi);
+              ("A", a);
+              ("B", b);
+              ("q", q);
+              ("T", type_q);
+            ]
+            in
+            let goal = apply_subst_unique_var s goal_template in
             let new_frame = {
               env = f.env;
               proof_name = f.proof_name;
               proof_prop = f.proof_prop;
-              goals = (ctx, goal1) :: (ctx, goal2) :: tl;
+              goals = (ctx, goal) :: tl;
             }
             in 
             Success (ProofFrame new_frame)
@@ -658,6 +615,24 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
 
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
+and eval_tac_JUDGE_SWAP (f: proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+      (* Check the application condition *)
+      match hd with
+      | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
+        let new_goal = Fun {head; args=[pre; s2; s1; post]} in
+        let new_frame = {
+          env = f.env;
+          proof_name = f.proof_name;
+          proof_prop = f.proof_prop;
+          goals = (ctx, new_goal) :: tl;
+        } in
+        Success (ProofFrame new_frame)
+      | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
+
+  
 and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."

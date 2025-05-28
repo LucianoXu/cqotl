@@ -42,9 +42,10 @@ and tactic2str (t: tactic) : string =
   | Simpl -> "simpl."
 
   | R_SKIP -> "r_skip."
-  | R_SEQ (n, t) -> Printf.sprintf "r_seq %d %s." n (term2str t)
+  | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ -> "r_initq."
 
+  | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
   | SIMPL_ENTAIL -> "simpl_entail."
