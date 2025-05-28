@@ -32,18 +32,16 @@ rule token = parse
     | "-->"                         { LONGARROW }
     | "->"                          { ARROW }
     | "=>"                          { DARROW }
-    | "@1"                          { AT1 }
-    | "@2"                          { AT2 }
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
     | "|->"                         { MAPSTO }
     | "|-"                          { VDASH }
-    | "+cq"                         { PLUSCQ }
     | "<-$"                         { RNDARROW }
+    | "<-"                          { LARROW }
     | ":="                          { ASSIGN }
-    | "*="                          { STARASSIGN }
-    | "|0>"                         { KET0 }
+    (* | "*="                          { STARASSIGN } *)
+    (* | "|0>"                         { KET0 } *)
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
@@ -57,6 +55,7 @@ rule token = parse
     | "("                           { LPAREN }
     | ")"                           { RPAREN }
     | "*"                           { STAR }
+    | "@@"                          { ATAT }
     | "@"                           { AT }
     | "|"                           { VBAR }
     | ">"                           { RANGLE }
@@ -84,18 +83,17 @@ rule token = parse
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
     | "simpl"                       { SIMPL }
+    | "rewrite"                     { REWRITE }
 
     | "r_skip"                      { R_SKIP }
     | "r_seq"                       { R_SEQ }
     | "r_initq"                     { R_INITQ }
+    | "r_unitary"                   { R_UNITARY }
     
     | "judge_swap"                  { JUDGE_SWAP }
     | "cq_entail"                   { CQ_ENTAIL }
     | "dirac"                       { DIRAC }
     | "simpl_entail"                { SIMPL_ENTAIL }
-    (* | "seq_front"                   { SEQ_FRONT }
-    | "seq_back"                    { SEQ_BACK }
-    | "r_unitary1"                  { R_UNITARY1 } *)
 
 
     (* terms *)
@@ -116,42 +114,6 @@ rule token = parse
 
     | "0O"                          { ZEROO }
     | "1O"                          { ONEO }
-    (*
-
-    (* Types *)
-    | "Prop"                        { PROP }
-    | "QVList"                      { QVLIST }
-    | "OptPair"                     { OPTPAIR }
-    | "CType"                       { CTYPE }
-    | "CVar"                        { CVAR }
-    | "QReg"                        { QREG }
-    | "Prog"                        { PROG }
-    | "CAssn"                       { CASSN }
-    | "QAssn"                       { QASSN }
-    | "CQAssn"                      { CQASSN }
-
-    | "Bit"                         { BIT }
-
-    | "CTerm"                       { CTERM }
-    | "SType"                       { STYPE }
-    | "OType"                       { OTYPE }
-    | "DType"                       { DTYPE }
-
-
-    (* Assertions *)
-    | "true"                        { TRUE }
-    | "false"                       { FALSE }
-
-
-    (* Propositions *)
-    | "Unitary"                     { PROP_UNITARY }
-    | "Pos"                         { PROP_POS }
-    | "Proj"                        { PROP_PROJ }
-    | "Meas"                        { PROP_MEAS }
-    (* Judgement *)
-    (* eq = *)
-
-    *)
 
     | id as v                       { ID v }
     | eof                           { EOF }

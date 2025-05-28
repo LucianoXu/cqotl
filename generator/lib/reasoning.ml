@@ -86,15 +86,24 @@ let cq_entailment_destruct (t : terms) : terms option =
 
 (** the term rewriting rules in *)
 let dirac_rules = [
+  parse_rw_rule "x^D^D --> x";
+
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
   parse_rw_rule "0O[T, T] /\\ B --> 0O[T, T]";
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
+  parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
+
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
 
 
   parse_rw_rule "A : OTYPE[T1, T2] |- A @ 0O[T2, T3] --> 0O[T1, T3]";
   parse_rw_rule "B : OTYPE[T2, T3] |- 0O[T1, T2] @ B --> 0O[T1, T3]";
   parse_rw_rule "SUM[S, fun (i : T) => 0O[T1, T2]] --> 0O[T1, T2]";
+
+  parse_rw_rule "U @@ (psi | A) --> (U @@ psi) | (U @@ A)";
+  parse_rw_rule "U @@ (p /\\ q) --> (U @@ p) /\\ (U @@ q)";
+  parse_rw_rule "U @@ (psi -> P) --> psi -> (U @@ P)";
+  parse_rw_rule "U @@ A --> (U @ A) @ U^D";
 ]
 
 

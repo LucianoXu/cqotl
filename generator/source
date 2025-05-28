@@ -43,6 +43,7 @@ Prove pf : {P} skip; ~ skip; {P}.
 QED.
 
 Var H : OTYPE[BIT, BIT].
+Var vplus : KTYPE[BIT].
 
 
 Var P0 : OTYPE[BIT, BIT].
@@ -93,8 +94,12 @@ Prove Pf2 :
         cq_entail. intro H. simpl. dirac. simpl_entail. refl.
         dirac. simpl_entail. refl.
 
-    r_seq -1 1 ~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q).
+    r_seq -1 1 ~(b1 == b2) -> (vplus @ vplus^D)_(q,q) | 0O[BIT]_(q,q).
 
+    r_unitary. dirac. simpl_entail. split.
+        cq_entail. intro H. rewrite H0. simpl. simpl_entail. by_lean.
+
+        refl.
     
     Pause.
     

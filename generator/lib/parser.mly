@@ -7,23 +7,17 @@
 %token <int> NUM
 
 (* character symbols *)
-%token VEE WEDGE LONGARROW ARROW DARROW AT1 AT2 COLON COMMA PERIOD MAPSTO VDASH PLUSCQ RNDARROW ASSIGN STARASSIGN KET0 SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR AT VBAR RANGLE LANGLE ADJ UNDERSCORE
+%token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT VBAR RANGLE LANGLE ADJ UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY REFL INTRO CHOOSE SPLIT BYLEAN SIMPL
-%token R_SKIP R_SEQ R_INITQ R_UNITARY1 
+%token SORRY REFL INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
+%token R_SKIP R_SEQ R_INITQ R_UNITARY 
 %token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
 
-%token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
-
-(* assertions and operators *)
-%token TRUE FALSE
-
-(* token for propositions *)
-%token PROP_UNITARY PROP_POS PROP_PROJ PROP_MEAS
+%token FORALL FUN TYPE
 
 (* token for Dirac notation *)
 %token ONEO ZEROO
@@ -52,7 +46,8 @@
 %left STAR
 %nonassoc EQEQ
 %left PLUS
-%left AT
+%left AT ATAT
+%nonassoc ADJ
 %nonassoc UNDERSCORE
 %nonassoc LPAREN RPAREN
 /**************************/
@@ -103,18 +98,18 @@ tactic:
   | SPLIT PERIOD { Split }
   | BYLEAN PERIOD { ByLean }
   | SIMPL PERIOD { Simpl }
+  | REWRITE t = terms PERIOD { Rewrite_L2R t }
+  | REWRITE LARROW t = terms PERIOD { Rewrite_R2L t }
 
   | R_SKIP PERIOD { R_SKIP }
   | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
   | R_INITQ PERIOD { R_INITQ }
+  | R_UNITARY PERIOD { R_UNITARY }
 
   | JUDGE_SWAP PERIOD { JUDGE_SWAP }
   | CQ_ENTAIL PERIOD { CQ_ENTAIL }
   | DIRAC PERIOD { DIRAC }
   | SIMPL_ENTAIL PERIOD { SIMPL_ENTAIL }
-  // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
-  // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
-  // | R_UNITARY1 PERIOD { R_UNITARY1 }
 
 // qvlist :
 //   | q = ID { [q] }
@@ -155,6 +150,8 @@ terms:
   | t1 = terms UNDERSCORE t2 = terms { Fun {head=_subscript; args=[t1; t2]} }
 
   | t1 = terms MAPSTO t2 = terms { Fun {head=_guarded; args=[t1; t2]} }
+
+  | t1 = terms ATAT t2 = terms { Fun {head=_atat; args=[t1; t2]} }
   
   | t1 = terms VBAR t2 = terms { Fun {head=_vbar; args=[t1; t2]}}
 
