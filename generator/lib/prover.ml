@@ -345,6 +345,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         begin
           match tac with
           | Sorry -> eval_tac_sorry proof_f
+          | Refl -> eval_tac_refl proof_f
           | Intro v -> eval_tac_intro proof_f v
           | Choose i -> eval_tac_choose proof_f i
           | Split -> eval_tac_split proof_f
@@ -356,7 +357,8 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | R_INITQ -> eval_tac_R_INITQ proof_f
 
           | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
-          | DELABEL -> eval_tac_DELABEL proof_f
+          | DIRAC -> eval_tac_DIRAC proof_f
+          | SIMPL_ENTAIL -> eval_tac_SIMPL_ENTAIL proof_f
 
           (*
           | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f *)
@@ -378,6 +380,21 @@ and eval_tac_sorry (f: proof_frame) : tactic_result =
       (* Add the proof to the frame. *)
       let new_frame = discharge_first_goal f in
       Success (ProofFrame new_frame)
+
+and eval_tac_refl (f: proof_frame) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (_, hd) :: _ ->
+      (* Check the application condition *)
+      match hd with
+      | Fun {head; args=[t1; t2]} when head = _eq && t1 = t2 ->
+      (* Add the proof to the frame. *)
+        let new_frame = discharge_first_goal f in
+        Success (ProofFrame new_frame)
+      | _ -> 
+        TacticError (Printf.sprintf "The tactic is not applicable to the current goal: %s" (term2str hd))
+
+        
 
 and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
   match f.goals with
@@ -442,13 +459,12 @@ and eval_tac_simpl (f: proof_frame) : tactic_result =
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: ls ->
       (* create the typing function *)
-      let typing t =
-        let wfctx = get_pf_wfctx f in
+      let typing wfctx t =
         match calc_type wfctx t with
         | Type type_t -> Some type_t
         | TypeError _ -> None
       in
-      let new_goal = simpl typing hd in
+      let new_goal = simpl typing (get_pf_wfctx f) hd in
       let new_frame = {
         env = f.env;
         proof_name = f.proof_name;
@@ -671,18 +687,17 @@ and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
         end
       | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
 
-and eval_tac_DELABEL (f: proof_frame) : tactic_result = 
+and eval_tac_DIRAC (f: proof_frame) : tactic_result = 
   (* check the uniqueness of the quantum variable list qs *)
   match f.goals with
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: tl ->
-    let typing t = 
-      let wfctx = get_pf_wfctx f in
+    let typing wfctx t = 
       match calc_type wfctx t with
       | Type type_t -> Some type_t
       | TypeError _ -> None
     in
-    let new_goal = delabel typing hd in
+    let new_goal = dirac_simpl typing (get_pf_wfctx f) hd in
     let new_frame = {
       env = f.env;
       proof_name = f.proof_name;
@@ -691,6 +706,24 @@ and eval_tac_DELABEL (f: proof_frame) : tactic_result =
     } in
     Success (ProofFrame new_frame)
       
+and eval_tac_SIMPL_ENTAIL (f: proof_frame) : tactic_result =
+  (* check the uniqueness of the quantum variable list qs *)
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    let typing wfctx t = 
+      match calc_type wfctx t with
+      | Type type_t -> Some type_t
+      | TypeError _ -> None
+    in
+    let new_goal = simpl_entail typing (get_pf_wfctx f) hd in
+    let new_frame = {
+      env = f.env;
+      proof_name = f.proof_name;
+      proof_prop = f.proof_prop;
+      goals = (ctx, new_goal) :: tl;
+    } in
+    Success (ProofFrame new_frame)
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

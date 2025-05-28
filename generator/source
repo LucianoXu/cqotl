@@ -83,16 +83,13 @@ Prove Pf2 :
 
     intro b1. intro b2. intro q.
     
-    r_seq -2 
-        true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
+    r_seq -2 true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
 
     r_initq.
-    cq_entail.
+        cq_entail. intro H. simpl. dirac. simpl_entail. refl.
+        dirac. simpl_entail. refl.
 
-    intro H. simpl. delabel. by_lean.
-
-    delabel. by_lean.
+    r_seq -1 ~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q).
 
     Pause.
     
-Pause.

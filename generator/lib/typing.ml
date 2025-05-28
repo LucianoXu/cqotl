@@ -835,16 +835,6 @@ let rec get_qvlist (qreg : terms) : termls_result =
 
 
 
-type envItem =
-  | Assumption of {name: string; t: terms}
-  | Definition of {name: string; t: terms; e: terms}
-
-(* The well-formed environment and context *)
-type wf_ctx = {
-  env: envItem list; 
-  ctx: envItem list
-}
-
 (* return a fresh name for the context *)
 let fresh_name_for_ctx (ctx: wf_ctx) (prefix : string): string =
   (* Helper function to get all symbols in an environment list *)

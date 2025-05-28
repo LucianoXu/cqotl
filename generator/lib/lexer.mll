@@ -78,6 +78,7 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "refl"                        { REFL }
     | "intro"                       { INTRO }
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
@@ -88,7 +89,8 @@ rule token = parse
     | "r_initq"                     { R_INITQ }
     
     | "cq_entail"                   { CQ_ENTAIL }
-    | "delabel"                     { DELABEL }
+    | "dirac"                       { DIRAC }
+    | "simpl_entail"                { SIMPL_ENTAIL }
     (* | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
     | "r_unitary1"                  { R_UNITARY1 } *)

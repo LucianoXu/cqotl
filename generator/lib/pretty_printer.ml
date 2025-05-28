@@ -34,6 +34,7 @@ and command2str (c: command) : string =
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | Refl -> "refl."
   | Intro v -> Printf.sprintf "intro %s." v
   | Choose i -> Printf.sprintf "choose %d." i
   | Split -> "split."
@@ -45,7 +46,8 @@ and tactic2str (t: tactic) : string =
   | R_INITQ -> "r_initq."
 
   | CQ_ENTAIL -> "cq_entail."
-  | DELABEL -> "delabel."
+  | DIRAC -> "dirac."
+  | SIMPL_ENTAIL -> "simpl_entail."
 
 and term2str (e: terms) : string =
     match e with

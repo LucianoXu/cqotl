@@ -15,8 +15,8 @@ let simpl_rules = [
 ]
 
 
-let simpl (typing: terms -> terms option) (t : terms) : terms =
-  let simpl_transforms = List.map (fun r -> apply_rewriting_rule_all r typing) simpl_rules
+let simpl (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
+  let simpl_transforms = List.map (fun r -> apply_rewriting_rule_all r typing wfctx) simpl_rules
   in
   (* apply_rewriting_rule  *)
   repeat_transforms simpl_transforms t
@@ -85,18 +85,36 @@ let cq_entailment_destruct (t : terms) : terms option =
 
 
 (** the term rewriting rules in *)
-let delabel_rules = [
+let dirac_rules = [
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+  parse_rw_rule "0O[T, T] /\\ B --> 0O[T, T]";
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
 
-  (* Simplification of partial order. *)
-  parse_rw_rule "A_q <= B_q --> (A <= B)";
+
+  parse_rw_rule "A : OTYPE[T1, T2] |- A @ 0O[T2, T3] --> 0O[T1, T3]";
+  parse_rw_rule "B : OTYPE[T2, T3] |- 0O[T1, T2] @ B --> 0O[T1, T3]";
+  parse_rw_rule "SUM[S, fun (i : T) => 0O[T1, T2]] --> 0O[T1, T2]";
 ]
 
-let delabel (typing : terms -> terms option) (t : terms) : terms =
-  let delabel_transforms = List.map (fun r -> apply_rewriting_rule_all r typing) delabel_rules
+
+
+let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
+  let dirac_transforms = List.map (fun r -> apply_rewriting_rule_all r typing wfctx) dirac_rules
   in
   (* apply_rewriting_rule  *)
-  repeat_transforms delabel_transforms t
+  repeat_transforms dirac_transforms t
+    
+
+let simpl_entail_rules = [
+  (* Simplification of partial order. *)
+  parse_rw_rule "A_q <= B_q --> (A <= B)";
+  parse_rw_rule "0O[T1, T2] <= A --> true = true";
+]
+
+let simpl_entail (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
+  let simpl_entail_transforms = List.map (fun r -> apply_rewriting_rule_all r typing wfctx) simpl_entail_rules
+  in
+  (* apply_rewriting_rule  *)
+  repeat_transforms simpl_entail_transforms t
     

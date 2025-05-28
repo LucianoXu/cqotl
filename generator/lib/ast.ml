@@ -115,6 +115,7 @@ type command =
 
 and tactic =
   | Sorry
+  | Refl
   | Intro of string
   | Choose of int
   | Split
@@ -127,7 +128,8 @@ and tactic =
 
   | CQ_ENTAIL
   (* This tactic will fix a global quantum register order and try to transform all labelled Dirac notation into plain Dirac notation for the current goal. *)
-  | DELABEL
+  | DIRAC
+  | SIMPL_ENTAIL
 
   (* The two sided rules *)
   (* | R_SKIP
@@ -349,3 +351,14 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
+
+
+type envItem =
+  | Assumption of {name: string; t: terms}
+  | Definition of {name: string; t: terms; e: terms}
+
+(* The well-formed environment and context *)
+type wf_ctx = {
+  env: envItem list; 
+  ctx: envItem list
+}
