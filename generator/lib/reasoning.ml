@@ -82,3 +82,21 @@ let cq_entailment_destruct (t : terms) : terms option =
     | Fun {head=head_entail; args=[left; right]} when head_entail = _entailment ->
       aux_j right left
     | _ -> None
+
+
+(** the term rewriting rules in *)
+let delabel_rules = [
+  parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+  parse_rw_rule "A_q @ B_q --> (A @ B)_q";
+  parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
+
+  (* Simplification of partial order. *)
+  parse_rw_rule "A_q <= B_q --> (A <= B)";
+]
+
+let delabel (typing : terms -> terms option) (t : terms) : terms =
+  let delabel_transforms = List.map (fun r -> apply_rewriting_rule_all r typing) delabel_rules
+  in
+  (* apply_rewriting_rule  *)
+  repeat_transforms delabel_transforms t
+    

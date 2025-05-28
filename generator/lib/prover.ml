@@ -356,9 +356,9 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | R_INITQ -> eval_tac_R_INITQ proof_f
 
           | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
+          | DELABEL -> eval_tac_DELABEL proof_f
 
-          (*| SEQ_FRONT t -> eval_tac_SEQ_FRONT proof_f t
-          | SEQ_BACK t -> eval_tac_SEQ_BACK proof_f t
+          (*
           | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f *)
           (* | _ -> raise (Failure "Tactic not implemented yet") *)
         end
@@ -671,7 +671,26 @@ and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
         end
       | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
 
-
+and eval_tac_DELABEL (f: proof_frame) : tactic_result = 
+  (* check the uniqueness of the quantum variable list qs *)
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    let typing t = 
+      let wfctx = get_pf_wfctx f in
+      match calc_type wfctx t with
+      | Type type_t -> Some type_t
+      | TypeError _ -> None
+    in
+    let new_goal = delabel typing hd in
+    let new_frame = {
+      env = f.env;
+      proof_name = f.proof_name;
+      proof_prop = f.proof_prop;
+      goals = (ctx, new_goal) :: tl;
+    } in
+    Success (ProofFrame new_frame)
+      
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

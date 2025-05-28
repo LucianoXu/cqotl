@@ -88,6 +88,7 @@ rule token = parse
     | "r_initq"                     { R_INITQ }
     
     | "cq_entail"                   { CQ_ENTAIL }
+    | "delabel"                     { DELABEL }
     (* | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
     | "r_unitary1"                  { R_UNITARY1 } *)

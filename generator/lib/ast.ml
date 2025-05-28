@@ -126,6 +126,8 @@ and tactic =
   | R_INITQ
 
   | CQ_ENTAIL
+  (* This tactic will fix a global quantum register order and try to transform all labelled Dirac notation into plain Dirac notation for the current goal. *)
+  | DELABEL
 
   (* The two sided rules *)
   (* | R_SKIP

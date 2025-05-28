@@ -45,6 +45,7 @@ and tactic2str (t: tactic) : string =
   | R_INITQ -> "r_initq."
 
   | CQ_ENTAIL -> "cq_entail."
+  | DELABEL -> "delabel."
 
 and term2str (e: terms) : string =
     match e with

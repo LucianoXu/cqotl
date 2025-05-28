@@ -15,7 +15,7 @@
 (* token for tactics *)
 %token SORRY INTRO CHOOSE SPLIT BYLEAN SIMPL
 %token R_SKIP R_SEQ R_INITQ R_UNITARY1 
-%token CQ_ENTAIL
+%token CQ_ENTAIL DELABEL
 
 %token FORALL FUN TYPE PROP QVLIST OPTPAIR CTYPE CVAR QREG PROG CASSN QASSN CQASSN BIT CTERM STYPE OTYPE DTYPE
 
@@ -98,13 +98,20 @@ tactic:
   | SPLIT PERIOD { Split }
   | BYLEAN PERIOD { ByLean }
   | SIMPL PERIOD { Simpl }
+
   | R_SKIP PERIOD { R_SKIP }
   | R_SEQ n = NUM t = terms PERIOD { R_SEQ (n, t) }
   | R_INITQ PERIOD { R_INITQ }
+
   | CQ_ENTAIL PERIOD { CQ_ENTAIL }
+  | DELABEL PERIOD { DELABEL }
   // | SEQ_FRONT t = terms PERIOD { SEQ_FRONT t }
   // | SEQ_BACK t = terms PERIOD { SEQ_BACK t }
   // | R_UNITARY1 PERIOD { R_UNITARY1 }
+
+// qvlist :
+//   | q = ID { [q] }
+//   | q = ID qs = qvlist { q :: qs }
 
 terms:
   | LPAREN t1 = terms RPAREN { t1 }
