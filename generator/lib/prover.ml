@@ -8,8 +8,8 @@ type normal_frame = {
   env: envItem list;
 }
 
+(* The environment for the whole proof *)
 type proof_frame = {
-  (* The environment for the whole proof *)
   env : envItem list;
   proof_name: string;
   proof_prop: terms;
@@ -22,11 +22,9 @@ let get_pf_wfctx (pf : proof_frame) : wf_ctx =
   | (ctx, _)::_ -> 
       {env = pf.env; ctx = ctx}
 
-
 type frame = 
   | NormalFrame of normal_frame
   | ProofFrame of proof_frame
-
 
 (** Get the environment from the frame. *)
 let get_frame_wfctx (f: frame) : wf_ctx =
@@ -36,8 +34,6 @@ let get_frame_wfctx (f: frame) : wf_ctx =
 
 let add_envItem (f: normal_frame) (item: envItem) : frame =
   NormalFrame {env = item::f.env}
-
-
 
 (*************************************************************)
 (* Proof Frame Operations *)
@@ -78,10 +74,6 @@ let add_goal (f: proof_frame) (goal: terms) : proof_frame =
   new_frame
 
 (*************************************************************)
-
-
-
-
 
 (** The prover. 
     Initially it has empty stack and the frame is described by empty_frame. *)

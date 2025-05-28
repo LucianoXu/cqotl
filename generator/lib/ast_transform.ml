@@ -22,8 +22,6 @@ let rec repeat_transforms (transforms: transform list) (t: terms) : terms =
   | Some t' -> repeat_transforms transforms t'
   | None -> t
 
-
-
 (***************************************************************)
 (* Term Rewriting System *)
 
@@ -174,7 +172,6 @@ let apply_rewriting_rule
       (* if not matched, return None *)
       None
 
-
 (**  Depth-first, left-to-right search.
      – If the rule matches the whole term, rewrite immediately.
      – Otherwise descend into the first sub-term that can be rewritten
@@ -203,7 +200,6 @@ let rec apply_rewriting_rule_all
           search [] args
       | _ -> None                              (* Symbol / Opaque – leaves *)
       end
-
 
 (***************************************************************)
 (* Convenience helpers for whole systems of rules              *)

@@ -16,7 +16,6 @@ let whitespace  = [' ' '\t']
 let digit       = ['0'-'9']
 let number      = '0' | ['1'-'9' '-'] (digit*)
 let alpha       = ['a'-'z' 'A'-'Z' ''']
-(* let id          = alpha (alpha | digit | '_')* *)
 let id          = alpha (alpha | digit)*
 
 rule token = parse
