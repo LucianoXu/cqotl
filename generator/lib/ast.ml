@@ -35,25 +35,25 @@ and terms =
   | Opaque
 
 (* The reserved term symbols *)
-let _type = "Type"
+let _type   = "Type"
 let _forall = "FORALL"
-let _fun = "FUN"
-let _apply = "APPLY"
+let _fun    = "FUN"
+let _apply  = "APPLY"
 
-let _ctype = "CTYPE"
-let _cvar = "CVAR"
-let _cterm = "CTERM"
-let _set = "SET"
-let _bit = "BIT"
+let _ctype  = "CTYPE"
+let _cvar   = "CVAR"
+let _cterm  = "CTERM"
+let _set    = "SET"
+let _bit    = "BIT"
 
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
-let _qreg = "QREG"
-let _stype = "STYPE"
-let _ktype = "KTYPE"
-let _btype = "BTYPE"
-let _otype = "OTYPE"
-let _dtype = "DTYPE"
+let _qreg   = "QREG"
+let _stype  = "STYPE"
+let _ktype  = "KTYPE"
+let _btype  = "BTYPE"
+let _otype  = "OTYPE"
+let _dtype  = "DTYPE"
 
 (** The type for a single program statement. *)
 let _progstt = "PROGSTT"

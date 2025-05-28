@@ -18,7 +18,8 @@
   ast_transform
   typing
   reasoning
-  prover)
+  prover
+  lean_generator)
  (libraries menhirLib) 
 )
 ; Disable warnings for unused variables

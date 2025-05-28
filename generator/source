@@ -17,7 +17,7 @@ Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
 
-    (* Pause. *)
+    Pause.
     (* simpl. *)
     sorry.
     (* by_lean. *)
@@ -88,6 +88,10 @@ Prove Pf2 :
 
     r_initq.
     cq_entail.
+
+    intro H. simpl. delabel.
+
+    Pause.
 
     intro H. simpl. delabel. by_lean.
 
