@@ -15,7 +15,10 @@
   parser               
   lexer
   parser_utils
-  kernel)
+  ast_transform
+  typing
+  reasoning
+  prover)
  (libraries menhirLib) 
 )
 ; Disable warnings for unused variables

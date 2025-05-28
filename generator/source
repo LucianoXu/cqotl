@@ -11,6 +11,7 @@ Var t : CTERM[T].
 Var x : CVAR[T].
 Check (<t| @ |t>) ^D.
 
+
 Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
@@ -18,10 +19,9 @@ Prove eqpf : (A + B) + 0O[T] = B + A.
 
     (* Pause. *)
     (* simpl. *)
-
+    sorry.
     (* by_lean. *)
     (* Pause. *)
-    sorry.
 
 QED.
 
@@ -43,6 +43,8 @@ Prove pf : {P} skip; ~ skip; {P}.
 QED.
 
 Var H : OTYPE[BIT, BIT].
+
+
 Var P0 : OTYPE[BIT, BIT].
 Var P1 : OTYPE[BIT, BIT].
 (* Var q : QREG[BIT].
@@ -56,16 +58,14 @@ Check ~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q). *)
 
 Prove test' : 
     forall (P : Type), forall (Q : Type), P /\ Q.
-    
+
+    (* intro P. *)
+
+    (* by_lean. *)
     sorry.
-    (* intro P.
-    intro Q.
-    split.
-    sorry.
-    sorry. *)
+
 QED.
 
-(* Pause. *)
 
 Prove Pf2 :
     forall (b1 : CVAR[BIT]), 
@@ -80,69 +80,19 @@ Prove Pf2 :
         b2 := meas (P0, P1) q; 
     {~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)}.
 
-    intro b1.
-    intro b2.
-    intro q.
 
+    intro b1. intro b2. intro q.
+    
     r_seq -2 
         true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
 
     r_initq.
-
     cq_entail.
 
+    intro H. simpl. delabel. by_lean.
 
-    intro H.
+    delabel. by_lean.
+
     Pause.
-    split.
-    intro H2.
-
-    by_lean.
-
-    intro H2.
-    by_lean.
-
-    Check P <= Q.
     
 Pause.
-
-
-
-
-
-
-
-
-Check Type.
-Check forall (x : Type), x.
-Check fun (x : Type) => x.
-Check (fun (x : Type) => x) @ Type.
-
-(* Check APPLY[forall (x : Type), x, Type]. *)
-
-Check QVLIST.
-
-
-
-Check CVAR[T].
-
-Check CTERM[T].
-
-Check PROG.
-
-Var x : CVAR[T].
-Var e : CTERM[T].
-Check x := e.
-
-Pause.
-
-Prove xpf : Type = Type.
-    (* Pause. *)
-    sorry.
-QED.
-
-Check skip.
-
-Pause.
-
-Check unitary x y; skip; if x then s1 else s2 end; init qs;.

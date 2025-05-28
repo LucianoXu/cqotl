@@ -1,5 +1,6 @@
 open Ast
 
+
 let rec command_list_2_str (cs: command list) : string =
   let format_command (c: command) : string = 
     command2str c in
@@ -29,181 +30,138 @@ and command2str (c: command) : string =
   | Tactic t      ->
       (tactic2str t)
   | QED -> "QED."
-  (* | _ -> 
-      Printf.sprintf "Command not implemented yet" *)
 
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | Intro v -> Printf.sprintf "intro %s." v
   | Choose i -> Printf.sprintf "choose %d." i
+  | Split -> "split."
+  | ByLean -> "by_lean."
+  | Simpl -> "simpl."
 
   | R_SKIP -> "r_skip."
-  | SEQ_FRONT t -> Printf.sprintf "seq_front %s." (term2str t)
-  | SEQ_BACK t -> Printf.sprintf "seq_back %s." (term2str t)
-  | R_UNITARY1 -> "r_unitary1."
-  (* | _ -> "Unknown tactic" *)
+  | R_SEQ (n, t) -> Printf.sprintf "r_seq %d %s." n (term2str t)
+  | R_INITQ -> "r_initq."
 
-  and term2str (e: terms) : string =
+  | CQ_ENTAIL -> "cq_entail."
+  | DELABEL -> "delabel."
+
+and term2str (e: terms) : string =
     match e with
-    | Var x -> 
-        Printf.sprintf "%s" x
-    | Type ->
-        Printf.sprintf "Type"
-    | Prop ->
-        Printf.sprintf "Prop"
-    | QVList ->
-        Printf.sprintf "QVList"
-    | OptPair t ->
-        Printf.sprintf "OptPair[%s]" (term2str t)
-    | ProofTerm ->
-        Printf.sprintf "<proof>"
-    | CType ->
-        Printf.sprintf "CType"
-    | CVar t ->
-        Printf.sprintf "CVar[%s]" (term2str t)
-    | QReg qs ->
-        Printf.sprintf "QReg[%s]" (term2str qs)
-    | Prog -> 
-        Printf.sprintf "Prog"
-    | CAssn ->
-        Printf.sprintf "CAssn"
-    | QAssn ->
-        Printf.sprintf "QAssn"
-    | CQAssn ->
-        Printf.sprintf "CQAssn"
 
-    | Bit ->
-        Printf.sprintf "Bit"
+    (* special case, nondependent forall is printed as arrow *)
+    | Fun {head; args=[Symbol x; t; t']} when head = _forall && not (List.mem x (get_symbols t')) ->
+        Printf.sprintf "(%s -> %s)" (term2str t) (term2str t')
 
-    | CTerm t ->
-        Printf.sprintf "CTerm[%s]" (term2str t)
-    | SType ->
-        Printf.sprintf "SType"
-    | OType (t1, t2) ->
-        Printf.sprintf "OType[%s, %s]" (term2str t1) (term2str t2)
-    | DType (t1, t2) ->
-        Printf.sprintf "DType[%s, %s]" (term2str t1) (term2str t2)
+    | Fun {head; args=[Symbol x; t; t']} when head = _forall->
+        Printf.sprintf "(forall (%s : %s), %s)" x (term2str t) (term2str t')
+    | Fun {head; args=[Symbol x; t; e]} when head = _fun->
+        Printf.sprintf "(fun (%s : %s) => %s)" x (term2str t) (term2str e)
+    | Fun {head; args=[f; t]} when head = _apply->
+        Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
 
-    | Star (t1, t2) ->
-        Printf.sprintf "(%s * %s)" (term2str t1) (term2str t2)
-    | At1 v ->
-        Printf.sprintf "%s@1" v
-    | At2 v ->
-        Printf.sprintf "%s@2" v
-
-    | Pair (t1, t2) ->
+    (* pair *)
+    | Fun {head; args=[t1; t2]} when head = _pair ->
         Printf.sprintf "(%s, %s)" (term2str t1) (term2str t2)
-    | AnglePair (t1, t2) ->
-        Printf.sprintf "<%s, %s>" (term2str t1) (term2str t2)
+
+    (* list *)
+    | Fun {head; args=tls} when head = _list ->
+        let args_str = List.map term2str tls |> String.concat ", " in
+        Printf.sprintf "[%s]" args_str
 
 
-    | QVListTerm tls ->
-        qvlistterm2str tls
+    (* dirac notation *)
+    | Fun {head; args =[t]} when head = _ket ->
+        Printf.sprintf "|%s>" (term2str t)
+    | Fun {head; args=[t]} when head = _bra ->
+        Printf.sprintf "<%s|" (term2str t)
+    | Fun {head; args=[t]} when head = _adj ->
+        Printf.sprintf "(%s^D)" (term2str t)
 
-    | Subscript (t1, t2, t3) ->
-        Printf.sprintf "%s_%s,%s" (term2str t1) (term2str t2) (term2str t3)
+    | Fun {head; args=[t1; t2]} when head = _zeroo ->
+        Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
+    | Fun {head; args=[t]} when head = _oneo ->
+        Printf.sprintf "1O[%s]" (term2str t)
 
-    | BitTerm b -> (bitterm2str b)
+    | Fun {head; args=[t1; t2]} when head = _plus ->
+        Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
 
-    (* | CAssnTerm c -> (cassn2str c) *)
+    | Fun {head; args=[t1; t2]} when head = _subscript ->
+        Printf.sprintf "%s_%s" (term2str t1) (term2str t2)
 
-    | OptTerm o -> (opt2str o)
+    | Fun {head; args=[t1; t2]} when head = _eqeq ->
+        Printf.sprintf "(%s == %s)" (term2str t1) (term2str t2)
 
-    | CQAssnTerm cq -> (cqassn2str cq)
+    | Fun {head; args=[t1; t2]} when head = _wedge ->
+        Printf.sprintf "(%s /\\ %s)" (term2str t1) (term2str t2)
 
-    | ProgTerm s -> (stmt_seq_2_str s)
+    | Fun {head; args=[t1; t2]} when head = _vee ->
+        Printf.sprintf "(%s \\/ %s)" (term2str t1) (term2str t2)
 
-    | PropTerm p -> (prop2str p)
-    
-    (* | _ -> 
-        Printf.sprintf "<Term not implemented yet>" *)
+    | Fun {head; args=[t]} when head = _not ->
+        Printf.sprintf "(~ %s)" (term2str t)
 
-and qvlistterm2str (tls : terms list) : string =
-    List.map term2str tls |> String.concat ", " |> Printf.sprintf "[%s]"
-    
+    | Fun {head; args=[t1; t2]} when head = _imply ->
+        Printf.sprintf "(%s -> %s)" (term2str t1) (term2str t2)
 
-and prop2str (p: props) : string =
-  match p with
-  | Unitary e -> 
-      Printf.sprintf "Unitary %s" (term2str e)
-  | Pos e ->
-      Printf.sprintf "Pos %s" (term2str e)
-  | Proj e ->
-      Printf.sprintf "Proj %s" (term2str e)
-  | Meas e ->
-      Printf.sprintf "Meas %s" (term2str e)
-  | Judgement {pre; s1; s2; post} -> 
-    Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
-      (term2str pre) (term2str s1) (term2str s2) (term2str post)
-  | Eq {t1; t2} ->
-      Printf.sprintf "%s = %s" (term2str t1) (term2str t2)
-  | Leq {t1; t2} ->
-      Printf.sprintf "%s <= %s" (term2str t1) (term2str t2)
-  (* | _ -> "Unknown proposition" *)
+    | Fun {head; args=[t1; t2]} when head = _guarded ->
+        Printf.sprintf "(%s |-> %s)" (term2str t1) (term2str t2)
 
-and bitterm2str (b: bitterm) : string =
-  match b with
-  | True -> 
-      Printf.sprintf "true"
-  | False -> 
-      Printf.sprintf "false"
-  | Eq {t1; t2} -> 
-      Printf.sprintf "%s == %s" (term2str t1) (term2str t2)
-  (* | _ -> "Unknown bit term" *)
-(* 
-and cassn2str (c: cassn) : string =
-  match c with
-    | _ -> raise (Failure "Unknown assertion")
-    | _ -> "Unknown assertion" *)
+    | Fun {head; args=[t1; t2]} when head = _vbar ->
+        Printf.sprintf "(%s | %s)" (term2str t1) (term2str t2)
 
-and opt2str (o: opt) : string =
-  match o with
-  | OneO t -> Printf.sprintf "1O[%s]" (term2str t)
-  | ZeroO {t1; t2} -> Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
-  | Add {o1; o2} -> Printf.sprintf "(%s + %s)" (term2str o1) (term2str o2)
-  (* | _ -> "Unknown operator" *)
 
-and cqassn2str (c: cqassn) : string =
-  match c with
-  | Fiber {psi; p} -> 
-      Printf.sprintf "(%s |-> %s)" (term2str psi) (term2str p)
-  | Add {cq1; cq2} -> 
-      Printf.sprintf "(%s +cq %s)" (term2str cq1) (term2str cq2)
-  | UApply {u; cq} ->
-      Printf.sprintf "(%s @ %s)" (term2str u) (term2str cq)
-  (* | _ -> "Unknown assertion" *) 
 
-and stmt_seq_2_str (s: stmt_seq) : string =
-    match s with
-    | SingleCmd s1               -> stmt2str s1
-    | (::) (s1, s2)              -> 
-        stmt2str s1 ^ "\n" ^ stmt_seq_2_str s2
+    | Fun {head; args=[t1; t2]} when head = _eq ->
+        Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)
 
-and stmt2str (s: stmt) : string =
-  match s with
-  | Skip                        -> 
-      "skip"
+    | Fun {head; args=[t1; t2]} when head = _entailment ->
+        Printf.sprintf "(%s <= %s)" (term2str t1) (term2str t2)
 
-  | Assign {x; t}               ->
-    Printf.sprintf "%s := %s" x (term2str t)
+    | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
+        Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
+          (term2str pre) (term2str s1) (term2str s2) (term2str post)
 
-  | PAssign {x; t}              ->
-    Printf.sprintf "%s <-$ %s" x (term2str t)
 
-  | InitQubit q                 -> 
-      Printf.sprintf "init %s" (term2str q)
+    (* program statements *)
+    | Symbol x when x = _skip ->
+        "skip"
+  
+    | Fun {head; args=[Symbol x; t]} when head = _assign ->
+        Printf.sprintf "%s := %s" x (term2str t)
 
-  | Unitary {u_opt; qs}       ->
-      Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
+    | Fun {head; args=[Symbol x; t]} when head = _passign ->
+        Printf.sprintf "%s <-$ %s" x (term2str t)
 
-  | Meas {x; m_opt; qs}             ->
-      Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)
-
-  | IfMeas {b; s1; s2}  ->
-      Printf.sprintf "if %s then %s else %s end" 
-        (term2str b) (term2str s1) (term2str s2)
+    | Fun {head; args=[q]} when head = _init_qubit ->
+        Printf.sprintf "init %s" (term2str q)
         
-  | WhileMeas {b; s}   ->
-      Printf.sprintf "while %s do %s end" 
-        (term2str b) (term2str s)
-  (* | _ -> "Unknown labeled operator" *)
+    | Fun {head; args=[u_opt; qs]} when head = _unitary ->
+        Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
+    
+    | Fun {head; args=[Symbol x; m_opt; qs]} when head = _meas ->
+        Printf.sprintf "%s := meas %s %s" x (term2str m_opt) (term2str qs)
+
+    | Fun {head; args=[b; s1; s2]} when head = _if ->
+        Printf.sprintf "if %s then %s else %s end" 
+          (term2str b) (term2str s1) (term2str s2)
+  
+    | Fun {head; args=[b; s]} when head = _while ->
+        Printf.sprintf "while %s do %s end" 
+          (term2str b) (term2str s)
+
+    | Fun {head; args} when head = _seq ->
+        let args_str = List.map term2str args |> String.concat ";\n" in
+        Printf.sprintf "%s;" args_str
+
+
+    | Symbol x -> 
+        Printf.sprintf "%s" x
+
+    | Fun {head; args} ->
+        let args_str = List.map term2str args |> String.concat ", " in
+        Printf.sprintf "%s[%s]" head args_str
+
+    | Opaque ->
+        Printf.sprintf "<opaque>"

@@ -14,23 +14,31 @@
 
 let whitespace  = [' ' '\t']
 let digit       = ['0'-'9']
-let number      = ['1'-'9'] (digit*)
-let alpha       = ['a'-'z' 'A'-'Z']
+let number      = '0' | ['1'-'9' '-'] (digit*)
+let alpha       = ['a'-'z' 'A'-'Z' ''']
 (* let id          = alpha (alpha | digit | '_')* *)
 let id          = alpha (alpha | digit)*
 
 rule token = parse
     | '\n'                          { newline lexbuf; token lexbuf }
     | whitespace                    { token lexbuf }
+    | number as n                    { NUM (int_of_string n) }
+
     | "(*"                          { comment lexbuf; token lexbuf }
 
     (* Symbols *)
+    | "\\/"                         { VEE }
+    | "/\\"                         { WEDGE }
+    | "-->"                         { LONGARROW }
+    | "->"                          { ARROW }
+    | "=>"                          { DARROW }
     | "@1"                          { AT1 }
     | "@2"                          { AT2 }
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
     | "|->"                         { MAPSTO }
+    | "|-"                          { VDASH }
     | "+cq"                         { PLUSCQ }
     | "<-$"                         { RNDARROW }
     | ":="                          { ASSIGN }
@@ -45,14 +53,17 @@ rule token = parse
     | "~"                           { TILDE }
     | "{"                           { LBRACE }
     | "}"                           { RBRACE }
-    | "<"                           { LANGLE }
-    | ">"                           { RANGLE }
     | "+"                           { PLUS }
     | "("                           { LPAREN }
     | ")"                           { RPAREN }
     | "*"                           { STAR }
     | "@"                           { AT }
-    | "_"                           { UNDERSCORE }
+    | "|"                           { VBAR }
+    | ">"                           { RANGLE }
+    | "<"                           { LANGLE }
+    | "^D"                          { ADJ }
+    | '_'                           { UNDERSCORE }
+
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -67,14 +78,43 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "intro"                       { INTRO }
     | "choose"                      { CHOOSE }
+    | "split"                       { SPLIT }
+    | "by_lean"                     { BYLEAN }
+    | "simpl"                       { SIMPL }
     | "r_skip"                      { R_SKIP }
-    | "seq_front"                   { SEQ_FRONT }
+    | "r_seq"                       { R_SEQ }
+    | "r_initq"                     { R_INITQ }
+    
+    | "cq_entail"                   { CQ_ENTAIL }
+    | "delabel"                     { DELABEL }
+    (* | "seq_front"                   { SEQ_FRONT }
     | "seq_back"                    { SEQ_BACK }
-    | "r_unitary1"                  { R_UNITARY1 }
+    | "r_unitary1"                  { R_UNITARY1 } *)
+
+
+    (* terms *)
+    | "Type"                        { TYPE }
+    | "forall"                      { FORALL }
+    | "fun"                         { FUN }
+
+    | "skip"                        { SKIP }
+    | "init"                        { INIT }
+    | "unitary"                     { UNITARY_PROG }
+    | "meas"                        { MEAS }
+    | "if"                          { IF }
+    | "then"                        { THEN }
+    | "else"                        { ELSE }
+    | "while"                       { WHILE }
+    | "do"                          { DO }
+    | "end"                         { END }
+
+    | "0O"                          { ZEROO }
+    | "1O"                          { ONEO }
+    (*
 
     (* Types *)
-    | "Type"                        { TYPE }
     | "Prop"                        { PROP }
     | "QVList"                      { QVLIST }
     | "OptPair"                     { OPTPAIR }
@@ -107,25 +147,9 @@ rule token = parse
     (* Judgement *)
     (* eq = *)
 
-    (* Dirac notation *)
-    | "1O"                          { ONEO }
-    | "0O"                          { ZEROO }
-
-    (* Terms *)
-    | "skip"                        { SKIP }
-    | "init"                        { INIT }
-    | "unitary"                     { UNITARY_PROG }
-    | "meas"                        { MEAS }
-    | "if"                          { IF }
-    | "then"                        { THEN }
-    | "else"                        { ELSE }
-    | "while"                       { WHILE }
-    | "do"                          { DO }
-    | "end"                         { END }
+    *)
 
     | id as v                       { ID v }
-    (* Does it mean that only one-digit number is parsed? *)
-    | number as n                    { NUM (int_of_string n) }
     | eof                           { EOF }
 
     | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}

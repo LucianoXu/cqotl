@@ -13,6 +13,8 @@ Extending Quantum Relational Hoare Logics from Optimal Transport Duality with Cl
 \section{Type System}
 This section introduces the typing system of the prover, which includes the types, terms and propositions. We use $x$ to denote the variables.
 
+\newcommand{\Forall}{\textsf{forall}}
+
 \newcommand{\Type}{\textsf{Type}}
 \newcommand{\CType}{\textsf{CType}}
 \newcommand{\CTerm}[1]{\ensuremath{\textsf{CTerm}(#1)}}
@@ -20,6 +22,7 @@ This section introduces the typing system of the prover, which includes the type
 
 \newcommand{\cvar}[1]{\ensuremath{\textsf{CVar}(#1)}}
 \newcommand{\qreg}[1]{\ensuremath{\textsf{QReg}(#1)}}
+\newcommand{\assn}{\ensuremath{\textsf{Assn}}}
 \newcommand{\cAssn}{\ensuremath{\textsf{CAssn}}}
 \newcommand{\qAssn}{\ensuremath{\textsf{QAssn}}}
 \newcommand{\cqAssn}{\ensuremath{\textsf{CQAssn}}}
@@ -37,6 +40,7 @@ This section introduces the typing system of the prover, which includes the type
 
 \newcommand{\prog}{\ensuremath{\textsf{Prog}}}
 \newcommand{\prop}{\ensuremath{\textsf{Prop}}}
+\newcommand{\cset}[1]{\ensuremath{\textsf{Set}(#1)}}
 \newcommand{\bit}{\textsf{Bit}}
 \newcommand{\pf}{\textsf{proof}}
 \newcommand{\judge}[4]{\ensuremath{\{#1\}~#2 \sim #3~\{#4\}}}
@@ -49,11 +53,19 @@ This section introduces the typing system of the prover, which includes the type
 
 \begin{definition}
     \begin{align*}
-        t ::=\ & \mid x \\
-        & \mid \Type \mid \prop \mid \qvlist \mid \optpair{t} \\
-        & \mid \CType \mid \cvar{t} \mid \qreg{t} \mid \prog \mid \cAssn \mid \qAssn \mid \cqAssn \\
+        t ::=\ & \mid x \mid \Type \mid \forall (x : t). t \mid \lambda (x : t). t \mid t\ t\\
+        \\
+        & \mid \CType \mid \cvar{t} \mid \CTerm{t} \mid \cset{t} \mid \bit \\
+        & \mid \qvlist \mid \optpair{t} \\
+        & \mid \qreg{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
+        & \mid \prog \mid \assn \\
+        \\
+        & \mid t + t \\
+        \\
+        & \mid t = t \\
+        \\
+        \\
         & \mid \bit \\
-        & \mid \CTerm{t} \mid \SType \mid \opt{t}{t} \mid \ldirac{t}{t} \\
         & \mid t \times t \mid  x@1 \mid x@2 \\ 
         & \mid (t, t) \mid \abracket{t, t} \mid [x_1, x_2, \dots, x_n] \mid t_{t,t} \\
         & \mid bitterm \mid opt \mid cqassn \mid stmts \mid \phi \\
@@ -153,43 +165,82 @@ The well-formed contexts can be constructed in the following ways:
 
 These are subtyping rules:
 \begin{gather*}
-    \frac{\Gamma \vdash t : \cvar{t}}{\Gamma \vdash t : \CTerm{t}}
-    \quad
-    \frac{\Gamma \vdash t : \CTerm{\bit}}{\Gamma \vdash t : \cAssn}
+    % \frac{\Gamma \vdash t : \CType}{\Gamma \vdash t : \Type}
+    % \qquad
+    % \frac{\Gamma \vdash t : \cvar{t}}{\Gamma \vdash t : \CTerm{t}}
 \end{gather*}
 
 
 The typing rules for type terms are as follows.
 \begin{gather*}
-    \frac{\WF{\Gamma}}{\Gamma \vdash \prop : \Type}
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \qvlist : \Type}
-    \qquad
-    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \optpair{T} : \Type}
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \CType : \Type} \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \Type : \Type} \\
     \\
+    \frac{\Gamma \vdash t : \Type \quad \Gamma; x:t \vdash t' : \Type}{\Gamma \vdash \forall (x:t). t' : \Type}
+    \qquad
+    \frac{\Gamma \vdash t : \Type \quad \Gamma; x:t \vdash e : T}{\Gamma \vdash \lambda (x:t). e : \forall (x:t). T} \\
+    \\
+    \frac{\Gamma \vdash f : \forall (x : T). T' \quad \Gamma \vdash t : T}{\Gamma \vdash (f\ t) : T'[t/x]}\\
+    \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \CType : \Type}
+    \qquad
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \cvar{T} : \Type}
     \qquad
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
+    \\
+    \\
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \cset{T} : \Type}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
+    \\
+    \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \qvlist : \Type}
+    \qquad
+    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \optpair{T} : \Type}\\
+    \\
     \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \qreg{T} : \Type}
     \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type} \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \prog : \Type} 
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \assn : \Type}
     \\
-    \frac{\WF{\Gamma}}{\Gamma \vdash \cAssn : \Type}
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \qAssn : \Type}
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \cqAssn : \Type} \\
     \\
-    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \SType : \Type}
     \qquad
-    \frac{\Gamma \vdash T : \CType}{\Gamma \vdash \CTerm{T} : \Type }
-    \qquad
-    \frac{\WF{\Gamma}}{\Gamma \vdash \SType : \Type} \\
-    \\
     \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash \opt{T_1}{T_2} : \Type}
     \qquad
-    \frac{\Gamma \vdash r_1 : \qvlist \quad \Gamma \vdash r_2 : \qvlist}{\Gamma \vdash \ldirac{r_1}{r_2} : \Type} \\
+    \frac{\Gamma \vdash r_1 : \qvlist \quad \Gamma \vdash r_2 : \qvlist}{\Gamma \vdash \ldirac{r_1}{r_2} : \Type} 
+    \\
+    \\
+    \frac{\Gamma \vdash t_1 : T \quad \Gamma \vdash t_2 : T}{\Gamma \vdash t_1 = t_2 : \Type}
+\end{gather*}
+
+Typing rules for bit terms
+\begin{gather*}
+    \frac{\WF{\Gamma}}{\Gamma \vdash \true : \CTerm{\bit}}
+    \qquad
+    \frac{\WF{\Gamma}}{\Gamma \vdash \false : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{T} \quad \Gamma \vdash t_2 : \CTerm{T}}{\Gamma \vdash t_1 == t_2 : \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \wedge t_2 : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \vee t_2 : \CTerm{\bit}} \\
+    \\
+    \frac{\Gamma \vdash t : \CTerm{\bit}}{\Gamma \vdash \neg t : \CTerm{\bit}}
+    \qquad
+    \frac{\Gamma \vdash t_1 : \CTerm{\bit} \quad \Gamma \vdash t_2 : \CTerm{\bit}}{\Gamma \vdash t_1 \to t_2 : \CTerm{\bit}} \\
+\end{gather*}
+
+-----------
+\begin{gather*}
+    % \frac{\WF{\Gamma}}{\Gamma \vdash \cAssn : \Type}
+    % \qquad
+    % \frac{\WF{\Gamma}}{\Gamma \vdash \qAssn : \Type}
+    % \qquad
+    % \frac{\WF{\Gamma}}{\Gamma \vdash \cqAssn : \Type} \\
+    % \\
+    \frac{\WF{\Gamma}}{\Gamma \vdash \bit : \CType}
+    \\
     \\
     \frac{\Gamma \vdash T_1 : \CType \quad \Gamma \vdash T_2 : \CType}{\Gamma \vdash T_1 \times T_2 : \CType} \\
     \\
