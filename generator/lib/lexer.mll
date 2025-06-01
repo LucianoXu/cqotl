@@ -91,6 +91,8 @@ rule token = parse
     | "r_initq"                     { R_INITQ }
     | "r_unitary"                   { R_UNITARY }
     | "r_meas_sample"               { R_MEAS_SAMPLE }
+    | "id"                          { SWITCH_ID }
+    | "swap"                        { SWITCH_SWAP }
     
     | "judge_swap"                  { JUDGE_SWAP }
     | "cq_entail"                   { CQ_ENTAIL }

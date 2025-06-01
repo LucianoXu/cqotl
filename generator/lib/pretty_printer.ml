@@ -48,7 +48,7 @@ and tactic2str (t: tactic) : string =
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ -> "r_initq."
   | R_UNITARY -> "r_unitary."
-  | R_MEAS_SAMPLE -> "r_meas_sample."
+  | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
 
 
   | JUDGE_SWAP -> "judge_swap."

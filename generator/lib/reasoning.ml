@@ -152,8 +152,16 @@ let _measure_sample_or_bj (t: terms) : terms option =
   | Some t -> Some (Fun {head=_eq; args=[t; Symbol _true]})
   | None -> None
 
+let _bijection_mapping (switch: bool) (t: terms) : terms =
+  match t with
+  | Symbol x when x = _true ->
+    if switch then (Symbol _true) else (Symbol _false)
+  | Symbol x when x = _false ->
+    if switch then (Symbol _false) else (Symbol _true)
+  | _ -> failwith ("_bijection_mapping: unexpected term.")
 
-let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (miu: terms) : terms option =
+
+let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (miu: terms) (switch: bool) : terms option =
 
   (* The function that outputs 
     bj' -> forall (rho in Pj'), tr(Mi_q rho_q) = miu(f(i))
@@ -188,8 +196,8 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
         match preproj with
         | Fun {head; args=[bj'; pj']} when head = _imply ->
           begin
-            let termv0 = aux bj' pj' m0 q (Symbol _false) in
-            let termv1 = aux bj' pj' m1 q (Symbol _true) in
+            let termv0 = aux bj' pj' m0 q (_bijection_mapping switch (Symbol _false)) in
+            let termv1 = aux bj' pj' m1 q (_bijection_mapping switch (Symbol _true)) in
             match termv0, termv1 with
             | Some termv0', Some termv1' ->
               (* return the goal *)
@@ -208,7 +216,7 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
     end
   | _ -> None
 
-let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postproj: terms) (m_opt: terms) (q: terms) : terms option =
+let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postproj: terms) (m_opt: terms) (q: terms) (switch: bool) : terms option =
   let template = parse_terms "bisubst -> (Mj_(q, q) -> Pisubst)" in
   match m_opt with
   | Fun {head; args=[m0; m1]} when head = _pair ->
@@ -228,14 +236,14 @@ let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postpr
             ("bisubst", get_subst bi x y (Symbol _false));
             ("Mj", m0);
             ("q", q);
-            ("Pisubst", get_subst pi x y (Symbol _false));
+            ("Pisubst", get_subst pi x y (_bijection_mapping switch (Symbol _false)));
           ] in
           let term0 = apply_subst_unique_var s0 template in
           let s1 = [
             ("bisubst", get_subst bi x y (Symbol _true));
             ("Mj", m1);
             ("q", q);
-            ("Pisubst", get_subst pi x y (Symbol _true));
+            ("Pisubst", get_subst pi x y (_bijection_mapping switch (Symbol _true)));
           ] in 
           let term1 = apply_subst_unique_var s1 template in
           Some (Fun {head=_wedge; args=[term0; term1]})

@@ -30,7 +30,7 @@ and tactic =
   | R_SEQ of int * int * terms
   | R_INITQ
   | R_UNITARY
-  | R_MEAS_SAMPLE
+  | R_MEAS_SAMPLE of bool
 
   | JUDGE_SWAP
   | CQ_ENTAIL

@@ -92,7 +92,7 @@ Prove Pf2 :
         refl.
 
     judge_swap.
-    r_meas_sample.
+    r_meas_sample id.
 
         refl.
     

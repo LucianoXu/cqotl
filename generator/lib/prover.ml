@@ -362,7 +362,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | R_SEQ (n1, n2, t) -> eval_tac_R_SEQ proof_f n1 n2 t
           | R_INITQ -> eval_tac_R_INITQ proof_f
           | R_UNITARY -> eval_tac_R_UNITARY proof_f
-          | R_MEAS_SAMPLE -> eval_tac_R_MEAS_SAMPLE proof_f
+          | R_MEAS_SAMPLE switch -> eval_tac_R_MEAS_SAMPLE proof_f switch
 
           | JUDGE_SWAP -> eval_tac_JUDGE_SWAP proof_f
           | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
@@ -730,8 +730,8 @@ match f.goals with
 
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
 
-
-and eval_tac_R_MEAS_SAMPLE (f: proof_frame) : tactic_result =
+(* switch: the flag controls the bijection between measurement and sampling *)
+and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: tl ->
@@ -756,8 +756,8 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) : tactic_result =
           head_post = _vbar && (is_zeroo zero_post)
         ) ->
         let goal_vee_bj = _measure_sample_or_bj phi in
-        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs miu in
-        let goal_proj = _measure_sample_proj_goal x1 x2 phi psi m_opt qs in
+        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs miu switch in
+        let goal_proj = _measure_sample_proj_goal x1 x2 phi psi m_opt qs switch in
         begin
           match goal_vee_bj, goal_trace, goal_proj with
           | Some goal_vee_bj, Some goal_trace, Some goal_proj -> 
