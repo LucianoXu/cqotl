@@ -35,6 +35,7 @@ and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
   | Refl -> "refl."
+  | Destruct v -> Printf.sprintf "destruct %s." v
   | Intro v -> Printf.sprintf "intro %s." v
   | Choose i -> Printf.sprintf "choose %d." i
   | Split -> "split."
@@ -46,7 +47,9 @@ and tactic2str (t: tactic) : string =
   | R_SKIP -> "r_skip."
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ -> "r_initq."
-  | R_UNITARY -> "r_unitary"
+  | R_UNITARY -> "r_unitary."
+  | R_MEAS_SAMPLE -> "r_meas_sample."
+
 
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."

@@ -194,6 +194,15 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
           | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as DType." (term2str s) (term2str t2))
         end
+
+      (* probabilistic distribution *)
+      | Type (Fun {head; args=[ct]}) when head = _pdist ->
+        begin
+          match type_check wfctx t2 (Fun {head=_cterm; args=[ct]}) with
+          | Type _ -> Type (Symbol _stype)
+          | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CTerm[%s]. %s" (term2str s) (term2str t2) (term2str ct) msg)
+        end
+
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
@@ -216,6 +225,15 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | Type _ -> Type (Symbol _type)
       | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CType. %s" (term2str s) (term2str t) msg)
     end
+
+  (* PDist *)
+  | Fun {head; args=[t]} when head = _pdist ->
+    begin
+      match type_check wfctx t (Symbol _ctype) with
+      | Type _ -> Type (Symbol _type)
+      | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CType. %s" (term2str s) (term2str t) msg)
+    end
+
 
   (* Set *)
   | Fun {head; args=[t]} when head = _set ->
@@ -345,11 +363,16 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* PAssign *)
-  | Fun {head; args=[Symbol x; t]} when head = _passign ->
+  | Fun {head; args=[Symbol x; miu]} when head = _passign ->
     begin
-      match type_check wfctx (Symbol x) (Fun {head=_cvar; args=[t]}) with
-      | Type _ -> Type (Symbol _progstt)
-      | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s cannot be typed as CVar[%s]. %s" (term2str s) x (term2str t) msg)
+      match calc_type wfctx miu with
+      | Type (Fun {head; args=[t]}) when head = _pdist ->
+        begin
+        match type_check wfctx (Symbol x) (Fun {head=_cvar; args=[t]}) with
+        | Type _ -> Type (Symbol _progstt)
+        | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s cannot be typed as CVar[%s]. %s" (term2str s) x (term2str t) msg)
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as PDist." (term2str s) (term2str miu))
     end
 
   (* Init Qubit *)
@@ -440,29 +463,28 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* list of qreg *)
-  | Fun {head; args} when head = _pair ->
-    let symbols = get_qvlist s in
-    begin
-      match symbols with 
-      (* check whether calculate qvlist can work *)
-      | TermError msg -> TypeError (Printf.sprintf "%s typing failed. %s" (term2str s) msg)
-      | TermList symbols ->
-        (* check whether all qreg are unique *)
-        if not (all_unique symbols) then
-          TypeError (Printf.sprintf "%s typing failed. It contains duplicate quantum variables." (term2str s))
-        else
-          let rec aux args =
+  | Fun {head; args} when head = _list ->
+    (* check whether all qreg are unique *)
+    if not (all_unique args) then
+      TypeError (Printf.sprintf "%s typing failed. It contains duplicate quantum variables." (term2str s))
+    else
+      let rec aux args =
+        begin
+        match args with
+        | [] -> Type (Symbol _qvlist)
+        | hd :: tl ->
+          match hd with
+          | Symbol v ->
             begin
-            match args with
-            | [] -> Type (Symbol _qvlist)
-            | hd :: tl ->
               match calc_type wfctx hd with
               | Type (Fun {head; _}) when head = _qreg ->
                 aux tl
               | _ -> TypeError (Printf.sprintf "%s cannot be typd as QReg." (term2str hd))
             end
-          in aux args
-    end
+          | _ -> 
+            TypeError (Printf.sprintf "All elements of the qvlist should be atomic symbols.")
+        end
+      in aux args
 
 
   (**************************************)
@@ -557,6 +579,15 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s must be typed as a function." (term2str s) (term2str f))
     end
 
+  (* trace *)
+  | Fun {head; args=[t]} when head = _tr ->
+    begin
+      match calc_type wfctx t with
+      | Type (Fun {head=head; args=[t1; t2]}) when head = _otype || head = _dtype ->
+        Type (Symbol _stype)
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as OType or DType." (term2str s) (term2str t))
+    end
+
   (* uset *)
   | Fun {head; args=[t]} when head = _uset ->
     begin
@@ -591,7 +622,6 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
         end
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
-
 
 
   (* true *)
@@ -679,12 +709,19 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
             (* boolean implication *)
             | _ when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && type_t2 = type_t1 ->
                 Type (Fun {head=_cterm; args=[Symbol _bit]})
-            (* Sasaki implication *)
+                
+            (* Sasaki implication (OType) *)
             | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _otype && head2 = _otype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
                 Type (Fun {head=_otype; args=[tt1; tt1]})
+
+            (* Sasaki implication (DType) *)
+            | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _dtype && head2 = _dtype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
+                Type (Fun {head=_dtype; args=[tt1; tt1]})
+
             (* cq-projector *)
             | _, Fun {head=head2; _} when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && head2=_dtype ->
                 Type (Symbol _cqproj)
+
             | _ ->
                 TypeError (Printf.sprintf "%s typing failed." (term2str s))
           end
@@ -763,6 +800,26 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t1) msg)
     end
 
+  (* inspace *)
+  | Fun {head; args=[t1; t2]} when head = _inspace ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 ->
+        begin
+          match type_t1, type_t2 with
+          (* labelled dirac notation *)
+          | Fun {head=head1; _}, Fun {head=head2; _} when 
+            head1 = _dtype && head2 = _dtype ->
+            Type (Symbol _type)
+
+          | _ -> 
+            TypeError (Printf.sprintf "%s typing failed." (term2str s))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
+    end
+
+
+    
   (* Entailment *)
   | Fun {head; args=[t1; t2]} when head = _entailment -> 
     begin

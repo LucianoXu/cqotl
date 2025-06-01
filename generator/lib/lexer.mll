@@ -78,6 +78,7 @@ rule token = parse
     (* Tactics *)
     | "sorry"                       { SORRY }
     | "refl"                        { REFL }
+    | "destruct"                    { DESTRUCT }
     | "intro"                       { INTRO }
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
@@ -89,6 +90,7 @@ rule token = parse
     | "r_seq"                       { R_SEQ }
     | "r_initq"                     { R_INITQ }
     | "r_unitary"                   { R_UNITARY }
+    | "r_meas_sample"               { R_MEAS_SAMPLE }
     
     | "judge_swap"                  { JUDGE_SWAP }
     | "cq_entail"                   { CQ_ENTAIL }

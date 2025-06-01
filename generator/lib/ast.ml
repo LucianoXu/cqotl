@@ -17,6 +17,7 @@ type command =
 and tactic =
   | Sorry
   | Refl
+  | Destruct of string
   | Intro of string
   | Choose of int
   | Split
@@ -29,6 +30,7 @@ and tactic =
   | R_SEQ of int * int * terms
   | R_INITQ
   | R_UNITARY
+  | R_MEAS_SAMPLE
 
   | JUDGE_SWAP
   | CQ_ENTAIL
@@ -53,6 +55,7 @@ let _apply = "APPLY"
 let _ctype = "CTYPE"
 let _cvar = "CVAR"
 let _cterm = "CTERM"
+let _pdist = "PDIST"  (* Probability distribution. *)
 let _set = "SET"
 let _bit = "BIT"
 
@@ -83,6 +86,7 @@ let _zeroo = "ZEROO"
 let _oneo = "ONEO"
 let _plus = "PLUS"
 let _sum = "SUM"
+let _tr = "tr"
 
 let _uset = "USET"
 
@@ -128,6 +132,7 @@ let _if = "IF"
 let _while = "WHILE"
 
 let _eq = "EQ"
+let _inspace = "INSPACE"
 let _entailment = "ENTAILMENT"
 let _judgement = "JUDGEMENT"
 
@@ -139,6 +144,8 @@ let reserved_symbols = [
   _ctype;
   _cvar;
   _cterm;
+  _pdist;
+  _set;
   _bit;
 
   _qvlist;
@@ -163,6 +170,7 @@ let reserved_symbols = [
   _oneo;
   _plus;
   _sum;
+  _tr;
 
   _subscript;
 
@@ -191,6 +199,7 @@ let reserved_symbols = [
   _while;
   
   _eq;
+  _inspace;
   _entailment;
   _judgement;]
 
