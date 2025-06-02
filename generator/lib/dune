@@ -6,6 +6,8 @@
 
 (ocamllex lexer)
 
+(include_subdirs unqualified)
+
 (library
  (name cqotl_vgc)
  (modules
@@ -18,7 +20,12 @@
   ast_transform
   typing
   reasoning
-  prover)
+  prover
+  examples
+  lean_ast
+  lean_generator
+  lean_printer
+  mapper)
  (libraries menhirLib) 
 )
 ; Disable warnings for unused variables

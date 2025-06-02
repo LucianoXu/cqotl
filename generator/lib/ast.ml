@@ -37,20 +37,16 @@ and tactic =
   | DIRAC
   | SIMPL_ENTAIL
 
-
 and terms = 
   | Symbol of string
   | Fun of {head: string; args: terms list}
   | Opaque
 
-
-
 (* The reserved term symbols *)
-
-let _type = "Type"
+let _type   = "Type"
 let _forall = "FORALL"
-let _fun = "FUN"
-let _apply = "APPLY"
+let _fun    = "FUN"
+let _apply  = "APPLY"
 
 let _ctype = "CTYPE"
 let _cvar = "CVAR"
@@ -58,15 +54,14 @@ let _cterm = "CTERM"
 let _pdist = "PDIST"  (* Probability distribution. *)
 let _set = "SET"
 let _bit = "BIT"
-
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
-let _qreg = "QREG"
-let _stype = "STYPE"
-let _ktype = "KTYPE"
-let _btype = "BTYPE"
-let _otype = "OTYPE"
-let _dtype = "DTYPE"
+let _qreg   = "QREG"
+let _stype  = "STYPE"
+let _ktype  = "KTYPE"
+let _btype  = "BTYPE"
+let _otype  = "OTYPE"
+let _dtype  = "DTYPE"
 
 (** The type for a single program statement. *)
 let _progstt = "PROGSTT"
@@ -105,21 +100,6 @@ let _atat = "ATAT"
 let _guarded = "GUARDED"
 
 let _vbar = "VBAR"
-
-
-(* and stmt_seq =
-  | SingleCmd of stmt
-  | (::) of stmt * stmt_seq
-
-and stmt =
-  | Skip
-  | Assign of {x: string; t: terms}
-  | PAssign of {x: string; t: terms}
-  | InitQubit of      terms
-  | Unitary of        {u_opt: terms; qs: terms}
-  | Meas of           {x: string; m_opt: terms; qs: terms}
-  | IfMeas of         {b: terms; s1: terms; s2: terms}
-  | WhileMeas of      {b: terms; s: terms} *)
 
 let _seq = "SEQ"
 let _skip = "SKIP"
@@ -232,7 +212,6 @@ let rec replace (t : terms) (from_: terms) (to_: terms) : terms =
       let args' = List.map (fun arg -> replace arg from_ to_) args in
       Fun {head; args = args'}
   | Opaque -> Opaque
-
 
 (*************************************)
 (** Get all the symbols in the term (function head are not counted). *)

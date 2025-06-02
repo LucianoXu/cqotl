@@ -10,12 +10,13 @@ type normal_frame = {
   env: envItem list;
 }
 
+(* The environment for the whole proof *)
 type proof_frame = {
-  (* The environment for the whole proof *)
   env : envItem list;
   proof_name: string;
   proof_prop: terms;
   goals: (envItem list * terms) list;
+  lean_goals: (envItem list * terms) list;
 }
 
 let get_pf_wfctx (pf : proof_frame) : wf_ctx =
@@ -24,32 +25,29 @@ let get_pf_wfctx (pf : proof_frame) : wf_ctx =
   | (ctx, _)::_ -> 
       {env = pf.env; ctx = ctx}
 
-
 type frame = 
   | NormalFrame of normal_frame
-  | ProofFrame of proof_frame
-
+  | ProofFrame  of proof_frame
 
 (** Get the environment from the frame. *)
 let get_frame_wfctx (f: frame) : wf_ctx =
   match f with
   | NormalFrame {env} -> env2wfctx env
-  | ProofFrame pf -> get_pf_wfctx pf
+  | ProofFrame  pf -> get_pf_wfctx pf
 
 let add_envItem (f: normal_frame) (item: envItem) : frame =
   NormalFrame {env = item::f.env}
-
-
 
 (*************************************************************)
 (* Proof Frame Operations *)
 
 let open_proof (f: normal_frame) (name: string) (prop: terms) : frame =
   ProofFrame {
-    env = f.env;
-    proof_name = name;
-    proof_prop = prop;
-    goals = [([], prop)]
+    env         = f.env;
+    proof_name  = name;
+    proof_prop  = prop;
+    goals       = [([], prop)];
+    lean_goals  = [];
   }
 
 let close_proof (f: proof_frame) : frame =
@@ -62,10 +60,11 @@ let discharge_first_goal (f: proof_frame) : proof_frame =
   | [] -> f
   | _ :: tl ->
       let new_frame = {
-        env = f.env;
-        proof_name = f.proof_name;
-        proof_prop = f.proof_prop;
-        goals = tl
+        env         = f.env;
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = tl;
+        lean_goals  = [];
       } in
       new_frame
 
@@ -73,17 +72,14 @@ let discharge_first_goal (f: proof_frame) : proof_frame =
 let add_goal (f: proof_frame) (goal: terms) : proof_frame =
   let new_frame = {
         env = f.env;
-        proof_name = f.proof_name;
-        proof_prop = f.proof_prop;
-        goals = ([], goal)::f.goals
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = ([], goal)::f.goals;
+        lean_goals  = []
       } in
   new_frame
 
 (*************************************************************)
-
-
-
-
 
 (** The prover. 
     Initially it has empty stack and the frame is described by empty_frame. *)
@@ -120,7 +116,6 @@ let wfctx2str (wfctx: wf_ctx): string =
       (String.concat "\n" env_str)
       (String.concat "\n" ctx_str)
 
-
 let goals2str (f: proof_frame): string =
   match f.goals with
   | [] -> "All Goals Clear.\n"
@@ -133,6 +128,18 @@ let goals2str (f: proof_frame): string =
     String.concat "\n\n" goals_str
     |> Printf.sprintf "[Goals]\n\n%s\n"
 
+let leangoals2str (f: proof_frame): string =
+  match f.lean_goals with
+  | [] -> "NO LEAN4 Goals.\n"
+  | _ ->
+    let total = List.length f.goals in
+    let goals_str = List.mapi 
+      (fun i (_, p) -> Printf.sprintf "(%d/%d) %s" (i + 1) total (term2str p))
+      f.goals
+    in
+    String.concat "\n\n" goals_str
+    |> Printf.sprintf "[Goals]\n\n%s\n"
+    
 (* The whole information about the frame *)
 let frame2str (f: frame): string =
   match f with
@@ -140,16 +147,17 @@ let frame2str (f: frame): string =
       let env_str = env2str env in
         Printf.sprintf "%s" env_str
   | ProofFrame f ->
-    let env_str = wfctx2str (get_pf_wfctx f) in
-    let proof_mode_str = Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode]\n\n%s" (goals2str f)
-    in
-      Printf.sprintf "%s%s" env_str proof_mode_str
+    let env_str         = wfctx2str (get_pf_wfctx f) 
+    in  let proof_mode_str  = 
+          Printf.sprintf "\n---------------------------------------------------------------\n[Proof Mode]\n\n%s"  (goals2str f)   
+    in  let lean_goals_str  = 
+          Printf.sprintf "\n---------------------------------------------------------------\n[LEAN4 Goals]\n\n%s" (leangoals2str f)
+    in  Printf.sprintf "%s%s%s" env_str proof_mode_str lean_goals_str
 
 let prover2str (p: prover): string =
   let frame = get_frame p in
     (frame2str frame)
     |> Printf.sprintf "%s" 
-
 
 type tactic_result =
   | Success of frame
@@ -187,7 +195,6 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_tactic p t
     | QED ->
         eval_QED p
-
 
     (* | _ -> raise (Failure "Command not implemented yet") *)
   in match res with
@@ -270,7 +277,6 @@ and eval_check (p: prover) (e: terms) : eval_result =
   | Type t -> Printf.printf "Check %s : %s.\n" (term2str e) (term2str t); Success
   | TypeError msg ->
     ProverError (Printf.sprintf "Typing error: %s" msg)
-
 
 and eval_show (p: prover) (x: string) : eval_result =
   let frame = get_frame p in
@@ -442,9 +448,10 @@ and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
         let name = fresh_name_for_ctx (get_pf_wfctx f) v in
         let new_frame = {
           env = f.env;
-          proof_name = f.proof_name;
-          proof_prop = f.proof_prop;
-          goals = (Assumption {name; t}::ctx, substitute t' x (Symbol name)) :: tl;
+          proof_name  = f.proof_name;
+          proof_prop  = f.proof_prop;
+          goals       = (Assumption {name; t}::ctx, substitute t' x (Symbol name)) :: tl;
+          lean_goals  = []
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
@@ -454,10 +461,11 @@ and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
     TacticError (Printf.sprintf "The index %d is out of range." i)
   else
     Success (ProofFrame {
-      env = f.env;
-      proof_name = f.proof_name;
-      proof_prop = f.proof_prop;
-      goals = move_to_front f.goals i;
+      env         = f.env;
+      proof_name  = f.proof_name;
+      proof_prop  = f.proof_prop;
+      goals       = move_to_front f.goals i;
+      lean_goals  = []
     })
 
 and eval_tac_split (f: proof_frame) : tactic_result =
@@ -473,10 +481,11 @@ and eval_tac_split (f: proof_frame) : tactic_result =
           type_check wfctx t2 (Symbol _type) with
         | Type _, Type _ ->
           let new_frame = {
-            env = f.env;
-            proof_name = f.proof_name;
-            proof_prop = f.proof_prop;
-            goals = (ctx, t1) :: (ctx, t2) :: tl;
+            env         = f.env;
+            proof_name  = f.proof_name;
+            proof_prop  = f.proof_prop;
+            goals       = (ctx, t1) :: (ctx, t2) :: tl;
+            lean_goals  = []
           }
           in 
           Success (ProofFrame new_frame)
@@ -503,9 +512,10 @@ and eval_tac_simpl (f: proof_frame) : tactic_result =
       let new_goal = simpl typing (get_pf_wfctx f) hd in
       let new_frame = {
         env = f.env;
-        proof_name = f.proof_name;
-        proof_prop = f.proof_prop;
-        goals = (ctx, new_goal) :: ls;
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = (ctx, new_goal) :: ls;
+        lean_goals  = [];
       } in
       Success (ProofFrame new_frame)
 
@@ -602,6 +612,7 @@ and eval_tac_R_SEQ (f: proof_frame) (n1: int) (n2: int) (t : terms): tactic_resu
             proof_name = f.proof_name;
             proof_prop = f.proof_prop;
             goals = (ctx, new_goal1) :: (ctx, new_goal2) :: tl;
+            lean_goals  = [];
           } in
           Success (ProofFrame new_frame)
 
@@ -657,6 +668,7 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
               proof_name = f.proof_name;
               proof_prop = f.proof_prop;
               goals = (ctx, goal) :: tl;
+              lean_goals  = [];
             }
             in 
             Success (ProofFrame new_frame)
@@ -811,10 +823,11 @@ and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
               match cq_entailment_destruct hd with
               | Some p -> 
                 let new_frame = {
-                  env = f.env;
-                  proof_name = f.proof_name;
-                  proof_prop = f.proof_prop;
-                  goals = (ctx, p) :: tl;
+                  env         = f.env;
+                  proof_name  = f.proof_name;
+                  proof_prop  = f.proof_prop;
+                  goals       = (ctx, p) :: tl;
+                  lean_goals  = [];
                 } in
                 Success (ProofFrame new_frame)
               | None -> TacticError "cq_entail tactic cannot apply here. cq-projector are not in normal form."
@@ -835,10 +848,11 @@ and eval_tac_DIRAC (f: proof_frame) : tactic_result =
     in
     let new_goal = dirac_simpl typing (get_pf_wfctx f) hd in
     let new_frame = {
-      env = f.env;
-      proof_name = f.proof_name;
-      proof_prop = f.proof_prop;
-      goals = (ctx, new_goal) :: tl;
+      env         = f.env;
+      proof_name  = f.proof_name;
+      proof_prop  = f.proof_prop;
+      goals       = (ctx, new_goal) :: tl;
+      lean_goals  = [];
     } in
     Success (ProofFrame new_frame)
       

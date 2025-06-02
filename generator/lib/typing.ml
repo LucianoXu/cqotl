@@ -2,8 +2,6 @@ open Ast
 open Pretty_printer
 open Utils
 
-
-
 (* QVList Calculation *)
 type termls_result =
   | TermList of terms list
@@ -23,8 +21,6 @@ let rec get_qvlist (qreg : terms) : termls_result =
       | _, TermError msg -> TermError msg
     )
   | _ -> TermError "Cannot calculate the quantum variable list for the given term."
-
-
 
 (* return a fresh name for the context *)
 let fresh_name_for_ctx (ctx: wf_ctx) (prefix : string): string =
@@ -893,4 +889,3 @@ and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   | Type t' -> 
       TypeError (Printf.sprintf "The term %s is not typed as CTerm, but %s." (term2str s) (term2str t'))
   | TypeError msg -> TypeError msg
-  
