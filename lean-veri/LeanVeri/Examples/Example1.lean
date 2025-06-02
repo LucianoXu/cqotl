@@ -54,7 +54,7 @@ lemma obligation1 : @InfValPred.LoewnerOrder 𝕜 𝕜² _ _ _ _ A2 A1 := by
     apply Subtype.mk_le_mk.mpr
     rw [← sub_nonneg, ← map_sub]
     apply le_of_eq
-    rw [← @RCLike.zero_re' 𝕜]
+    rw [← @RCLike.zero_re 𝕜]
     apply (RCLike.ext_iff.mp _).left
     symm
     obtain ⟨c, hc⟩ := exist_smul_ketP_of_inner_ketbraM_eq_zero x h1
@@ -102,7 +102,7 @@ lemma obligation2 : @InfValPred.LoewnerOrder 𝕜 𝕜² _ _ _ _ A3 A1 := by
     apply Subtype.mk_le_mk.mpr
     rw [← sub_nonneg, ← map_sub]
     apply le_of_eq
-    rw [← @RCLike.zero_re' 𝕜]
+    rw [← @RCLike.zero_re 𝕜]
     apply (RCLike.ext_iff.mp _).left
     symm
     obtain ⟨c, hc⟩ := exist_smul_ketP_of_inner_ketbraM_eq_zero x h1

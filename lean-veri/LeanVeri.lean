@@ -4,8 +4,6 @@ import LeanVeri.Examples.Example1
 import LeanVeri.InfValPred
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
-import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties
 import LeanVeri.Sum
-import LeanVeri.Trace

@@ -132,7 +132,7 @@ lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite' {c : 𝕜} (hc
     · simp only [RCLike.ofReal_im, c']
       exact RCLike.conj_eq_iff_im.mp hstarc
   have hc' : 0 ≤ c' := by
-    rw [← @RCLike.zero_re' 𝕜]
+    rw [← @RCLike.zero_re 𝕜]
     exact (RCLike.le_iff_re_im.mp hc).left
   rw [hcc']
   exact isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite hT hc'
@@ -320,7 +320,7 @@ theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[�
   · intro hx
     have hx' : RCLike.re (inner 𝕜 (T x) x) = 0 := by
       rw [hx]
-      exact RCLike.zero_re'
+      exact RCLike.zero_re
     exact (re_inner_app_eq_zero_iff_app_eq_zero hT x).mp hx'
   · intro hx
     rw [hx]

@@ -3,8 +3,8 @@ Copyright (c) 2025 Jam Kabeer Ali Khan, Iván Renison. All rights reserved.
 Authors: Iván Renison, Jam Kabeer Ali Khan
 -/
 
-import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
+import Mathlib.Analysis.InnerProductSpace.Projection
 
 /-!
 This file formalizes the basic properties of the quantum computing

@@ -2,8 +2,8 @@
 Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
-import LeanVeri.Projection
 import LeanVeri.LinearMapPropositions
+import Mathlib.Analysis.InnerProductSpace.Projection
 
 /-!
 There is a one to one correspondence between the projection operators and the subspaces.
