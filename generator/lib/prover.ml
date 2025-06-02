@@ -132,7 +132,7 @@ let leangoals2str (f: proof_frame): string =
   match f.lean_goals with
   | [] -> "NO LEAN4 Goals.\n"
   | _ ->
-    let total = List.length f.goals in
+    let total = List.length f.lean_goals in
     let goals_str = List.mapi 
       (fun i (_, p) -> Printf.sprintf "(%d/%d) %s" (i + 1) total (term2str p))
       f.lean_goals
