@@ -1,3 +1,4 @@
+
 type command =
   | Def of {x : string; t : terms; e : terms}
   | DefWithoutType of {x : string; e : terms}
@@ -15,19 +16,26 @@ type command =
 
 and tactic =
   | Sorry
+  | Refl
+  | Destruct of string
   | Intro of string
   | Choose of int
   | Split
   | ByLean
   | Simpl
+  | Rewrite_L2R of terms
+  | Rewrite_R2L of terms
 
   | R_SKIP
-  | R_SEQ of int * terms
+  | R_SEQ of int * int * terms
   | R_INITQ
+  | R_UNITARY
+  | R_MEAS_SAMPLE of bool
 
+  | JUDGE_SWAP
   | CQ_ENTAIL
-  (* This tactic will fix a global quantum register order and try to transform all labelled Dirac notation into plain Dirac notation for the current goal. *)
-  | DELABEL
+  | DIRAC
+  | SIMPL_ENTAIL
 
 and terms = 
   | Symbol of string
@@ -40,12 +48,12 @@ let _forall = "FORALL"
 let _fun    = "FUN"
 let _apply  = "APPLY"
 
-let _ctype  = "CTYPE"
-let _cvar   = "CVAR"
-let _cterm  = "CTERM"
-let _set    = "SET"
-let _bit    = "BIT"
-
+let _ctype = "CTYPE"
+let _cvar = "CVAR"
+let _cterm = "CTERM"
+let _pdist = "PDIST"  (* Probability distribution. *)
+let _set = "SET"
+let _bit = "BIT"
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
 let _qreg   = "QREG"
@@ -73,6 +81,7 @@ let _zeroo = "ZEROO"
 let _oneo = "ONEO"
 let _plus = "PLUS"
 let _sum = "SUM"
+let _tr = "tr"
 
 let _uset = "USET"
 
@@ -85,6 +94,8 @@ let _wedge = "WEDGE"
 let _vee = "VEE"
 let _not = "NOT"
 let _imply = "IMPLY"
+
+let _atat = "ATAT"
 
 let _guarded = "GUARDED"
 
@@ -101,6 +112,7 @@ let _if = "IF"
 let _while = "WHILE"
 
 let _eq = "EQ"
+let _inspace = "INSPACE"
 let _entailment = "ENTAILMENT"
 let _judgement = "JUDGEMENT"
 
@@ -112,6 +124,8 @@ let reserved_symbols = [
   _ctype;
   _cvar;
   _cterm;
+  _pdist;
+  _set;
   _bit;
 
   _qvlist;
@@ -136,6 +150,7 @@ let reserved_symbols = [
   _oneo;
   _plus;
   _sum;
+  _tr;
 
   _subscript;
 
@@ -148,6 +163,8 @@ let reserved_symbols = [
   _vee;
   _not;
   _imply;
+
+  _atat;
 
   _vbar;
 
@@ -162,6 +179,7 @@ let reserved_symbols = [
   _while;
   
   _eq;
+  _inspace;
   _entailment;
   _judgement;]
 
@@ -183,6 +201,16 @@ let rec substitute (t : terms) (x: string) (v: terms) : terms =
       let args' = List.map (fun arg -> substitute arg x v) args in
       Fun {head; args = args'}
 
+  | Opaque -> Opaque
+
+(** Replace a subterm in the term t. *)
+let rec replace (t : terms) (from_: terms) (to_: terms) : terms =
+  if t = from_ then to_ else
+  match t with
+  | Symbol _ -> t
+  | Fun {head; args} ->
+      let args' = List.map (fun arg -> replace arg from_ to_) args in
+      Fun {head; args = args'}
   | Opaque -> Opaque
 
 (*************************************)
@@ -222,3 +250,14 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
+
+
+type envItem =
+  | Assumption of {name: string; t: terms}
+  | Definition of {name: string; t: terms; e: terms}
+
+(* The well-formed environment and context *)
+type wf_ctx = {
+  env: envItem list; 
+  ctx: envItem list
+}
