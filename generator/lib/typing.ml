@@ -447,19 +447,79 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
+  (* star *)
+  | Fun {head; args=[t1; t2]} when head = _star ->
+    begin
+      match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 ->
+        begin
+          match type_t1, type_t2 with
+          (* product of ctype *)
+          | Symbol v1, Symbol v2 when v1 = _ctype && v2 = _ctype ->
+            Type (Symbol _ctype)
+
+          (* tensor product - otype *)
+          | Fun {head=head1; args=[t1; t2]}, Fun {head=head2; args=[t1'; t2']} when
+            head1 = _otype && head2 = _otype ->
+              Type (Fun {head=_otype; args=[
+                Fun {head=_star; args=[t1; t1']}; 
+                Fun {head=_star; args=[t2; t2']}
+              ]})
+
+          (* tensor product - ktype *)
+          | Fun {head=head1; args=[t1]}, Fun {head=head2; args=[t1']} when
+            head1 = _ktype && head2 = _ktype ->
+              Type (Fun {head=_ktype; args=[
+                Fun {head=_star; args=[t1; t1']}
+              ]})
+          
+          (* tensor product - btype *)
+          | Fun {head=head1; args=[t1]}, Fun {head=head2; args=[t1']} when
+            head1 = _btype && head2 = _btype ->
+              Type (Fun {head=_btype; args=[
+                Fun {head=_star; args=[t1; t1']}
+              ]})
+
+          (* tensor product - dtype *)
+          | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]}, Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when
+            head1 = _dtype && head2 = _dtype ->
+              (* Check the disjointness of symbols *)
+              if list_disjoint s1 s1' && list_disjoint s2 s2' then
+                Type (Fun {head=_dtype; args=[
+                  Fun{head=_list; args=s1 @ s1'};
+                  Fun{head=_list; args=s2 @ s2'};
+                ]})
+              else
+                TypeError (Printf.sprintf "%s typing failed. Quantum register list disjointness not satisfied." (term2str s))
+
+          | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+        end
+      | _ -> 
+        TypeError (Printf.sprintf "%s typing failed. %s and %s are not well typed." (term2str s) (term2str t1) (term2str t2))
+    end
 
   (* pair *)
   | Fun {head; args=[t1; t2]} when head = _pair ->
     begin
-      match calc_type wfctx t1, calc_type wfctx t2 with
-      (* operator pair *)
-      | Type (Fun {head=head1; args=[tt1; tt2]}), Type (Fun {head=head2; args=[tt1'; tt2']}) when head1 = _otype && head2 = _otype && tt1 = tt2 && tt1' = tt2' && tt1 = tt1'->
-        Type (Fun {head=_optpair; args=[tt1]})
+      match is_cterm wfctx t1, is_cterm wfctx t2 with
+      (* classical item pair *)
+      | Type (Fun {args=[tt1]; _}), Type (Fun {args=[tt2]; _}) ->
+        Type (Fun {head=_cterm; args=[Fun {head=_star; args=[tt1; tt2]}]})
+      | _ ->
+        match calc_type wfctx t1, calc_type wfctx t2 with
 
-      | Type (Fun {head=head1; _}), Type (Fun {head=head2; _}) when head1 = _otype && head2 = _otype ->
-        TypeError (Printf.sprintf "%s typing failed. %s and %s are not square operators of the same type." (term2str s) (term2str t1) (term2str t2))
+        (* operator pair *)
+        | Type (Fun {head=head1; args=[tt1; tt2]}), Type (Fun {head=head2; args=[tt1'; tt2']}) when head1 = _otype && head2 = _otype && tt1 = tt2 && tt1' = tt2' && tt1 = tt1'->
+          Type (Fun {head=_optpair; args=[tt1]})
 
-      | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as OType." (term2str s) (term2str t1) (term2str t2))
+        | Type (Fun {head=head1; _}), Type (Fun {head=head2; _}) when head1 = _otype && head2 = _otype ->
+          TypeError (Printf.sprintf "%s typing failed. %s and %s are not square operators of the same type." (term2str s) (term2str t1) (term2str t2))
+
+        (* QReg pair *)
+        | Type (Fun {head=head1; args=[tt1]}), Type (Fun {head=head2; args=[tt2]}) when head1 = _qreg && head2 = _qreg ->
+          Type (Fun {head=_qreg; args=[Fun{head=_star; args=[tt1; tt2]}]})
+
+        | _ -> TypeError (Printf.sprintf "%s typing failed. %s and %s are not typed as OType." (term2str s) (term2str t1) (term2str t2))
     end
 
   (* list of qreg *)
@@ -665,6 +725,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           (* cq-projector conjunction *)
           | _ when type_t1 = Symbol _cqproj && type_t2 = Symbol _cqproj ->
               Type (Symbol _cqproj) 
+
+
+          (* otype projector conjunction *)
+          | Fun {head=head1; _}, _ when head1 = _otype && type_t1 = type_t2 ->
+            Type type_t1
+            
+          (* dtype projector conjunction *)
+          | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]},
+            Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when head1 = _dtype && head2 = _dtype && s1 = s2 && s1' = s2' ->
+              let new_s1 = list_union s1 s1' in
+              let new_s2 = list_union s2 s2' in 
+              Type (Fun{head=_dtype; 
+                args=[
+                  Fun{head=_list; args=new_s1};
+                  Fun{head=_list; args=new_s2}]
+              })
+              
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
@@ -679,7 +756,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
         begin
           if type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && type_t2 = type_t1 then
             Type (Fun {head=_cterm; args=[Symbol _bit]})
-          else
+          else match type_t1, type_t2 with
+
+          (* otype projector conjunction *)
+          | Fun {head=head1; _}, _ when head1 = _otype && type_t1 = type_t2 ->
+            Type type_t1
+
+          (* dtype projector conjunction *)
+          | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]},
+            Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when head1 = _dtype && head2 = _dtype && s1 = s2 && s1' = s2' ->
+              let new_s1 = list_union s1 s1' in
+              let new_s2 = list_union s2 s2' in 
+              Type (Fun{head=_dtype; 
+                args=[
+                  Fun{head=_list; args=new_s1};
+                  Fun{head=_list; args=new_s2}]
+              })
+          | _ ->
             TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
