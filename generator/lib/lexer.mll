@@ -76,6 +76,7 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "expand"                      { EXPAND }
     | "refl"                        { REFL }
     | "destruct"                    { DESTRUCT }
     | "intro"                       { INTRO }

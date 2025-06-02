@@ -13,7 +13,7 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
+%token SORRY EXPAND REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
 %token R_SKIP R_SEQ R_INITQ R_UNITARY R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
 %token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
 
@@ -43,9 +43,9 @@
 %nonassoc TILDE LBRACE RBRACE
 %nonassoc SEMICOLON
 %nonassoc SKIP ASSIGN RNDARROW INIT UNITARY_PROG MEAS IF WHILE
-%left STAR
 %nonassoc EQEQ
 %left PLUS
+%left STAR
 %left AT ATAT
 %nonassoc ADJ
 %nonassoc UNDERSCORE
@@ -92,6 +92,7 @@ command:
 
 tactic:
   | SORRY PERIOD { Sorry }
+  | EXPAND v = ID PERIOD { Expand v }
   | REFL PERIOD { Refl }
   | DESTRUCT v = ID PERIOD { Destruct v }
   | INTRO v = ID PERIOD { Intro v}
@@ -128,6 +129,9 @@ terms:
   | FORALL LPAREN x = ID COLON t1 = terms RPAREN COMMA t2 = terms { Fun {head=_forall; args=[Symbol x; t1; t2]} }
   | FUN LPAREN x = ID COLON t = terms RPAREN DARROW e = terms { Fun {head=_fun; args=[Symbol x; t; e]} }
   | f = terms AT t = terms { Fun {head=_apply; args=[f; t]} }
+
+  (* star *)
+  | t1 = terms STAR t2 = terms { Fun {head=_star; args=[t1; t2]} }
 
   (* pair *)
   | LPAREN t1 = terms COMMA t2 = terms RPAREN { Fun {head=_pair; args=[t1; t2]} }
