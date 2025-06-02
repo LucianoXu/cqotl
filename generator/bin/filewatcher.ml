@@ -1,6 +1,4 @@
 open Unix
-(* open Cqotl_vgc.Ast *)
-(* open Cqotl_vgc.Pretty_printer *)
 open Cqotl_vgc.Parser_utils
 open Cqotl_vgc.Prover
 

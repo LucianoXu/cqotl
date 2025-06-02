@@ -105,9 +105,6 @@ let rwrule2str (r: rewriting_rule) : string =
         (List.map (fun (x, t) -> Printf.sprintf "%s : %s" (term2str x) (term2str t)) typings)
     |> String.concat ", " in
     Printf.sprintf "%s |- %s --> %s" typings_str (term2str lhs) (term2str rhs)
-      
-  
-
 
 let rec term_fresh_name (boundvars: string list) (t: terms) : terms =
     match t with
