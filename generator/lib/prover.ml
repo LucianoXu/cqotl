@@ -64,7 +64,7 @@ let discharge_first_goal (f: proof_frame) : proof_frame =
         proof_name  = f.proof_name;
         proof_prop  = f.proof_prop;
         goals       = tl;
-        lean_goals  = [];
+        lean_goals  = f.lean_goals;
       } in
       new_frame
 
@@ -75,7 +75,7 @@ let add_goal (f: proof_frame) (goal: terms) : proof_frame =
         proof_name  = f.proof_name;
         proof_prop  = f.proof_prop;
         goals       = ([], goal)::f.goals;
-        lean_goals  = []
+        lean_goals  = f.lean_goals
       } in
   new_frame
 
@@ -135,11 +135,10 @@ let leangoals2str (f: proof_frame): string =
     let total = List.length f.goals in
     let goals_str = List.mapi 
       (fun i (_, p) -> Printf.sprintf "(%d/%d) %s" (i + 1) total (term2str p))
-      f.goals
+      f.lean_goals
     in
     String.concat "\n\n" goals_str
-    |> Printf.sprintf "[Goals]\n\n%s\n"
-    
+
 (* The whole information about the frame *)
 let frame2str (f: frame): string =
   match f with
@@ -352,29 +351,26 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         let tac_res = 
         begin
           match tac with
-          | Sorry -> eval_tac_sorry proof_f
-          | Expand v -> eval_tac_expand proof_f v
-          | Refl -> eval_tac_refl proof_f
-          | Destruct v -> eval_tac_destruct proof_f v
-          | Intro v -> eval_tac_intro proof_f v
-          | Choose i -> eval_tac_choose proof_f i
-          | Split -> eval_tac_split proof_f
-          | ByLean -> eval_tac_by_lean proof_f
-          | Simpl -> eval_tac_simpl proof_f
+          | Sorry         -> eval_tac_sorry proof_f
+          | Expand v      -> eval_tac_expand proof_f v
+          | Refl          -> eval_tac_refl proof_f
+          | Destruct v    -> eval_tac_destruct proof_f v
+          | Intro v       -> eval_tac_intro proof_f v
+          | Choose i      -> eval_tac_choose proof_f i
+          | Split         -> eval_tac_split proof_f
+          | ByLean        -> eval_tac_by_lean proof_f
+          | Simpl         -> eval_tac_simpl proof_f
           | Rewrite_L2R t -> eval_tac_rewrite proof_f t true
           | Rewrite_R2L t -> eval_tac_rewrite proof_f t false
-
-
-          | R_SKIP -> eval_tac_R_SKIP proof_f
+          | R_SKIP        -> eval_tac_R_SKIP proof_f
           | R_SEQ (n1, n2, t) -> eval_tac_R_SEQ proof_f n1 n2 t
-          | R_INITQ -> eval_tac_R_INITQ proof_f
-          | R_UNITARY -> eval_tac_R_UNITARY proof_f
+          | R_INITQ       -> eval_tac_R_INITQ proof_f
+          | R_UNITARY     -> eval_tac_R_UNITARY proof_f
           | R_MEAS_SAMPLE switch -> eval_tac_R_MEAS_SAMPLE proof_f switch
-
-          | JUDGE_SWAP -> eval_tac_JUDGE_SWAP proof_f
-          | CQ_ENTAIL -> eval_tac_CQ_ENTAIL proof_f
-          | DIRAC -> eval_tac_DIRAC proof_f
-          | SIMPL_ENTAIL -> eval_tac_SIMPL_ENTAIL proof_f
+          | JUDGE_SWAP    -> eval_tac_JUDGE_SWAP proof_f
+          | CQ_ENTAIL     -> eval_tac_CQ_ENTAIL proof_f
+          | DIRAC         -> eval_tac_DIRAC proof_f
+          | SIMPL_ENTAIL  -> eval_tac_SIMPL_ENTAIL proof_f
 
           (*
           | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f *)
@@ -446,7 +442,7 @@ and eval_tac_destruct (f: proof_frame) (v: string) : tactic_result =
                   proof_name = f.proof_name;
                   proof_prop = f.proof_prop;
                   goals = tl;
-                  lean_goals = [];
+                  lean_goals = f.lean_goals;
                 } in
                 Success (ProofFrame new_frame)
             else
@@ -471,7 +467,7 @@ and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
           proof_name  = f.proof_name;
           proof_prop  = f.proof_prop;
           goals       = (Assumption {name; t}::ctx, substitute t' x (Symbol name)) :: tl;
-          lean_goals  = []
+          lean_goals  = f.lean_goals
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
@@ -485,7 +481,7 @@ and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
       proof_name  = f.proof_name;
       proof_prop  = f.proof_prop;
       goals       = move_to_front f.goals i;
-      lean_goals  = []
+      lean_goals  = f.lean_goals
     })
 
 and eval_tac_split (f: proof_frame) : tactic_result =
@@ -505,7 +501,7 @@ and eval_tac_split (f: proof_frame) : tactic_result =
             proof_name  = f.proof_name;
             proof_prop  = f.proof_prop;
             goals       = (ctx, t1) :: (ctx, t2) :: tl;
-            lean_goals  = []
+            lean_goals  = f.lean_goals
           }
           in 
           Success (ProofFrame new_frame)
@@ -514,10 +510,32 @@ and eval_tac_split (f: proof_frame) : tactic_result =
     | _ -> TacticError "split tactic cannot apply here."
 
 and eval_tac_by_lean (f: proof_frame) : tactic_result =
-  (*** IMPLEMENT THE CODE TO GET LEAN CODE FOR THE FIRST GOAL FROM THE proof_frame *)
+  match f.goals with
+  | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
+  | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
+      let new_frame = {
+            env         = f.env;
+            proof_name  = f.proof_name;
+            proof_prop  = f.proof_prop;
+            goals       = rest_goals;
+            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
+          } 
+      in  let () = Printf.printf "------- Lean obligations updated --------" 
+      in  Success (ProofFrame new_frame)
+    
+    (*
+    and eval_tac_sorry (f: proof_frame) : tactic_result =
+      match f.goals with
+      | [] -> TacticError "Nothing to prove."
+      | _ :: _ ->
+          (* Add the proof to the frame. *)
+          let new_frame = discharge_first_goal f in
+          Success (ProofFrame new_frame)
+      
+    match goal_to_lean_ast wfctx ctx 
   let output_code = frame2str (ProofFrame f) in
-  Printf.printf "Lean code:\n%s\n" output_code;
-  eval_tac_sorry f
+  Printf.printf "Lean code (Hello World):\n%s\n" output_code;
+  eval_tac_sorry f *)
 
 and eval_tac_simpl (f: proof_frame) : tactic_result =
   match f.goals with
@@ -535,7 +553,7 @@ and eval_tac_simpl (f: proof_frame) : tactic_result =
         proof_name  = f.proof_name;
         proof_prop  = f.proof_prop;
         goals       = (ctx, new_goal) :: ls;
-        lean_goals  = [];
+        lean_goals  = f.lean_goals;
       } in
       Success (ProofFrame new_frame)
 
@@ -558,7 +576,7 @@ and eval_tac_rewrite (f: proof_frame) (t: terms) (l2r: bool) : tactic_result =
           proof_name  = f.proof_name;
           proof_prop  = f.proof_prop;
           goals       = (ctx, new_goal) :: ls;
-          lean_goals  = []
+          lean_goals  = f.lean_goals
         } in
         Success (ProofFrame new_frame)
         
@@ -633,7 +651,7 @@ and eval_tac_R_SEQ (f: proof_frame) (n1: int) (n2: int) (t : terms): tactic_resu
             proof_name = f.proof_name;
             proof_prop = f.proof_prop;
             goals = (ctx, new_goal1) :: (ctx, new_goal2) :: tl;
-            lean_goals  = [];
+            lean_goals  = f.lean_goals;
           } in
           Success (ProofFrame new_frame)
 
@@ -689,7 +707,7 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
               proof_name = f.proof_name;
               proof_prop = f.proof_prop;
               goals = (ctx, goal) :: tl;
-              lean_goals  = [];
+              lean_goals  = f.lean_goals;
             }
             in 
             Success (ProofFrame new_frame)
@@ -748,7 +766,7 @@ match f.goals with
             proof_name  = f.proof_name;
             proof_prop  = f.proof_prop;
             goals       = (ctx, goal) :: tl;
-            lean_goals  = []
+            lean_goals  = f.lean_goals
           }
           in 
           Success (ProofFrame new_frame)
@@ -802,7 +820,7 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
               goals       = (ctx, goal_vee_bj) :: 
                             (ctx, goal_trace) :: 
                             (ctx, goal_proj) :: tl;
-              lean_goals = []
+              lean_goals = f.lean_goals
             } in
             Success (ProofFrame new_frame)
           | _ -> TacticError (Printf.sprintf "Format matching failed.")
@@ -824,7 +842,7 @@ and eval_tac_JUDGE_SWAP (f: proof_frame) : tactic_result =
           proof_name  = f.proof_name;
           proof_prop  = f.proof_prop;
           goals       = (ctx, new_goal) :: tl;
-          lean_goals  = []
+          lean_goals  = f.lean_goals
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
@@ -851,7 +869,7 @@ and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =
                   proof_name  = f.proof_name;
                   proof_prop  = f.proof_prop;
                   goals       = (ctx, p) :: tl;
-                  lean_goals  = [];
+                  lean_goals  = f.lean_goals;
                 } in
                 Success (ProofFrame new_frame)
               | None -> TacticError "cq_entail tactic cannot apply here. cq-projector are not in normal form."
@@ -876,7 +894,7 @@ and eval_tac_DIRAC (f: proof_frame) : tactic_result =
       proof_name  = f.proof_name;
       proof_prop  = f.proof_prop;
       goals       = (ctx, new_goal) :: tl;
-      lean_goals  = [];
+      lean_goals  = f.lean_goals;
     } in
     Success (ProofFrame new_frame)
       
@@ -896,7 +914,7 @@ and eval_tac_SIMPL_ENTAIL (f: proof_frame) : tactic_result =
       proof_name  = f.proof_name;
       proof_prop  = f.proof_prop;
       goals       = (ctx, new_goal) :: tl;
-      lean_goals  = []
+      lean_goals  = f.lean_goals
     } in
     Success (ProofFrame new_frame)
 

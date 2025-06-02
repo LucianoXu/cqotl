@@ -16,11 +16,9 @@ Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
-    
     sorry.
     (* by_lean. *)
     (* Pause. *)
-
 QED.
 
 Var P : ASSN.
@@ -29,9 +27,9 @@ Var R : ASSN.
 Var s1 : PROG.
 Var s2 : PROG.
 
-Var M   : OPTPAIR[T].
-Var qs  : QREG[T].
-Var b   : CVAR[BIT].
+Var M : OPTPAIR[T].
+Var qs : QREG[T].
+Var b : CVAR[BIT].
 
 Check b := meas M qs. 
 
@@ -46,9 +44,6 @@ Var vplus : KTYPE[BIT].
 
 Var P0 : OTYPE[BIT, BIT].
 Var P1 : OTYPE[BIT, BIT].
-(* Var q : QREG[BIT].
-Var b1 : CVAR[BIT].
-Var b2 : CVAR[BIT]. *)
 
 (* The uniform distribution on bit. *)
 Var miu : PDIST[BIT].
@@ -64,11 +59,9 @@ Prove Pf1 :
         unitary H q; 
         b2 := meas (P0, P1) q; 
     {~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)}.
-
-
+    
     intro b1. intro b2. intro q.
 
-    
     r_seq -2 -2 true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
 
     r_initq.
@@ -83,10 +76,12 @@ Prove Pf1 :
     r_unitary. dirac. simpl_entail. split.
 
         cq_entail. intro H. rewrite H0. simpl. simpl_entail. 
-
+        (* Pause. *)
         by_lean.
-
+        (* Pause. *)
+        
         refl.
+        (* Pause. *)
 
     judge_swap.
     r_meas_sample id.
@@ -95,17 +90,19 @@ Prove Pf1 :
     
         split.
             intro H.
-                (* A problem here. We don't have types for density operators yet. *)
-                dirac. by_lean.
+            (* A problem here. We don't have types for density operators yet. *)
+            dirac. by_lean.
             intro H. dirac. by_lean.
-
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
+            
+            Pause.
 
 QED.
 
 Pause.
+
 
 Def SWAP := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
 

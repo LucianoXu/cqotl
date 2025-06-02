@@ -18,9 +18,9 @@ and tactic =
   | Sorry
   | Expand of string
   | Refl
-  | Destruct of string
-  | Intro of string
-  | Choose of int
+  | Destruct  of string
+  | Intro     of string
+  | Choose    of int
   | Split
   | ByLean
   | Simpl

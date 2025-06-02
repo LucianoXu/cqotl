@@ -44,14 +44,11 @@ and tactic2str (t: tactic) : string =
   | Simpl -> "simpl."
   | Rewrite_L2R e -> Printf.sprintf "rewrite %s." (term2str e)
   | Rewrite_R2L e -> Printf.sprintf "rewrite <- %s." (term2str e)
-
   | R_SKIP -> "r_skip."
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
-  | R_INITQ -> "r_initq."
-  | R_UNITARY -> "r_unitary."
+  | R_INITQ         -> "r_initq."
+  | R_UNITARY       -> "r_unitary."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
-
-
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
@@ -59,7 +56,6 @@ and tactic2str (t: tactic) : string =
 
 and term2str (e: terms) : string =
     match e with
-
     (* special case, nondependent forall is printed as arrow *)
     | Fun {head; args=[Symbol x; t; t']} when head = _forall && not (List.mem x (get_symbols t')) ->
         Printf.sprintf "(%s -> %s)" (term2str t) (term2str t')
@@ -83,7 +79,6 @@ and term2str (e: terms) : string =
     | Fun {head; args=tls} when head = _list ->
         let args_str = List.map term2str tls |> String.concat ", " in
         Printf.sprintf "[%s]" args_str
-
 
     (* dirac notation *)
     | Fun {head; args =[t]} when head = _ket ->
@@ -125,11 +120,8 @@ and term2str (e: terms) : string =
     | Fun {head; args=[t1; t2]} when head = _atat ->
         Printf.sprintf "(%s @@ %s)" (term2str t1) (term2str t2)
 
-
     | Fun {head; args=[t1; t2]} when head = _vbar ->
         Printf.sprintf "(%s | %s)" (term2str t1) (term2str t2)
-
-
 
     | Fun {head; args=[t1; t2]} when head = _eq ->
         Printf.sprintf "(%s = %s)" (term2str t1) (term2str t2)
@@ -140,7 +132,6 @@ and term2str (e: terms) : string =
     | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
         Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
           (term2str pre) (term2str s1) (term2str s2) (term2str post)
-
 
     (* program statements *)
     | Symbol x when x = _skip ->
@@ -172,7 +163,6 @@ and term2str (e: terms) : string =
     | Fun {head; args} when head = _seq ->
         let args_str = List.map term2str args |> String.concat ";\n" in
         Printf.sprintf "%s;" args_str
-
 
     | Symbol x -> 
         Printf.sprintf "%s" x
