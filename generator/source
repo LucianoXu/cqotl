@@ -16,32 +16,24 @@ Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
-    
+
+    (* Pause. *)
+    (* simpl. *)
     sorry.
     (* by_lean. *)
     (* Pause. *)
 
 QED.
 
+Var P : ASSN.
+Var Q : ASSN.
+Var R : ASSN.
+Var s1 : PROG.
+Var s2 : PROG.
 
-Prove ex1 : (|false> @ <false|) + (|true> @ <true|) = 1O[BIT].
-
-    by_lean.
-
-
-    generate_lean.
-    Pause.
-QED.
-
-Var P   : ASSN.
-Var Q   : ASSN.
-Var R   : ASSN.
-Var s1  : PROG.
-Var s2  : PROG.
-
-Var M   : OPTPAIR[T].
-Var qs  : QREG[T].
-Var b   : CVAR[BIT].
+Var M : OPTPAIR[T].
+Var qs : QREG[T].
+Var b : CVAR[BIT].
 
 Check b := meas M qs. 
 
@@ -83,6 +75,7 @@ Prove Pf2 :
 
     r_initq.
 
+    
         simpl_entail. split.
         
         cq_entail. intro H. simpl. dirac. simpl_entail. refl.
@@ -93,9 +86,10 @@ Prove Pf2 :
     r_unitary. dirac. simpl_entail. split.
 
         cq_entail. intro H. rewrite H0. simpl. simpl_entail. 
-
+        Pause.
         by_lean.
-
+        Pause.
+        
         refl.
 
     judge_swap.
@@ -105,11 +99,16 @@ Prove Pf2 :
     
         split.
             intro H.
-                (* Pause. *)
                 (* A problem here. We don't have types for density operators yet. *)
+                (* Pause. *)
                 by_lean.
-            intro H. by_lean.
-
+                (* Pause. *)
+                
+            intro H. 
+            Pause.
+            by_lean.
+            Pause.
+            
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
