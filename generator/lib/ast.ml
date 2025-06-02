@@ -1,102 +1,3 @@
-(* 
-
-and terms = 
-  | Var of string
-
-  | Forall of {x: string; t: terms; t': terms}
-  | Fun of {x: string; t: terms; e: terms}
-  | Apply of terms * terms
-
-  (* Forbid variables for these three types. *)
-  | Type
-  | Prop
-  | QVList
-  | OptPair of terms
-
-  | CType
-  | CVar of terms
-  | QReg of terms
-  | Prog
-  | CAssn
-  | QAssn
-  | CQAssn
-
-  | Bit
-  
-  | CTerm of terms
-  | SType
-  | OType of terms * terms
-  | DType of terms * terms
-
-  | Star of terms * terms
-  | At1 of string
-  | At2 of string
-
-  | Pair of terms * terms
-  | AnglePair of terms * terms
-  | QVListTerm of terms list     (* A set of (constant) quantum variable *)
-  | Subscript of terms * terms * terms
-
-  | BitTerm of bitterm
-
-  | OptTerm of opt
-  | CQAssnTerm of cqassn
-  | ProgTerm of stmt_seq
-  | PropTerm of props
-
-  | ProofTerm         (* the constant opaque proof term *)
-
-and bitterm =
-  | True 
-  | False
-  | Eq of {t1: terms; t2: terms}
-
-and opt =
-  | OneO of terms
-  | ZeroO of {t1: terms; t2: terms}
-  | Add of {o1: terms; o2: terms}
-  (* syntax for operators are omitted *)
-
-and cqassn =
-  | Fiber of {psi: terms; p: terms}
-  | Add of {cq1: terms; cq2: terms}
-  | UApply of {u: terms; cq: terms}
-
-
-
-
-and props =
-  | Unitary of terms
-  | Pos of terms
-  | Proj of terms
-  | Meas of terms
-  | Judgement of {
-    pre: terms;
-    s1 : terms;
-    s2 : terms;
-    post : terms;
-  } 
-  | Eq of {t1: terms; t2: terms}
-  | Leq of {t1: terms; t2: terms}
-
-
-let get_front_stmt (s: stmt_seq) : (stmt * stmt_seq) =
-  match s with
-  | SingleCmd s -> (s, SingleCmd Skip)
-  | (s1 :: s2) -> (s1, s2)
-
-let rec stmt_seq_concat (s1: stmt_seq) (s2: stmt_seq) : stmt_seq =
-  match s1 with
-  | SingleCmd s -> s :: s2
-  | (::) (hd, tl) -> hd :: (stmt_seq_concat tl s2)
-
-let rec get_back_stmt (s: stmt_seq) : (stmt * stmt_seq) =
-  match s with
-  | SingleCmd s -> (s, SingleCmd Skip)
-  | (s1 :: SingleCmd s2) -> (s2, SingleCmd s1)      
-  | (s1 :: s2) -> 
-      let (end_stmt, remain) = get_back_stmt s2 in
-      (end_stmt, s1 :: remain) *)
 
 type command =
   | Def of {x : string; t : terms; e : terms}
@@ -115,25 +16,26 @@ type command =
 
 and tactic =
   | Sorry
+  | Refl
+  | Destruct of string
   | Intro of string
   | Choose of int
   | Split
   | ByLean
   | Simpl
+  | Rewrite_L2R of terms
+  | Rewrite_R2L of terms
 
   | R_SKIP
-  | R_SEQ of int * terms
+  | R_SEQ of int * int * terms
   | R_INITQ
+  | R_UNITARY
+  | R_MEAS_SAMPLE of bool
 
+  | JUDGE_SWAP
   | CQ_ENTAIL
-  (* This tactic will fix a global quantum register order and try to transform all labelled Dirac notation into plain Dirac notation for the current goal. *)
-  | DELABEL
-
-  (* The two sided rules *)
-  (* | R_SKIP
-  | SEQ_FRONT of terms
-  | SEQ_BACK of terms
-  | R_UNITARY1 *)
+  | DIRAC
+  | SIMPL_ENTAIL
 
 
 and terms = 
@@ -153,6 +55,7 @@ let _apply = "APPLY"
 let _ctype = "CTYPE"
 let _cvar = "CVAR"
 let _cterm = "CTERM"
+let _pdist = "PDIST"  (* Probability distribution. *)
 let _set = "SET"
 let _bit = "BIT"
 
@@ -183,6 +86,7 @@ let _zeroo = "ZEROO"
 let _oneo = "ONEO"
 let _plus = "PLUS"
 let _sum = "SUM"
+let _tr = "tr"
 
 let _uset = "USET"
 
@@ -195,6 +99,8 @@ let _wedge = "WEDGE"
 let _vee = "VEE"
 let _not = "NOT"
 let _imply = "IMPLY"
+
+let _atat = "ATAT"
 
 let _guarded = "GUARDED"
 
@@ -226,6 +132,7 @@ let _if = "IF"
 let _while = "WHILE"
 
 let _eq = "EQ"
+let _inspace = "INSPACE"
 let _entailment = "ENTAILMENT"
 let _judgement = "JUDGEMENT"
 
@@ -237,6 +144,8 @@ let reserved_symbols = [
   _ctype;
   _cvar;
   _cterm;
+  _pdist;
+  _set;
   _bit;
 
   _qvlist;
@@ -261,6 +170,7 @@ let reserved_symbols = [
   _oneo;
   _plus;
   _sum;
+  _tr;
 
   _subscript;
 
@@ -273,6 +183,8 @@ let reserved_symbols = [
   _vee;
   _not;
   _imply;
+
+  _atat;
 
   _vbar;
 
@@ -287,6 +199,7 @@ let reserved_symbols = [
   _while;
   
   _eq;
+  _inspace;
   _entailment;
   _judgement;]
 
@@ -310,6 +223,15 @@ let rec substitute (t : terms) (x: string) (v: terms) : terms =
 
   | Opaque -> Opaque
 
+(** Replace a subterm in the term t. *)
+let rec replace (t : terms) (from_: terms) (to_: terms) : terms =
+  if t = from_ then to_ else
+  match t with
+  | Symbol _ -> t
+  | Fun {head; args} ->
+      let args' = List.map (fun arg -> replace arg from_ to_) args in
+      Fun {head; args = args'}
+  | Opaque -> Opaque
 
 
 (*************************************)
@@ -349,3 +271,14 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
+
+
+type envItem =
+  | Assumption of {name: string; t: terms}
+  | Definition of {name: string; t: terms; e: terms}
+
+(* The well-formed environment and context *)
+type wf_ctx = {
+  env: envItem list; 
+  ctx: envItem list
+}

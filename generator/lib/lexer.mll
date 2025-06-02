@@ -32,18 +32,16 @@ rule token = parse
     | "-->"                         { LONGARROW }
     | "->"                          { ARROW }
     | "=>"                          { DARROW }
-    | "@1"                          { AT1 }
-    | "@2"                          { AT2 }
     | ":"                           { COLON }
     | ","                           { COMMA }
     | "."                           { PERIOD }
     | "|->"                         { MAPSTO }
     | "|-"                          { VDASH }
-    | "+cq"                         { PLUSCQ }
     | "<-$"                         { RNDARROW }
+    | "<-"                          { LARROW }
     | ":="                          { ASSIGN }
-    | "*="                          { STARASSIGN }
-    | "|0>"                         { KET0 }
+    (* | "*="                          { STARASSIGN } *)
+    (* | "|0>"                         { KET0 } *)
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
@@ -57,6 +55,7 @@ rule token = parse
     | "("                           { LPAREN }
     | ")"                           { RPAREN }
     | "*"                           { STAR }
+    | "@@"                          { ATAT }
     | "@"                           { AT }
     | "|"                           { VBAR }
     | ">"                           { RANGLE }
@@ -78,20 +77,27 @@ rule token = parse
     
     (* Tactics *)
     | "sorry"                       { SORRY }
+    | "refl"                        { REFL }
+    | "destruct"                    { DESTRUCT }
     | "intro"                       { INTRO }
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
     | "simpl"                       { SIMPL }
+    | "rewrite"                     { REWRITE }
+
     | "r_skip"                      { R_SKIP }
     | "r_seq"                       { R_SEQ }
     | "r_initq"                     { R_INITQ }
+    | "r_unitary"                   { R_UNITARY }
+    | "r_meas_sample"               { R_MEAS_SAMPLE }
+    | "id"                          { SWITCH_ID }
+    | "swap"                        { SWITCH_SWAP }
     
+    | "judge_swap"                  { JUDGE_SWAP }
     | "cq_entail"                   { CQ_ENTAIL }
-    | "delabel"                     { DELABEL }
-    (* | "seq_front"                   { SEQ_FRONT }
-    | "seq_back"                    { SEQ_BACK }
-    | "r_unitary1"                  { R_UNITARY1 } *)
+    | "dirac"                       { DIRAC }
+    | "simpl_entail"                { SIMPL_ENTAIL }
 
 
     (* terms *)
@@ -112,50 +118,14 @@ rule token = parse
 
     | "0O"                          { ZEROO }
     | "1O"                          { ONEO }
-    (*
-
-    (* Types *)
-    | "Prop"                        { PROP }
-    | "QVList"                      { QVLIST }
-    | "OptPair"                     { OPTPAIR }
-    | "CType"                       { CTYPE }
-    | "CVar"                        { CVAR }
-    | "QReg"                        { QREG }
-    | "Prog"                        { PROG }
-    | "CAssn"                       { CASSN }
-    | "QAssn"                       { QASSN }
-    | "CQAssn"                      { CQASSN }
-
-    | "Bit"                         { BIT }
-
-    | "CTerm"                       { CTERM }
-    | "SType"                       { STYPE }
-    | "OType"                       { OTYPE }
-    | "DType"                       { DTYPE }
-
-
-    (* Assertions *)
-    | "true"                        { TRUE }
-    | "false"                       { FALSE }
-
-
-    (* Propositions *)
-    | "Unitary"                     { PROP_UNITARY }
-    | "Pos"                         { PROP_POS }
-    | "Proj"                        { PROP_PROJ }
-    | "Meas"                        { PROP_MEAS }
-    (* Judgement *)
-    (* eq = *)
-
-    *)
 
     | id as v                       { ID v }
     | eof                           { EOF }
 
-    | _                             { raise (Error ("Unexpected char: " ^ Lexing.lexeme lexbuf))}
+    | _                             { UNEXPECTED }
 
 and comment = parse
     | "*)"                     { () }  (* End of comment *)
-    | eof                      { raise (Error "Unterminated comment") }
+    | eof                      { () }
     | '\n'                     { newline lexbuf; comment lexbuf }
     | _                        { comment lexbuf }  (* Skip any other character *)

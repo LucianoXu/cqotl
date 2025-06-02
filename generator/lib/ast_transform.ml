@@ -111,28 +111,38 @@ let rwrule2str (r: rewriting_rule) : string =
   
 
 
+let rec term_fresh_name (boundvars: string list) (t: terms) : terms =
+    match t with
+    | Symbol x when is_var x && not (List.mem x boundvars) -> Symbol ("$" ^ x)  (* prepend '$' to variable names *)
+    | Symbol x -> Symbol x  (* keep other symbols unchanged *)
+    | Fun {head; args = [Symbol v; t; s]} when head = _forall || head = _fun ->
+        let fresh_t = term_fresh_name boundvars t in
+        let fresh_s = term_fresh_name (v::boundvars) s in
+        Fun {head; args = [Symbol v; fresh_t; fresh_s]}  (* keep the variable name, but prepend '$' *)
+    | Fun {head; args} ->
+        let args' = List.map (term_fresh_name boundvars) args in
+        Fun {head; args = args'}
+    | Opaque -> Opaque
+
+
+(** Apply the substitution. Modify the variable name so that they will never conflict with values in the substitution. *)
+let apply_subst_unique_var (s: subst) (t: terms) : terms =
+  let new_s = List.map (fun (x, v) -> ("$" ^ x, v)) s in
+  let new_t = term_fresh_name [] t in
+  apply_subst new_s new_t
 
 
 (** Add a '$' symbol before all variables of the rule *)
 let rwrule_fresh_name (rule: rewriting_rule) : rewriting_rule =
-  let rec aux t =
-    match t with
-    | Symbol x when is_var x -> Symbol ("$" ^ x)  (* prepend '$' to variable names *)
-    | Symbol x -> Symbol x  (* keep constants unchanged *)
-    | Fun {head; args} ->
-        let args' = List.map aux args in
-        Fun {head; args = args'}
-    | Opaque -> Opaque
-  in
   {
-    lhs = aux rule.lhs;
-    rhs = aux rule.rhs;
-    typings = List.map (fun (t1, t2) -> (aux t1, aux t2)) rule.typings;
+    lhs = term_fresh_name [] rule.lhs;
+    rhs = term_fresh_name [] rule.rhs;
+    typings = List.map (fun (t1, t2) -> (term_fresh_name [] t1, term_fresh_name [] t2)) rule.typings;
   }
   
 
 let apply_rewriting_rule 
-  (rule: rewriting_rule) (typing: terms -> terms option) (t: terms) : terms option =
+  (rule: rewriting_rule) (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t: terms) : terms option =
   (* match the left-hand side of the rule against the term t *)
   match matchs [(rule.lhs, t)] [] with
   | Some subst ->
@@ -144,7 +154,7 @@ let apply_rewriting_rule
             let t1_substituted = apply_subst subst t1 in
             let t2_substituted = apply_subst subst t2 in
             
-            match typing t1_substituted with 
+            match typing wfctx t1_substituted with 
             | None ->
                 (* if the typing fails, return None *)
                 None
@@ -180,27 +190,46 @@ let apply_rewriting_rule
      – Otherwise descend into the first sub-term that can be rewritten
        and rebuild the parent on the way back. *)
 let rec apply_rewriting_rule_all
-    (rule : rewriting_rule) (typing: terms -> terms option) (t : terms) : terms option =
-  match apply_rewriting_rule rule typing t with
+    (rule : rewriting_rule) (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx)(t : terms) : terms option =
+  match apply_rewriting_rule rule typing wfctx t with
   | Some t' -> Some t'                         (* hit at the root *)
   | None ->
       begin match t with
+
+      (* special handling for forall and fun (wfctx adjustment) *)
+      | Fun { head; args = [Symbol v; t; s]} when head = _fun || head = _forall ->
+        begin
+          match apply_rewriting_rule_all rule typing wfctx t with
+          | Some t_rewritten -> 
+              Some (Fun { head; args = [Symbol v; t_rewritten; s] })
+          | None ->
+              let new_wfctx = {
+                env = wfctx.env;
+                ctx = Assumption {name = v; t = t} :: wfctx.ctx;
+              } in
+              begin match apply_rewriting_rule_all rule typing new_wfctx s with
+              | Some s_rewritten -> Some (Fun { head; args = [Symbol v; t; s_rewritten] })
+              | None -> None
+              end
+        end
+        
       | Fun { head; args } ->
           (* walk through the argument list until one rewrites *)
-          let rec search done_so_far todo =
+          let rec search done_so_far wfctx todo =
             match todo with
             | [] -> None                       (* no sub-term matches *)
             | a :: rest ->
-                begin match apply_rewriting_rule_all rule typing a with
+                begin match apply_rewriting_rule_all rule typing wfctx a with
                 | Some a' ->                   (* rewrite inside a *)
                     let args' =
                       List.rev done_so_far @ (a' :: rest) in
                     Some (Fun { head; args = args' })
                 | None ->
-                    search (a :: done_so_far) rest
+                    search (a :: done_so_far) wfctx rest
                 end
           in
-          search [] args
+          search [] wfctx args
+
       | _ -> None                              (* Symbol / Opaque – leaves *)
       end
 
@@ -210,17 +239,17 @@ let rec apply_rewriting_rule_all
 (***************************************************************)
 
 (** Try every rule once, returning the first successful rewrite. *)
-let rec rewrite_once (rules : rewriting_rule list) (typing: terms -> terms option) (t : terms) : terms option =
+let rec rewrite_once (rules : rewriting_rule list) (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms option =
   match rules with
   | [] -> None
   | r :: rs ->
-      begin match apply_rewriting_rule_all r typing t with
+      begin match apply_rewriting_rule_all r typing wfctx t with
       | Some t' -> Some t'
-      | None     -> rewrite_once rs typing t
+      | None     -> rewrite_once rs typing wfctx t
       end
 
 (** Normal-form computation: keep rewriting until nothing changes. *)
-let rec rewrite (rules : rewriting_rule list) (typing: terms -> terms option)  (t : terms) : terms =
-  match rewrite_once rules typing t with
-  | Some t' -> rewrite rules typing t'
+let rec rewrite (rules : rewriting_rule list) (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
+  match rewrite_once rules typing wfctx t with
+  | Some t' -> rewrite rules typing wfctx t'
   | None    -> t
