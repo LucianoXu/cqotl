@@ -427,6 +427,7 @@ and eval_tac_destruct (f: proof_frame) (v: string) : tactic_result =
                   proof_name = f.proof_name;
                   proof_prop = f.proof_prop;
                   goals = tl;
+                  lean_goals = [];
                 } in
                 Success (ProofFrame new_frame)
             else
@@ -534,10 +535,11 @@ and eval_tac_rewrite (f: proof_frame) (t: terms) (l2r: bool) : tactic_result =
           replace hd from_ to_
         in
         let new_frame = {
-          env = f.env;
-          proof_name = f.proof_name;
-          proof_prop = f.proof_prop;
-          goals = (ctx, new_goal) :: ls;
+          env         = f.env;
+          proof_name  = f.proof_name;
+          proof_prop  = f.proof_prop;
+          goals       = (ctx, new_goal) :: ls;
+          lean_goals  = []
         } in
         Success (ProofFrame new_frame)
         
@@ -723,10 +725,11 @@ match f.goals with
           in
           let goal = apply_subst_unique_var s goal_template in
           let new_frame = {
-            env = f.env;
-            proof_name = f.proof_name;
-            proof_prop = f.proof_prop;
-            goals = (ctx, goal) :: tl;
+            env         = f.env;
+            proof_name  = f.proof_name;
+            proof_prop  = f.proof_prop;
+            goals       = (ctx, goal) :: tl;
+            lean_goals  = []
           }
           in 
           Success (ProofFrame new_frame)
@@ -774,12 +777,13 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
           match goal_vee_bj, goal_trace, goal_proj with
           | Some goal_vee_bj, Some goal_trace, Some goal_proj -> 
             let new_frame = {
-              env = f.env;
-              proof_name = f.proof_name;
-              proof_prop = f.proof_prop;
-              goals = (ctx, goal_vee_bj) :: 
-                      (ctx, goal_trace) :: 
-                      (ctx, goal_proj) :: tl;
+              env         = f.env;
+              proof_name  = f.proof_name;
+              proof_prop  = f.proof_prop;
+              goals       = (ctx, goal_vee_bj) :: 
+                            (ctx, goal_trace) :: 
+                            (ctx, goal_proj) :: tl;
+              lean_goals = []
             } in
             Success (ProofFrame new_frame)
           | _ -> TacticError (Printf.sprintf "Format matching failed.")
@@ -797,10 +801,11 @@ and eval_tac_JUDGE_SWAP (f: proof_frame) : tactic_result =
       | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
         let new_goal = Fun {head; args=[pre; s2; s1; post]} in
         let new_frame = {
-          env = f.env;
-          proof_name = f.proof_name;
-          proof_prop = f.proof_prop;
-          goals = (ctx, new_goal) :: tl;
+          env         = f.env;
+          proof_name  = f.proof_name;
+          proof_prop  = f.proof_prop;
+          goals       = (ctx, new_goal) :: tl;
+          lean_goals  = []
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
@@ -868,10 +873,11 @@ and eval_tac_SIMPL_ENTAIL (f: proof_frame) : tactic_result =
     in
     let new_goal = simpl_entail typing (get_pf_wfctx f) hd in
     let new_frame = {
-      env = f.env;
-      proof_name = f.proof_name;
-      proof_prop = f.proof_prop;
-      goals = (ctx, new_goal) :: tl;
+      env         = f.env;
+      proof_name  = f.proof_name;
+      proof_prop  = f.proof_prop;
+      goals       = (ctx, new_goal) :: tl;
+      lean_goals  = []
     } in
     Success (ProofFrame new_frame)
 
