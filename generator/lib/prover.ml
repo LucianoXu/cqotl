@@ -403,9 +403,10 @@ and eval_tac_expand (f: proof_frame) (v: string) : tactic_result =
       let new_goal = substitute hd v e in
       let new_frame = {
         env = f.env;
-        proof_name = f.proof_name;
-        proof_prop = f.proof_prop;
-        goals = (ctx, new_goal) :: tl;
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = (ctx, new_goal) :: tl;
+        lean_goals  = f.lean_goals;
       } in
       Success (ProofFrame new_frame)
     | _ -> TacticError (Printf.sprintf "%s is not defined in the context." v)
