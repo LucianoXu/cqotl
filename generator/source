@@ -51,6 +51,7 @@ Prove pf : {P} skip; ~ skip; {P}.
 QED.
 
 Var H : OTYPE[BIT, BIT].
+Var vplus : KTYPE[BIT].
 
 
 Var P0 : OTYPE[BIT, BIT].
@@ -59,31 +60,15 @@ Var P1 : OTYPE[BIT, BIT].
 Var b1 : CVAR[BIT].
 Var b2 : CVAR[BIT]. *)
 
-
-(* Check false -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q).
-Check true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
-Check ~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q). *)
-
-Prove test' : 
-    forall (P : Type), forall (Q : Type), P /\ Q.
-    
-    (* intro P. *)
-
-    (* by_lean. *)
-    sorry.
-
-QED.
-
-Pause.
-    
+(* The uniform distribution on bit. *)
+Var miu : PDIST[BIT].
 
 Prove Pf2 :
     forall (b1 : CVAR[BIT]), 
     forall (b2 : CVAR[BIT]), 
     forall (q : QREG[BIT]),
     {false -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)} 
-        b1 <-$ BIT;
-        (* b2 <-$ BIT; *)
+        b1 <-$ miu;
             ~ 
         init q; 
         unitary H q; 
@@ -92,21 +77,43 @@ Prove Pf2 :
 
 
     intro b1. intro b2. intro q.
+
     
-    r_seq -2 
-        true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
+    r_seq -2 -2 true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
 
     r_initq.
-    cq_entail.
 
-    intro H. simpl. delabel.
+        simpl_entail. split.
+        
+        cq_entail. intro H. simpl. dirac. simpl_entail. refl.
+        dirac. simpl_entail. refl.
 
-    Pause.
+    r_seq -1 1 true -> (vplus @ vplus^D)_(q,q) | 0O[BIT]_(q,q).
 
-    intro H. simpl. delabel. by_lean.
+    r_unitary. dirac. simpl_entail. split.
 
-    delabel. by_lean.
+        cq_entail. intro H. rewrite H0. simpl. simpl_entail. 
 
-    Pause.
+        by_lean.
+
+        refl.
+
+    judge_swap.
+    r_meas_sample id.
+
+        refl.
     
-Pause.
+        split.
+            intro H.
+                (* Pause. *)
+                (* A problem here. We don't have types for density operators yet. *)
+                by_lean.
+            intro H. by_lean.
+
+            cq_entail. split.
+                simpl. intro H. destruct H0.
+                simpl. intro H. destruct H0.
+
+QED.
+    
+    

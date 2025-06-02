@@ -80,12 +80,12 @@ let parse_top_inc (input : string) : inc_parse_result =
 let parse_terms (input : string) : terms =
   let lexbuf = Lexing.from_string input in
   try Parser.terms_eof Lexer.token lexbuf with
-  | Parser.Error -> failwith "Syntax error"
-  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg)
+  | Parser.Error -> failwith ("Syntax error in terms: " ^ input)
+  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg ^ " in terms: " ^ input)
 
 let parse_rw_rule (input : string) : rewriting_rule
   =
   let lexbuf = Lexing.from_string input in
   try Parser.rewriting_rule_eof Lexer.token lexbuf with
-  | Parser.Error -> failwith "Syntax error in rewriting rule"
-  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg)
+  | Parser.Error -> failwith ("Syntax error in rewriting rule: " ^ input)
+  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg ^ " in rewriting rule: " ^ input)
