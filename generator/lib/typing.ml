@@ -534,7 +534,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
         | [] -> Type (Symbol _qvlist)
         | hd :: tl ->
           match hd with
-          | Symbol v ->
+          | Symbol _ ->
             begin
               match calc_type wfctx hd with
               | Type (Fun {head; _}) when head = _qreg ->
@@ -643,7 +643,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   | Fun {head; args=[t]} when head = _tr ->
     begin
       match calc_type wfctx t with
-      | Type (Fun {head=head; args=[t1; t2]}) when head = _otype || head = _dtype ->
+      | Type (Fun {head=head; args=[t1; t2]}) when (head = _otype && t1 = t2) || head = _dtype ->
         Type (Symbol _stype)
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as OType or DType." (term2str s) (term2str t))
     end
@@ -741,7 +741,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
                   Fun{head=_list; args=new_s1};
                   Fun{head=_list; args=new_s2}]
               })
-              
+
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
@@ -900,6 +900,11 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | Type type_t1, Type type_t2 ->
         begin
           match type_t1, type_t2 with
+          (* otype *)
+          | Fun {head=head1; _}, Fun {head=head2; _} when 
+            head1 = _otype && head2 = _otype ->
+              Type (Symbol _type)
+
           (* labelled dirac notation *)
           | Fun {head=head1; _}, Fun {head=head2; _} when 
             head1 = _dtype && head2 = _dtype ->

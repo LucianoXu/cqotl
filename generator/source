@@ -97,8 +97,8 @@ Prove Pf1 :
         split.
             intro H.
                 (* A problem here. We don't have types for density operators yet. *)
-                by_lean.
-            intro H. by_lean.
+                dirac. by_lean.
+            intro H. dirac. by_lean.
 
             cq_entail. split.
                 simpl. intro H. destruct H0.
@@ -106,14 +106,7 @@ Prove Pf1 :
 
 QED.
 
-Var q1 : QREG[BIT].
-Var q2 : QREG[BIT].
-Var U : OTYPE[BIT, BIT].
-
-Check H * H.
-Check (q1, q2).
-
-Check (H * H)_((q1, q2), (q1, q2)).
+Pause.
 
 Def SWAP := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
 
@@ -148,4 +141,4 @@ Prove Pf2 :
 
     {~(x1 == x2 /\ y1 == y2) -> 0O[BIT]_(p1, p1) | 0O[BIT]_(p1, p1)}.
 
-    expand.
+    expand SWAP.
