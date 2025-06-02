@@ -18,13 +18,14 @@ type expr =
   | UnOp          of string * expr
   | LitInt        of int
   | LitFloat      of string
+  | LitString     of string
   | Annotation    of expr   * expr
   | Lambda        of ident  * expr * expr
   | Prod          of expr list
   | Hole
   | Sorry
   | Type
-  | StringRepr    of string
+  | GenericRepr   of string
   | OfScientific  of string * string
 
 type binder = {
@@ -40,7 +41,7 @@ type decl =
       symbol      : string;
       definition  : expr;
     }
-  | Definition  of {
+  | Definition of {
       is_noncomputable  : bool;
       name              : ident;
       params            : binder list;
@@ -62,6 +63,6 @@ type lean_file = {
 }
 
 (* Sugar *)
-let v x     = Var x
-let app f x = App (f, x)
-let app_curried f args = List.fold_left app f args
+let v x                 = Var x
+let app f x             = App (f, x)
+let app_curried f args  = List.fold_left app f args
