@@ -157,7 +157,6 @@ let prover2str (p: prover): string =
     (frame2str frame)
     |> Printf.sprintf "%s" 
 
-
 type tactic_result =
   | Success of frame
   | TacticError of string
@@ -194,7 +193,6 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_tactic p t
     | QED ->
         eval_QED p
-
 
     (* | _ -> raise (Failure "Command not implemented yet") *)
   in match res with
@@ -277,7 +275,6 @@ and eval_check (p: prover) (e: terms) : eval_result =
   | Type t -> Printf.printf "Check %s : %s.\n" (term2str e) (term2str t); Success
   | TypeError msg ->
     ProverError (Printf.sprintf "Typing error: %s" msg)
-
 
 and eval_show (p: prover) (x: string) : eval_result =
   let frame = get_frame p in

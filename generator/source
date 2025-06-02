@@ -16,24 +16,32 @@ Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
-
-    Pause.
-    (* simpl. *)
+    
     sorry.
     (* by_lean. *)
     (* Pause. *)
 
 QED.
 
-Var P : ASSN.
-Var Q : ASSN.
-Var R : ASSN.
-Var s1 : PROG.
-Var s2 : PROG.
 
-Var M : OPTPAIR[T].
-Var qs : QREG[T].
-Var b : CVAR[BIT].
+Prove ex1 : (|false> @ <false|) + (|true> @ <true|) = 1O[BIT].
+
+    by_lean.
+
+
+    generate_lean.
+    Pause.
+QED.
+
+Var P   : ASSN.
+Var Q   : ASSN.
+Var R   : ASSN.
+Var s1  : PROG.
+Var s2  : PROG.
+
+Var M   : OPTPAIR[T].
+Var qs  : QREG[T].
+Var b   : CVAR[BIT].
 
 Check b := meas M qs. 
 
@@ -58,7 +66,7 @@ Check ~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q). *)
 
 Prove test' : 
     forall (P : Type), forall (Q : Type), P /\ Q.
-
+    
     (* intro P. *)
 
     (* by_lean. *)
@@ -66,6 +74,8 @@ Prove test' :
 
 QED.
 
+Pause.
+    
 
 Prove Pf2 :
     forall (b1 : CVAR[BIT]), 
