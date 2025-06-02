@@ -390,10 +390,6 @@ lemma ketbraP_add_ketbraM_eq_one :
     rw [← @eq_sub_iff_add_eq]
     apply ketbraP_eq_one_sub_ketbraM
 
-lemma exist_smul_ketP_of_inner_ketbraM_eq_zero (x : 𝕜²) (h : inner 𝕜 (ketbraM x) x = 0) :
-    ∃c : 𝕜, x = c • ketP := by
-  sorry
-
 def stBasis_val : Fin 2 → 𝕜²
   | 0 => ket0
   | 1 => ket1
