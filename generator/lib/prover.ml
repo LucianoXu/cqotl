@@ -353,6 +353,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
         begin
           match tac with
           | Sorry -> eval_tac_sorry proof_f
+          | Expand v -> eval_tac_expand proof_f v
           | Refl -> eval_tac_refl proof_f
           | Destruct v -> eval_tac_destruct proof_f v
           | Intro v -> eval_tac_intro proof_f v
@@ -395,6 +396,24 @@ and eval_tac_sorry (f: proof_frame) : tactic_result =
       (* Add the proof to the frame. *)
       let new_frame = discharge_first_goal f in
       Success (ProofFrame new_frame)
+
+and eval_tac_expand (f: proof_frame) (v: string) : tactic_result = 
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx,hd)::tl ->
+    let wfctx = (get_pf_wfctx f) in
+    match find_symbol wfctx v with
+    | Some (Definition {e; _}) ->
+      let new_goal = substitute hd v e in
+      let new_frame = {
+        env = f.env;
+        proof_name = f.proof_name;
+        proof_prop = f.proof_prop;
+        goals = (ctx, new_goal) :: tl;
+      } in
+      Success (ProofFrame new_frame)
+    | _ -> TacticError (Printf.sprintf "%s is not defined in the context." v)
+
 
 and eval_tac_refl (f: proof_frame) : tactic_result =
   match f.goals with

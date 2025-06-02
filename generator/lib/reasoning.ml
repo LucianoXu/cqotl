@@ -85,6 +85,69 @@ let cq_entailment_destruct (t : terms) : terms option =
     | _ -> None
 
 
+(** a helper function to remove Dirac notation label in forall. *)
+let get_type_qreg_from_qvlist (wfctx: wf_ctx) (qvlist: terms list) : (terms * terms) option =
+  let rec aux (qvlist: terms list) = 
+    match qvlist with
+    | [] -> None
+    | [qv] ->
+      begin
+        match calc_type wfctx qv with
+        | Type (Fun {head; args=[tt]}) when head = _qreg ->
+          Some (
+            tt,
+            qv
+          )
+        | _ -> None
+        end
+    | qv :: rest ->
+      begin
+        match calc_type wfctx qv with
+        | Type (Fun {head; args=[tt]}) when head = _qreg ->
+          begin
+            match aux rest with
+            | Some (tt', qv') ->
+              Some (
+                Fun {head=_star; args=[tt; tt']},
+                Fun {head=_pair; args=[qv; qv']}
+              )
+            | None -> None
+          end
+        | _ -> None
+      end
+  in
+  aux qvlist
+
+let forall_label_remove (wfctx: wf_ctx) (t : terms) : terms option =
+  match t with
+  | Fun {head; args=[
+      Symbol x; 
+      Fun{head=head_dtype; args=[
+        Fun{head=head_list1; args=ls1;}; 
+        Fun{head=head_list2; args=ls2;};
+        ];}; 
+      t'
+    ]} when (head = _forall && head_dtype = _dtype && head_list1 = _list && head_list2 = _list) ->
+    begin
+      match get_type_qreg_from_qvlist wfctx ls1, 
+            get_type_qreg_from_qvlist wfctx ls2 with
+      | Some (tt1, qv1), Some (tt2, qv2) ->
+        let new_t' = substitute t' x (Fun{head=_subscript; args=[Symbol x; Fun{head=_pair; args=[qv1; qv2]}]}) in
+        Some (
+          Fun {
+            head = _forall;
+            args = [
+              Symbol x;
+              Fun {head = _otype; args = [tt1; tt2];};
+              new_t'
+            ]
+          }
+        )
+        | _ -> None
+    end
+  | _ -> None
+
+
 (** the term rewriting rules in *)
 let dirac_rules = [
   parse_rw_rule "x^D^D --> x";
@@ -105,12 +168,17 @@ let dirac_rules = [
   parse_rw_rule "U @@ (p /\\ q) --> (U @@ p) /\\ (U @@ q)";
   parse_rw_rule "U @@ (psi -> P) --> psi -> (U @@ P)";
   parse_rw_rule "U @@ A --> (U @ A) @ U^D";
+
+  parse_rw_rule "INSPACE[rho_(q, q), P_(q, q)] --> INSPACE[rho, P]";
+  parse_rw_rule "tr[P_(q, q)] --> tr[P]";
 ]
 
 
 
 let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
-  let dirac_transforms = List.map (fun r -> apply_rewriting_rule_all r typing wfctx) dirac_rules
+  let dirac_transforms = 
+    forall_label_remove wfctx ::
+    (List.map (fun r -> apply_rewriting_rule_all r typing wfctx) dirac_rules)
   in
   (* apply_rewriting_rule  *)
   repeat_transforms dirac_transforms t
@@ -159,7 +227,7 @@ let _bijection_mapping (switch: bool) (t: terms) : terms =
   | Symbol x when x = _false ->
     if switch then (Symbol _false) else (Symbol _true)
   | _ -> failwith ("_bijection_mapping: unexpected term.")
-
+      
 
 let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (miu: terms) (switch: bool) : terms option =
 

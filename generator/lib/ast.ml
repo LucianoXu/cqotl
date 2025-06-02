@@ -16,6 +16,7 @@ type command =
 
 and tactic =
   | Sorry
+  | Expand of string
   | Refl
   | Destruct of string
   | Intro of string
@@ -71,6 +72,7 @@ let _prog = "PROG"
 let _cqproj = "CQPROJ"
 let _assn = "ASSN"
 
+let _star = "STAR"
 let _pair = "PAIR"
 let _list = "LIST"
 
@@ -141,7 +143,9 @@ let reserved_symbols = [
   _cqproj;
   _assn;
 
+  _star;
   _pair;
+  _list;
 
   _ket;
   _bra;
@@ -261,3 +265,15 @@ type wf_ctx = {
   env: envItem list; 
   ctx: envItem list
 }
+
+let find_symbol (wfctx : wf_ctx) (x : string) : envItem option =
+  let rec find_in_env env =
+    match env with
+    | [] -> None
+    | Assumption {name; t} :: _ when name = x -> Some (Assumption {name; t})
+    | Definition {name; t; e} :: _ when name = x -> Some (Definition {name; t; e})
+    | _ :: rest -> find_in_env rest
+  in
+  match find_in_env wfctx.ctx with
+  | Some item -> Some item
+  | None -> find_in_env wfctx.env

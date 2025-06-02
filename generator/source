@@ -23,21 +23,11 @@ Prove eqpf : (A + B) + 0O[T] = B + A.
 
 QED.
 
-
-Prove ex1 : (|false> @ <false|) + (|true> @ <true|) = 1O[BIT].
-
-    by_lean.
-
-
-    generate_lean.
-    Pause.
-QED.
-
-Var P   : ASSN.
-Var Q   : ASSN.
-Var R   : ASSN.
-Var s1  : PROG.
-Var s2  : PROG.
+Var P : ASSN.
+Var Q : ASSN.
+Var R : ASSN.
+Var s1 : PROG.
+Var s2 : PROG.
 
 Var M   : OPTPAIR[T].
 Var qs  : QREG[T].
@@ -63,7 +53,7 @@ Var b2 : CVAR[BIT]. *)
 (* The uniform distribution on bit. *)
 Var miu : PDIST[BIT].
 
-Prove Pf2 :
+Prove Pf1 :
     forall (b1 : CVAR[BIT]), 
     forall (b2 : CVAR[BIT]), 
     forall (q : QREG[BIT]),
@@ -105,15 +95,49 @@ Prove Pf2 :
     
         split.
             intro H.
-                (* Pause. *)
                 (* A problem here. We don't have types for density operators yet. *)
-                by_lean.
-            intro H. by_lean.
+                dirac. by_lean.
+            intro H. dirac. by_lean.
 
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
 
 QED.
-    
-    
+
+Pause.
+
+Def SWAP := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
+
+Prove Pf2 : 
+    forall (x1 : CVAR[BIT]), 
+    forall (x2 : CVAR[BIT]), 
+    forall (y1 : CVAR[BIT]), 
+    forall (y2 : CVAR[BIT]), 
+    forall (p1 : QREG[BIT]),
+    forall (p2 : QREG[BIT]),
+    forall (q1 : QREG[BIT]),
+    forall (q2 : QREG[BIT]),
+    forall (U : OTYPE[BIT, BIT]),
+
+    {true -> (
+        (|(false, false)>@<(false, false)| \/ |(true, true)>@<(true, true)|)_((p1, p2), (p1, p2)) 
+        /\ SWAP_((q1, q2), (q1, q2))) | 0O[BIT]_(p1, p1)}
+
+        unitary ((|false> @ <false|) * 1O[BIT] + (|true> @ <true|) * U) (q1, q2);
+        x1 := meas (P0, P1) q1;
+        y1 := meas (P0, P1) q2;
+
+        ~
+
+        x2 := meas (P0, P1) q1;
+        if x2 then 
+            unitary U q2;
+        else
+            skip;
+        end;
+        y2 := meas (P0, P1) q2;
+
+    {~(x1 == x2 /\ y1 == y2) -> 0O[BIT]_(p1, p1) | 0O[BIT]_(p1, p1)}.
+
+    expand SWAP.

@@ -70,6 +70,17 @@ let list_remove lst1 lst2 =
         else aux (x :: acc) xs
   in
   aux [] lst1
+
+(** append all elements in lst2 that does not appear in lst1, and return. *)
+let list_union lst1 lst2 =
+  (* Append elements from lst2 that don't appear in lst1 *)
+  let rec aux acc = function
+    | [] -> List.rev acc
+    | x :: xs ->
+        if List.mem x lst1 then aux acc xs
+        else aux (x :: acc) xs
+  in
+  lst1 @ aux [] lst2
   
 
 (* Some wrappers for often used expressions *)

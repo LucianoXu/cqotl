@@ -34,6 +34,7 @@ and command2str (c: command) : string =
 and tactic2str (t: tactic) : string =
   match t with
   | Sorry -> "sorry."
+  | Expand x -> Printf.sprintf "expand %s." x
   | Refl -> "refl."
   | Destruct v -> Printf.sprintf "destruct %s." v
   | Intro v -> Printf.sprintf "intro %s." v
@@ -69,6 +70,10 @@ and term2str (e: terms) : string =
         Printf.sprintf "(fun (%s : %s) => %s)" x (term2str t) (term2str e)
     | Fun {head; args=[f; t]} when head = _apply->
         Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
+
+    (* star *)
+    | Fun {head; args=[t1; t2]} when head = _star ->
+        Printf.sprintf "(%s * %s)" (term2str t1) (term2str t2)
 
     (* pair *)
     | Fun {head; args=[t1; t2]} when head = _pair ->
