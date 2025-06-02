@@ -4,6 +4,7 @@ Authors: Iván Renison, Jam Khan
 -/
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
+import LeanVeri.Projection
 import Mathlib.Analysis.InnerProductSpace.Completion
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.InnerProductSpace.Orthonormal
@@ -52,13 +53,15 @@ noncomputable def ketbraP : 𝕜² →ₗ[𝕜] 𝕜² :=
 noncomputable def ketbraM : 𝕜² →ₗ[𝕜] 𝕜² :=
   outerProduct 𝕜 ketM ketM
 
+noncomputable def Hadamard : 𝕜² →ₗ[𝕜] 𝕜² := outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketM
+
 /-- Ket plus equals !₂[1/√2, 1/√2] -/
-lemma ketP_eq : ketP = !₂[1/√2, 1/√2] := by
+lemma ketP_eq : ketP = (!₂[1/√2, 1/√2] : 𝕜²) := by
   unfold ketP ket0 ket1
   simp [← WithLp.equiv_symm_add, ← WithLp.equiv_symm_smul]
 
 /-- Ket minus equals !₂[1/√2, -1/√2] -/
-lemma ketM_eq : ketM = !₂[1/√2, -1/√2] := by
+lemma ketM_eq : ketM = (!₂[1/√2, -1/√2] : 𝕜²) := by
   unfold ketM ket0 ket1
   simp only [← WithLp.equiv_symm_sub, ← WithLp.equiv_symm_smul]
   field_simp
@@ -129,6 +132,22 @@ lemma inner_ketP_ketP : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
 /-- ⟨-|-⟩ = 1 -/
 lemma inner_ketM_ketM : @inner 𝕜 𝕜² _ ketM ketM = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketM norm_ketM).mpr rfl
+
+lemma neZero_ket0 : NeZero (R := 𝕜²) ket0 := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ket0]
+  exact Real.zero_lt_one
+
+lemma neZero_ket1 : NeZero (R := 𝕜²) ket1 := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ket1]
+  exact Real.zero_lt_one
+
+lemma neZero_ketP : NeZero (R := 𝕜²) ketP := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ketP]
+  exact Real.zero_lt_one
+
+lemma neZero_ketM : NeZero (R := 𝕜²) ketM := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ketM]
+  exact Real.zero_lt_one
 
 /-- |0⟩⟨0| is PSD (Positive Semi-Definitie) -/
 lemma isPositiveSemiDefinite_ketbra0 : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbra0 :=
@@ -389,6 +408,43 @@ lemma ketbraP_add_ketbraM_eq_one :
   ketbraP + ketbraM = (1 : 𝕜² →ₗ[𝕜] 𝕜²)  := by
     rw [← @eq_sub_iff_add_eq]
     apply ketbraP_eq_one_sub_ketbraM
+
+lemma ketbraP_ket0_eq_smul_ketP : (ketbraP ket0 : 𝕜²) = (1 / √2 : 𝕜) • ketP := by
+  unfold ketbraP
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ketP_ket0]
+
+lemma ketbraP_ket1_eq_smul_ketP : (ketbraP ket1 : 𝕜²) = (1 / √2 : 𝕜) • ketP := by
+  unfold ketbraP
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ketP_ket1]
+
+lemma ketbra0_ketP_eq_smul_ket0 : (ketbra0 ketP : 𝕜²) = (1 / √2 : 𝕜) • ket0 := by
+  unfold ketbra0
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ket0_ketP]
+
+lemma ketbra1_ketP_eq_smul_ket1 : (ketbra1 ketP : 𝕜²) = (1 / √2 : 𝕜) • ket1 := by
+  unfold ketbra1
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ket1_ketP]
+
+lemma hadamard_ketP_eq_ket0 : Hadamard ketP = (ket0 : 𝕜²) := by
+  unfold Hadamard
+  rw [LinearMap.add_apply, outerProduct_def, outerProduct_def, inner_ketP_ketP, inner_ketM_ketP]
+  simp
+
+lemma span_ketP_eq_span_ketM_comp : (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketM)ᗮ :=
+  Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
+  (neZero_iff.mp neZero_ketP) (neZero_iff.mp neZero_ketM) inner_ketP_ketM
+
+lemma span_ketM_eq_span_ketP_comp : (𝕜 ∙ ketM : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketP)ᗮ :=
+  Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
+  (neZero_iff.mp neZero_ketM) (neZero_iff.mp neZero_ketP) inner_ketM_ketP
 
 def stBasis_val : Fin 2 → 𝕜²
   | 0 => ket0
