@@ -4,6 +4,7 @@ Authors: Iván Renison, Jam Khan
 -/
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
+import LeanVeri.Projection
 import Mathlib.Analysis.InnerProductSpace.Completion
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.InnerProductSpace.Orthonormal
@@ -129,6 +130,22 @@ lemma inner_ketP_ketP : @inner 𝕜 𝕜² _ ketP ketP = 1 :=
 /-- ⟨-|-⟩ = 1 -/
 lemma inner_ketM_ketM : @inner 𝕜 𝕜² _ ketM ketM = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketM norm_ketM).mpr rfl
+
+lemma neZero_ket0 : NeZero (R := 𝕜²) ket0 := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ket0]
+  exact Real.zero_lt_one
+
+lemma neZero_ket1 : NeZero (R := 𝕜²) ket1 := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ket1]
+  exact Real.zero_lt_one
+
+lemma neZero_ketP : NeZero (R := 𝕜²) ketP := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ketP]
+  exact Real.zero_lt_one
+
+lemma neZero_ketM : NeZero (R := 𝕜²) ketM := by
+  rw [neZero_iff, ← norm_pos_iff, norm_ketM]
+  exact Real.zero_lt_one
 
 /-- |0⟩⟨0| is PSD (Positive Semi-Definitie) -/
 lemma isPositiveSemiDefinite_ketbra0 : @LinearMap.isPositiveSemiDefinite 𝕜 𝕜² _ _ _ _ ketbra0 :=
@@ -390,8 +407,96 @@ lemma ketbraP_add_ketbraM_eq_one :
     rw [← @eq_sub_iff_add_eq]
     apply ketbraP_eq_one_sub_ketbraM
 
-lemma exist_smul_ketP_of_inner_ketbraM_eq_zero (x : 𝕜²) (h : inner 𝕜 (ketbraM x) x = 0) :
-    ∃c : 𝕜, x = c • ketP := by
+lemma ketbraP_ket0_eq_smul_ketP : (ketbraP ket0 : 𝕜²) = (1 / √2 : 𝕜) • ketP := by
+  unfold ketbraP
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ketP_ket0]
+
+lemma ketbraP_ket1_eq_smul_ketP : (ketbraP ket1 : 𝕜²) = (1 / √2 : 𝕜) • ketP := by
+  unfold ketbraP
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ketP_ket1]
+
+lemma ketbra0_ketP_eq_smul_ket0 : (ketbra0 ketP : 𝕜²) = (1 / √2 : 𝕜) • ket0 := by
+  unfold ketbra0
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ket0_ketP]
+
+lemma ketbra1_ketP_eq_smul_ket1 : (ketbra1 ketP : 𝕜²) = (1 / √2 : 𝕜) • ket1 := by
+  unfold ketbra1
+  unfold outerProduct
+  simp only [LinearMap.coe_mk, AddHom.coe_mk]
+  rw [inner_ket1_ketP]
+
+lemma ketbraM_ketM_eq_ketM : (ketbraM ketM : 𝕜²) = ketM := by
+  unfold ketbraM
+  unfold outerProduct
+  simp
+  simp [ketM, ket0]
+  sorry
+
+lemma span_ketP_eq_span_ketM_comp : (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketM)ᗮ :=
+  Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
+  (neZero_iff.mp neZero_ketP) (neZero_iff.mp neZero_ketM) inner_ketP_ketM
+
+lemma span_ketM_eq_span_ketP_comp : (𝕜 ∙ ketM : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketP)ᗮ :=
+  Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
+  (neZero_iff.mp neZero_ketM) (neZero_iff.mp neZero_ketP) inner_ketM_ketP
+
+lemma exist_smul_ketP_of_inner_ketM_eq_zero (x : 𝕜²) (h : inner 𝕜 x ketM = 0) :
+    ∃c : 𝕜, c • ketP = x := by
+  rw [← Submodule.mem_span_singleton, span_ketP_eq_span_ketM_comp]
+  exact Submodule.mem_orthogonal_singleton_iff_inner_left.mpr h
+
+lemma mem_span_ketM_of_mem_range_ketbraM {x : 𝕜²} (h : x ∈ LinearMap.range ketbraM) : x ∈ (𝕜 ∙ ketM) := by
+  rw [Submodule.mem_span_singleton]
+  obtain ⟨y, hy⟩ := h
+  exact Exists.intro _ hy
+
+lemma aux : LinearMap.range ketbraM = (𝕜 ∙ ketM) := by
+  --rw [span_ketM_eq_span_ketP_comp]
+  ext x
+  apply Iff.intro
+  · intro h
+    exact mem_span_ketM_of_mem_range_ketbraM h
+  · intro h
+    rw [Submodule.mem_span_singleton] at h
+    rw [LinearMap.mem_range]
+    obtain ⟨c, hc⟩ := h
+    use x
+    rw [← hc]
+    rw [map_smul]
+
+
+    sorry
+
+
+lemma aux2 (x : 𝕜²) (h : ketbraM x = 0) : x ∈ (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) := by
+
+  sorry
+
+lemma exist_smul_ketP_of_inner_ketbraM_eq_zero (x : 𝕜²) (h : inner 𝕜 x (ketbraM x) = 0) :
+    ∃c : 𝕜, c • ketP = x := by
+  have h' : ketbraM x ∈ (𝕜 ∙ ketM : Submodule 𝕜 𝕜²) :=
+    mem_span_ketM_of_mem_range_ketbraM (LinearMap.mem_range_self ketbraM x)
+  rw [Submodule.mem_span_singleton] at h'
+  have h'' : inner 𝕜 x ketM = 0 := by
+    obtain ⟨c, hc⟩ := h'
+    rw [← hc] at h
+    rw [inner_smul_right] at h
+    rw [mul_eq_zero] at h
+    match h with
+    | Or.inl h =>
+      rw [h] at hc
+      simp at hc
+      have : x = 0 := by
+
+        sorry
+      sorry
+    | Or.inr h => exact h
   sorry
 
 def stBasis_val : Fin 2 → 𝕜²
