@@ -16,16 +16,9 @@ Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
-
-    (* Pause *)
-    (* simpl. *)
+    sorry.
+    (* by_lean. *)
     (* Pause. *)
-    by_lean.
-
-    (* Pause. *)
-
-    (* sorry. *)
-
 QED.
 
 Var P : ASSN.
@@ -97,13 +90,9 @@ Prove Pf1 :
     
         split.
             intro H.
-            (* Pause. *)
-                (* A problem here. We don't have types for density operators yet. *)
-            by_lean.
-            (* Pause. *)
-            intro H. 
-            (* Pause. *)
-            by_lean.
+            (* A problem here. We don't have types for density operators yet. *)
+            dirac. by_lean.
+            intro H. dirac. by_lean.
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
@@ -112,14 +101,8 @@ Prove Pf1 :
 
 QED.
 
-Var q1 : QREG[BIT].
-Var q2 : QREG[BIT].
-Var U : OTYPE[BIT, BIT].
+Pause.
 
-Check H * H.
-Check (q1, q2).
-
-Check (H * H)_((q1, q2), (q1, q2)).
 
 Def SWAP := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
 
@@ -154,4 +137,4 @@ Prove Pf2 :
 
     {~(x1 == x2 /\ y1 == y2) -> 0O[BIT]_(p1, p1) | 0O[BIT]_(p1, p1)}.
 
-    expand.
+    expand SWAP.

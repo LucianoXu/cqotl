@@ -33,23 +33,22 @@ and command2str (c: command) : string =
 
 and tactic2str (t: tactic) : string =
   match t with
-  | Sorry           -> "sorry."
-  | Refl            -> "refl."
-  | Destruct v      -> Printf.sprintf "destruct %s." v
-  | Intro v         -> Printf.sprintf "intro %s." v
-  | Choose i        -> Printf.sprintf "choose %d." i
-  | Split           -> "split."
-  | ByLean          -> "by_lean."
-  | Simpl           -> "simpl."
-  | Rewrite_L2R e   -> Printf.sprintf "rewrite %s." (term2str e)
-  | Rewrite_R2L e   -> Printf.sprintf "rewrite <- %s." (term2str e)
-  | R_SKIP          -> "r_skip."
+  | Sorry -> "sorry."
+  | Expand x -> Printf.sprintf "expand %s." x
+  | Refl -> "refl."
+  | Destruct v -> Printf.sprintf "destruct %s." v
+  | Intro v -> Printf.sprintf "intro %s." v
+  | Choose i -> Printf.sprintf "choose %d." i
+  | Split -> "split."
+  | ByLean -> "by_lean."
+  | Simpl -> "simpl."
+  | Rewrite_L2R e -> Printf.sprintf "rewrite %s." (term2str e)
+  | Rewrite_R2L e -> Printf.sprintf "rewrite <- %s." (term2str e)
+  | R_SKIP -> "r_skip."
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ         -> "r_initq."
   | R_UNITARY       -> "r_unitary."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
-
-
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
@@ -67,6 +66,10 @@ and term2str (e: terms) : string =
         Printf.sprintf "(fun (%s : %s) => %s)" x (term2str t) (term2str e)
     | Fun {head; args=[f; t]} when head = _apply->
         Printf.sprintf "(%s @ %s)" (term2str f) (term2str t)
+
+    (* star *)
+    | Fun {head; args=[t1; t2]} when head = _star ->
+        Printf.sprintf "(%s * %s)" (term2str t1) (term2str t2)
 
     (* pair *)
     | Fun {head; args=[t1; t2]} when head = _pair ->
