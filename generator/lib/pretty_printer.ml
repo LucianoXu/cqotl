@@ -48,6 +48,7 @@ and tactic2str (t: tactic) : string =
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ         -> "r_initq."
   | R_UNITARY       -> "r_unitary."
+  | R_MEAS_MEAS switch -> if switch then "r_meas_meas id." else "r_meas_meas swap."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
@@ -95,6 +96,10 @@ and term2str (e: terms) : string =
 
     | Fun {head; args=[t1; t2]} when head = _plus ->
         Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
+    
+    | Fun {head; args=[q; t2]} when head = _tr ->
+        Printf.sprintf "tr_%s(%s)" (term2str q) (term2str t2)
+
 
     | Fun {head; args=[t1; t2]} when head = _subscript ->
         Printf.sprintf "%s_%s" (term2str t1) (term2str t2)
@@ -132,6 +137,10 @@ and term2str (e: terms) : string =
     | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
         Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
           (term2str pre) (term2str s1) (term2str s2) (term2str post)
+
+    | Fun {head; args=[t1; t2; t3]} when head = _qcoupling ->
+        Printf.sprintf "(%s, %s #, %s)" 
+          (term2str t1) (term2str t2) (term2str t3)
 
     (* program statements *)
     | Symbol x when x = _skip ->

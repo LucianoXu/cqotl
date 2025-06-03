@@ -67,7 +67,7 @@ Prove Pf1 :
     r_initq.
 
         simpl_entail. split.
-        
+
         cq_entail. intro H. simpl. dirac. simpl_entail. refl.
         dirac. simpl_entail. refl.
 
@@ -75,7 +75,7 @@ Prove Pf1 :
 
     r_unitary. dirac. simpl_entail. split.
 
-        cq_entail. intro H. rewrite H0. simpl. simpl_entail. 
+        cq_entail. intro H. rewrite H0. simpl. simpl_entail.
         (* Pause. *)
         by_lean.
         (* Pause. *)
@@ -96,15 +96,11 @@ Prove Pf1 :
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
-            
-            Pause.
 
 QED.
 
-Pause.
 
-
-Def SWAP := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
+Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)|.
 
 Prove Pf2 : 
     forall (x1 : CVAR[BIT]), 
@@ -119,7 +115,7 @@ Prove Pf2 :
 
     {true -> (
         (|(false, false)>@<(false, false)| \/ |(true, true)>@<(true, true)|)_((p1, p2), (p1, p2)) 
-        /\ SWAP_((q1, q2), (q1, q2))) | 0O[BIT]_(p1, p1)}
+        /\ Psym2_((q1, q2), (q1, q2))) | 0O[BIT]_(p1, p1)}
 
         unitary ((|false> @ <false|) * 1O[BIT] + (|true> @ <true|) * U) (q1, q2);
         x1 := meas (P0, P1) q1;
@@ -137,4 +133,20 @@ Prove Pf2 :
 
     {~(x1 == x2 /\ y1 == y2) -> 0O[BIT]_(p1, p1) | 0O[BIT]_(p1, p1)}.
 
-    expand SWAP.
+    intro x1. intro x2. intro y1. intro y2.
+    intro p1. intro p2. intro q1. intro q2. intro U.
+
+    expand Psym2.
+
+
+    r_seq -1 -1 (~(x1 == x2) -> 0O[BIT]_(p1, p1) /\ ((x1 == x2) -> Psym2_((q1, q2), (q1, q2)))) | 0O[BIT]_(p1, p1).
+
+    choose 2. expand Psym2.
+
+    r_meas_meas id.
+
+        simpl. refl.
+
+        split. split.
+            intro H.
+          

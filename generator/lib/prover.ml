@@ -366,6 +366,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | R_SEQ (n1, n2, t) -> eval_tac_R_SEQ proof_f n1 n2 t
           | R_INITQ       -> eval_tac_R_INITQ proof_f
           | R_UNITARY     -> eval_tac_R_UNITARY proof_f
+          | R_MEAS_MEAS switch -> eval_tac_R_MEAS_MEAS proof_f switch
           | R_MEAS_SAMPLE switch -> eval_tac_R_MEAS_SAMPLE proof_f switch
           | JUDGE_SWAP    -> eval_tac_JUDGE_SWAP proof_f
           | CQ_ENTAIL     -> eval_tac_CQ_ENTAIL proof_f
@@ -506,9 +507,10 @@ and eval_tac_split (f: proof_frame) : tactic_result =
           }
           in 
           Success (ProofFrame new_frame)
-        | _ -> TacticError (Printf.sprintf "splic tactic cannot apply here. The two terms %s and %s are not typed as Type." (term2str t1) (term2str t2))
+        | TypeError msg, _ -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type. %s" (term2str t1) msg)
+        | _, TypeError msg -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type. %s" (term2str t2) msg)
       end
-    | _ -> TacticError "split tactic cannot apply here."
+    | _ -> TacticError "split tactic cannot apply here. The current goal is not a conjunction."
 
 and eval_tac_by_lean (f: proof_frame) : tactic_result =
   match f.goals with
@@ -779,6 +781,49 @@ match f.goals with
           | Fun {head=head1; args=[u_opt; q]}, Symbol sym2 when head1 = _unitary && sym2 = _skip -> aux u_opt q
           | Symbol sym1, Fun {head=head2; args=[u_opt; q]} when head2 = _unitary && sym1 = _skip -> aux u_opt q
           | _ -> TacticError (Printf.sprintf "The tactic must apply on [unitary U q; ~ skip;] or [skip; ~ unitary U q;]")
+        end
+
+      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+and eval_tac_R_MEAS_MEAS (f: proof_frame) (switch: bool): tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+      let wfctx = get_pf_wfctx f in
+      (* Check the application condition *)
+      let is_zeroo t =
+        match t with
+        | Fun {head; args=[Fun{head=head_o; _}; _]} when head = _subscript && head_o = _zeroo -> true
+        | _ -> false
+      in
+      match hd with
+      | Fun {head=head; args=[
+          Fun {head=head_pre; args=[phi; zero_pre]}; 
+          Fun {head=head_s1; args=[Fun {head=head_meas1; args=[Symbol x1; m_opt1; qs1]}]}; 
+          Fun {head=head_s2; args=[Fun {head=head_meas2; args=[Symbol x2; m_opt2; qs2]}]}; 
+          Fun {head=head_post; args=[psi; zero_post]};]} when 
+        (
+          head = _judgement && 
+          head_pre = _vbar && (is_zeroo zero_pre) &&
+          head_s1 = _seq && head_meas1 = _meas &&
+          head_s2 = _seq && head_meas2 = _meas &&
+          head_post = _vbar && (is_zeroo zero_post)
+        ) ->
+        let goal_vee_bj = _measure_sample_or_bj phi in
+        let goal_qcoupling = _meas_meas_coupling_goal wfctx x1 x2 phi psi m_opt1 qs1 m_opt2 qs2 switch in
+        begin
+          match goal_vee_bj, goal_qcoupling with
+          | Some goal_vee_bj, Some goal_qcoupling -> 
+            let new_frame = {
+              env         = f.env;
+              proof_name  = f.proof_name;
+              proof_prop  = f.proof_prop;
+              goals       = (ctx, goal_vee_bj) :: 
+                            (ctx, goal_qcoupling) :: tl;
+              lean_goals = f.lean_goals
+            } in
+            Success (ProofFrame new_frame)
+          | _ -> TacticError (Printf.sprintf "Format matching failed.")
         end
 
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")

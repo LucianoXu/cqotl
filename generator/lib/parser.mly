@@ -7,17 +7,17 @@
 %token <int> NUM
 
 (* character symbols *)
-%token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT VBAR RANGLE LANGLE ADJ UNDERSCORE
+%token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT HASH VBAR RANGLE LANGLE ADJ UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
 %token SORRY EXPAND REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
-%token R_SKIP R_SEQ R_INITQ R_UNITARY R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
+%token R_SKIP R_SEQ R_INITQ R_UNITARY R_MEAS_MEAS R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
 %token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
 
-%token FORALL FUN TYPE
+%token FORALL FUN TYPE TR
 
 (* token for Dirac notation *)
 %token ONEO ZEROO
@@ -107,6 +107,8 @@ tactic:
   | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
   | R_INITQ PERIOD { R_INITQ }
   | R_UNITARY PERIOD { R_UNITARY }
+  | R_MEAS_MEAS SWITCH_ID PERIOD { R_MEAS_MEAS true }
+  | R_MEAS_MEAS SWITCH_SWAP PERIOD { R_MEAS_MEAS false }
   | R_MEAS_SAMPLE SWITCH_ID PERIOD { R_MEAS_SAMPLE true }
   | R_MEAS_SAMPLE SWITCH_SWAP PERIOD { R_MEAS_SAMPLE false }
 
@@ -148,6 +150,10 @@ terms:
 
   | t1 = terms PLUS t2 = terms { Fun {head=_plus; args=[t1; t2]} }
 
+  (* labelled trace *)
+  | TR LBRACK t = terms RBRACK { Fun {head=_tr; args=[t]} }
+  | TR UNDERSCORE q = terms LPAREN t = terms RPAREN  { Fun {head=_tr; args = [q; t] } } 
+
   | t1 = terms EQEQ t2 = terms { Fun {head=_eqeq; args=[t1; t2]} }
   | t1 = terms WEDGE t2 = terms { Fun {head=_wedge; args=[t1; t2]} }
   | t1 = terms VEE t2 = terms { Fun {head=_vee; args=[t1; t2]} }
@@ -167,6 +173,9 @@ terms:
 
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE
     { Fun {head=_judgement; args=[pre; s1; s2; post]} }
+
+  | LPAREN t1 = terms COMMA t2 = terms HASH COMMA t3 = terms RPAREN
+    { Fun {head=_qcoupling; args=[t1; t2; t3]} }
 
 
   | SKIP                                                        { Symbol _skip }

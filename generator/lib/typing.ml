@@ -644,6 +644,28 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as OType or DType." (term2str s) (term2str t))
     end
 
+  (* labelled trace *)
+  | Fun {head; args=[q; t]} when head = _tr ->
+    begin
+      match calc_type wfctx q, calc_type wfctx t with
+      | Type (Fun {head=head1; args=[t1]}), 
+        Type (Fun {head=head2; args=[
+          Fun {args=ls1; _}; Fun {args=ls2; _}
+        ]}) when 
+        head1 = _qreg && head2 = _dtype && ls1 = ls2 ->
+          begin
+            match get_qvlist q with
+            | TermList qls ->
+              let new_ls1 = list_remove ls1 qls in
+              Type (Fun {head=_dtype; args=[
+                Fun {head=_list; args=new_ls1};
+                Fun {head=_list; args=new_ls1};
+              ]})
+            | _ -> TypeError (Printf.sprintf "%s typing failed. Cannot calculate qvlist of %s." (term2str s) (term2str q))
+          end
+      | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+    end
+
   (* uset *)
   | Fun {head; args=[t]} when head = _uset ->
     begin
@@ -741,7 +763,8 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
-      | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
+      | TypeError msg, _ -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t1) msg)
+      | _, TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t2) msg)
     end
       
   (* vee *)
@@ -948,7 +971,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           TypeError (Printf.sprintf "%s typing failed." (term2str s))
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
-  
+
+  (* qcoupling *)
+  | Fun {head; args=[left; p; post]} when head = _qcoupling ->
+    begin
+      match calc_type wfctx left, calc_type wfctx p, calc_type wfctx post with
+      | Type type_left, Type type_p, Type type_post ->
+        begin
+          match type_left, type_p, type_post with
+          (* qcoupling *)
+          | Fun {head=head1; _}, Fun {head=head2; _}, Fun {head=head3; _} when 
+            head1 = _dtype && head2 = _dtype && head3 = _dtype ->
+            Type (Symbol _type)
+          | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+    end
+
   (* Variable *)
   | Symbol x ->
     begin

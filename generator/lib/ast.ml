@@ -31,6 +31,7 @@ and tactic =
   | R_SEQ of int * int * terms
   | R_INITQ
   | R_UNITARY
+  | R_MEAS_MEAS of bool
   | R_MEAS_SAMPLE of bool
 
   | JUDGE_SWAP
@@ -117,6 +118,7 @@ let _eq = "EQ"
 let _inspace = "INSPACE"
 let _entailment = "ENTAILMENT"
 let _judgement = "JUDGEMENT"
+let _qcoupling = "QCOUPLING"
 
 let reserved_symbols = [
   _type;
@@ -185,7 +187,8 @@ let reserved_symbols = [
   _eq;
   _inspace;
   _entailment;
-  _judgement;]
+  _judgement;
+  _qcoupling;]
 
 
 
