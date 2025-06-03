@@ -648,7 +648,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   | Fun {head; args=[q; t]} when head = _tr ->
     begin
       match calc_type wfctx q, calc_type wfctx t with
-      | Type (Fun {head=head1; args=[t1]}), 
+      | Type (Fun {head=head1; args=[_]}), 
         Type (Fun {head=head2; args=[
           Fun {args=ls1; _}; Fun {args=ls2; _}
         ]}) when 
@@ -800,7 +800,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   (* not *)
   | Fun {head; args=[t]} when head = _not ->
     begin
-      match calc_type wfctx t with
+      match is_cterm wfctx t with
       | Type type_t ->
         begin
           if type_t = Fun {head=_cterm; args=[Symbol _bit]} then
@@ -1006,14 +1006,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result = 
   let calc_type_res = calc_type wfctx s in
   match calc_type_res with
-  (* the same type *)
-  | Type t' when t = t' -> Type t
-
-
-  | Type t' -> 
-      TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str t'))
   | TypeError msg -> TypeError msg
-  
+
+  | Type type_t ->
+
+    match type_t, t with
+
+    (* the same type *)
+    | _, _ when t = type_t -> Type t
+
+    (* cvar -> cterm *)
+    | Fun {head=head1; args=[t']}, Fun {head=head2; args=[t'']} when 
+      head1 = _cvar && head2 = _cterm && t' = t'' -> 
+        Type t
+
+    | _, _ -> 
+        TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
+    
 
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in
