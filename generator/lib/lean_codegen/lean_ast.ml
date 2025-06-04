@@ -22,15 +22,20 @@ type expr =
   | Annotation    of expr   * expr
   | Lambda        of ident  * expr * expr
   | Prod          of expr list
+  | GenericRepr   of string
   | Hole
   | Sorry
   | Type
-  | GenericRepr   of string
-  | OfScientific  of string * string
+
+type binder_style =
+  | Explicit  (* Represents () *)
+  | Implicit  (* Represents {} *)
+  | Instance  (* Represents [] *)
 
 type binder = {
-  name   : ident;
-  type_b : expr;
+  name    : ident;
+  type_b  : expr;
+  style   : binder_style;
 }
 
 type decl =
@@ -61,8 +66,3 @@ type lean_file = {
   imports       : decl list;
   declarations  : decl list;
 }
-
-(* Sugar *)
-let v x                 = Var x
-let app f x             = App (f, x)
-let app_curried f args  = List.fold_left app f args

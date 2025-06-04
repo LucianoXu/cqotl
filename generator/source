@@ -16,10 +16,12 @@ Check fun (x : CTERM[BIT]) => |x>.
 Check SUM[USET[BIT], fun (x : CTERM[BIT]) => (<x| @ |x>) ^D].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
-    sorry.
-    (* by_lean. *)
     (* Pause. *)
+    by_lean.
+    (* sorry. *)
+    (* by_lean. *)
 QED.
+(* Pause. *)
 
 Var P : ASSN.
 Var Q : ASSN.
@@ -75,11 +77,10 @@ Prove Pf1 :
 
     r_unitary. dirac. simpl_entail. split.
 
-        cq_entail. intro H. rewrite H0. simpl. simpl_entail. 
-        (* Pause. *)
+        cq_entail. intro H. rewrite H0. simpl. simpl_entail.
+        Pause.
         by_lean.
-        (* Pause. *)
-        
+        Pause.
         refl.
         (* Pause. *)
 
@@ -91,8 +92,16 @@ Prove Pf1 :
         split.
             intro H.
             (* A problem here. We don't have types for density operators yet. *)
-            dirac. by_lean.
-            intro H. dirac. by_lean.
+            dirac. 
+            Pause.
+            by_lean.
+            (* Pause. *)
+            intro H. 
+            (* Pause. *)
+            dirac. 
+            (* Pause. *)
+            by_lean.
+            (* Pause. *)
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.
