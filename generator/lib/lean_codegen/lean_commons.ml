@@ -29,9 +29,9 @@ let outerProduct e1 e2  = (app (app (app (v "outerProduct") (v "𝕜")) e1) e2)
 let applyH e            = (app hadamard_v e) 
 let trace e1            = (app (app (app (v "LinearMap.trace") rcLikeType) vectorType) e1)
 
-let supp operator         = app (v "LinearMap.toSubmodule") operator
-let image operator        = app (v "LinearMap.toSubmodule") operator
-let isDensityOperator op  = app (v "LinearMap.isDensityOperator") op
+let supp operator       = app (v "LinearMap.toSubmodule") operator
+let image operator      = app (v "LinearMap.toSubmodule") operator
+let isDensityOperator op= app (v "LinearMap.isDensityOperator") op
 
 let mult e1 e2          = BinOp ("*", e1, e2)
 let add e1 e2           = BinOp ("+", e1, e2)
@@ -46,17 +46,17 @@ let linearMapDefinition name' computable
                             is_noncomputable=computable; name=name'; params = []; type_v = Some linearMapType; body = Sorry 
                           }
 let vectorDefinition name' computable
-                          = Definition {
-                            is_noncomputable=computable; name=name'; params = []; type_v = Some vectorType; body = Sorry 
-                          }
-let qubitMeasDistr name'  = Definition {
-                            is_noncomputable = false; name = name'; params = []; type_v = Some (GenericRepr "Bool → 𝕜"); body = Sorry
-                          }
-let notationDefEuclidean  = Notation {
-                            is_local          = true;
-                            symbol            = "𝕜²";
-                            definition        = app (app (v "EuclideanSpace") rcLikeType) (app (v "Fin") (LitInt 2))
-                          }
+                        = Definition {
+                          is_noncomputable=computable; name=name'; params = []; type_v = Some vectorType; body = Sorry 
+                        }
+let qubitMeasDistr name'= Definition {
+                          is_noncomputable = false; name = name'; params = []; type_v = Some (GenericRepr "Bool → 𝕜"); body = Sorry
+                        }
+let notationDefEuclidean= Notation {
+                          is_local          = true;
+                          symbol            = "𝕜²";
+                          definition        = app (app (v "EuclideanSpace") rcLikeType) (app (v "Fin") (LitInt 2))
+                        }
 
 let hadamardDefinition    = linearMapDefinition "H" true
 let ketPlusDefinition     = vectorDefinition "ketPlus" true

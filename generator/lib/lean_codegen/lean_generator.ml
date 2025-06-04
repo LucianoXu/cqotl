@@ -3,7 +3,6 @@
 (* Make sure to create `cqotl_path.config` file and specify path of this project *)
 (*********************************************************************************)
 
-open Lean_ast
 open Printf
 open Lean_printer
 open Lean_examples

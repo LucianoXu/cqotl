@@ -67,8 +67,8 @@ let rec expr_to_string expr =
     | DocComment (comment, decl)                ->
         sprintf "/-- %s -/\n%s" comment (decl_to_string decl)
   
-  (* Main function to print the file *)
-  let lean_ast_to_lean_file (file : lean_file) : string =
+(* Main function to print the file *)
+let lean_ast_to_lean_file (file : lean_file) : string =
     let header_str =
       match file.header with
         | Some h    -> sprintf "/- %s -/\n\n" h
@@ -78,7 +78,3 @@ let rec expr_to_string expr =
     let decls_str     = String.concat "\n\n"  (List.map decl_to_string file.declarations)  in
   
     header_str ^ imports_str ^ "\n\n" ^ decls_str
-  
-  let () =
-    let lean_code_string = lean_ast_to_lean_file example3 in
-    print_endline lean_code_string

@@ -22,14 +22,20 @@ type expr =
   | Annotation    of expr   * expr
   | Lambda        of ident  * expr * expr
   | Prod          of expr list
+  | GenericRepr   of string
   | Hole
   | Sorry
   | Type
-  | GenericRepr   of string
+
+type binder_style =
+  | Explicit  (* Represents () *)
+  | Implicit  (* Represents {} *)
+  | Instance  (* Represents [] *)
 
 type binder = {
-  name   : ident;
-  type_b : expr;
+  name    : ident;
+  type_b  : expr;
+  style   : binder_style;
 }
 
 type decl =

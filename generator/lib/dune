@@ -25,6 +25,7 @@
   lean_ast
   lean_generator
   lean_printer
+  lean_commons
   mapper)
  (libraries menhirLib) 
 )
