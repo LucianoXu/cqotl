@@ -26,7 +26,6 @@ type expr =
   | Sorry
   | Type
   | GenericRepr   of string
-  | OfScientific  of string * string
 
 type binder = {
   name   : ident;
