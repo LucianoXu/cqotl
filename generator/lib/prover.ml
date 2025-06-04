@@ -362,12 +362,16 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | Simpl         -> eval_tac_simpl proof_f
           | Rewrite_L2R t -> eval_tac_rewrite proof_f t true
           | Rewrite_R2L t -> eval_tac_rewrite proof_f t false
+          | RWRULE r      -> eval_tac_RWRULE proof_f r
+
           | R_SKIP        -> eval_tac_R_SKIP proof_f
           | R_SEQ (n1, n2, t) -> eval_tac_R_SEQ proof_f n1 n2 t
           | R_INITQ       -> eval_tac_R_INITQ proof_f
           | R_UNITARY     -> eval_tac_R_UNITARY proof_f
+          | R_IF qs         -> eval_tac_R_IF proof_f qs
           | R_MEAS_MEAS switch -> eval_tac_R_MEAS_MEAS proof_f switch
           | R_MEAS_SAMPLE switch -> eval_tac_R_MEAS_SAMPLE proof_f switch
+
           | JUDGE_SWAP    -> eval_tac_JUDGE_SWAP proof_f
           | CQ_ENTAIL     -> eval_tac_CQ_ENTAIL proof_f
           | DIRAC         -> eval_tac_DIRAC proof_f
@@ -586,23 +590,56 @@ and eval_tac_rewrite (f: proof_frame) (t: terms) (l2r: bool) : tactic_result =
       | _ -> 
         TacticError (Printf.sprintf "The term %s is not a valid equality witness." (term2str t))
 
+and eval_tac_RWRULE (f : proof_frame) (r: rewriting_rule) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+      let typing wfctx t = 
+        match calc_type wfctx t with
+        | Type type_t -> Some type_t
+        | TypeError _ -> None
+      in
+      (* Check the application condition *)
+      let new_goal = 
+        match apply_rewriting_rule_all r typing (get_pf_wfctx f) hd with
+        | Some new_goal -> new_goal
+        | None -> hd
+      in
+      let new_frame = {
+        env = f.env;
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = (ctx, new_goal) :: tl;
+        lean_goals  = f.lean_goals;
+      } in
+      (* Add the proof to the frame. *)
+      Success (ProofFrame new_frame)
 
 
 
 and eval_tac_R_SKIP (f: proof_frame) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
-  | (_, hd) :: _ ->
+  | (ctx, hd) :: ls ->
       (* Check the application condition *)
       match hd with
       | Fun {head=head; args=[pre; s1; s2; post]} when 
         (
           head = _judgement && 
           s1 = Fun {head=_seq; args=[Symbol _skip]} &&
-          s2 = Fun {head=_seq; args=[Symbol _skip]} &&
-          pre = post
+          s2 = Fun {head=_seq; args=[Symbol _skip]}
         ) ->
-        let new_frame = discharge_first_goal f in
+        let new_goal = Fun {
+          head = _entailment;
+          args = [post; pre];
+        } in
+        let new_frame = {
+          env = f.env;
+          proof_name  = f.proof_name;
+          proof_prop  = f.proof_prop;
+          goals       = (ctx, new_goal) :: ls;
+          lean_goals  = f.lean_goals;
+        } in
         (* Add the proof to the frame. *)
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
@@ -737,53 +774,124 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
   { Phi } q *= U; ~ skip; { Psi }
 *)
 and eval_tac_R_UNITARY (f: proof_frame) : tactic_result =
-match f.goals with
-  | [] -> TacticError "Nothing to prove."
-  | (ctx, hd) :: tl ->
-      (* Check the application condition *)
-      match hd with
-      | Fun {head=head; args=[
-          phi; 
-          Fun {head=head_s1; args=[stt1]}; 
-          Fun {head=head_s2; args=[stt2]}; 
-          psi;]} when 
-        (
-          head = _judgement && 
-          head_s1 = _seq &&
-          head_s2 = _seq
-        ) ->
-        (* the function to calculate the new frame *)
-        let aux u q : tactic_result =
-          let goal_template = parse_terms (Printf.sprintf "(U^D_(q,q)) @@ Psi <= Phi")
-          in
-          let s = [
-            ("Phi", phi);
-            ("Psi", psi);
-            ("U", u);
-            ("q", q);
-          ]
-          in
-          let goal = apply_subst_unique_var s goal_template in
-          let new_frame = {
-            env         = f.env;
-            proof_name  = f.proof_name;
-            proof_prop  = f.proof_prop;
-            goals       = (ctx, goal) :: tl;
-            lean_goals  = f.lean_goals
-          }
-          in 
-          Success (ProofFrame new_frame)
+  match f.goals with
+    | [] -> TacticError "Nothing to prove."
+    | (ctx, hd) :: tl ->
+        (* Check the application condition *)
+        match hd with
+        | Fun {head=head; args=[
+            phi; 
+            Fun {head=head_s1; args=[stt1]}; 
+            Fun {head=head_s2; args=[stt2]}; 
+            psi;]} when 
+          (
+            head = _judgement && 
+            head_s1 = _seq &&
+            head_s2 = _seq
+          ) ->
+          (* the function to calculate the new frame *)
+          let aux u q : tactic_result =
+            let goal_template = parse_terms (Printf.sprintf "(U^D_(q,q)) @@ Psi <= Phi")
+            in
+            let s = [
+              ("Phi", phi);
+              ("Psi", psi);
+              ("U", u);
+              ("q", q);
+            ]
+            in
+            let goal = apply_subst_unique_var s goal_template in
+            let new_frame = {
+              env         = f.env;
+              proof_name  = f.proof_name;
+              proof_prop  = f.proof_prop;
+              goals       = (ctx, goal) :: tl;
+              lean_goals  = f.lean_goals
+            }
+            in 
+            Success (ProofFrame new_frame)
 
-        in
-        (* case on which side has the init *)
-        begin
-          match stt1, stt2 with
-          | Fun {head=head1; args=[u_opt; q]}, Symbol sym2 when head1 = _unitary && sym2 = _skip -> aux u_opt q
-          | Symbol sym1, Fun {head=head2; args=[u_opt; q]} when head2 = _unitary && sym1 = _skip -> aux u_opt q
-          | _ -> TacticError (Printf.sprintf "The tactic must apply on [unitary U q; ~ skip;] or [skip; ~ unitary U q;]")
-        end
+          in
+          (* case on which side has the init *)
+          begin
+            match stt1, stt2 with
+            | Fun {head=head1; args=[u_opt; q]}, Symbol sym2 when head1 = _unitary && sym2 = _skip -> aux u_opt q
+            | Symbol sym1, Fun {head=head2; args=[u_opt; q]} when head2 = _unitary && sym1 = _skip -> aux u_opt q
+            | _ -> TacticError (Printf.sprintf "The tactic must apply on [unitary U q; ~ skip;] or [skip; ~ unitary U q;]")
+          end
 
-      | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+        | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
+and eval_tac_R_IF (f: proof_frame) (qs: terms): tactic_result = 
+  match f.goals with
+    | [] -> TacticError "Nothing to prove."
+    | (ctx, hd) :: tl ->
+        (* Check the application condition *)
+        match hd with
+        | Fun {head=head; args=[
+            Fun {head=head_vbar; args=[phi; bb]}; 
+            Fun {head=head_s1; args=[stt1]}; 
+            Fun {head=head_s2; args=[stt2]}; 
+            post;]} when 
+          (
+            head = _judgement && 
+            head_vbar = _vbar &&
+            head_s1 = _seq &&
+            head_s2 = _seq
+          ) ->
+          (* check the qs *)
+          begin
+            match calc_type (get_pf_wfctx f) qs with
+            | Type (Fun {head; args=[tt];}) when head = _qreg ->
+              (* the function to calculate the new frame *)
+              let aux b s1 s2 : tactic_result =
+                let goal_template = parse_terms ("{ (~ xb -> 0O[type]_(qs, qs)) /\\ phi | B } S ~ skip; { post }")
+                in
+                let s_true = [
+                  ("xb", b);
+                  ("type", tt);
+                  ("qs", qs);
+                  ("phi", phi);
+                  ("B", bb);
+                  ("S", s1);
+                  ("post", post);
+                ] in
+                let goal_true = apply_subst_unique_var s_true goal_template in
+                let s_false = [
+                  ("xb", Fun {head=_not; args=[b]});
+                  ("type", tt);
+                  ("qs", qs);
+                  ("phi", phi);
+                  ("B", bb);
+                  ("S", s2);
+                  ("post", post);
+                ] in
+                let goal_false = apply_subst_unique_var s_false goal_template in
+                let new_frame = {
+                  env         = f.env;
+                  proof_name  = f.proof_name;
+                  proof_prop  = f.proof_prop;
+                  goals       = (ctx, goal_true) :: (ctx, goal_false) :: tl;
+                  lean_goals  = f.lean_goals
+                }
+                in 
+                Success (ProofFrame new_frame)
+
+            in
+            (* case on which side has the init *)
+            begin
+              match stt1, stt2 with
+              | Fun {head=head1; args=[b; s1; s2]}, Symbol sym2 when head1 = _if && sym2 = _skip -> aux b s1 s2
+              | Symbol sym1, Fun {head=head2; args=[b; s1; s2]} when head2 = _if && sym1 = _skip -> aux b s1 s2
+              | _ -> TacticError (Printf.sprintf "The tactic must apply on [if b then s1 end s2 end; ~ skip;] or [skip; ~ if b then s1 end s2 end;]")
+            end
+
+          | _ -> TacticError (Printf.sprintf "%s is not typed as QReg." (term2str qs))
+          
+          end
+
+        | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+
 
 and eval_tac_R_MEAS_MEAS (f: proof_frame) (switch: bool): tactic_result =
   match f.goals with
@@ -891,7 +999,7 @@ and eval_tac_JUDGE_SWAP (f: proof_frame) : tactic_result =
           lean_goals  = f.lean_goals
         } in
         Success (ProofFrame new_frame)
-      | _ -> TacticError "cq_entail tactic must apply on cq-projector entailment."
+      | _ -> TacticError "judge_swap tactic must apply on judgements."
 
   
 and eval_tac_CQ_ENTAIL (f: proof_frame) : tactic_result =

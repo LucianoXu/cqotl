@@ -38,12 +38,9 @@ Prove Pf1 :
     r_unitary. dirac. simpl_entail. split.
 
         cq_entail. intro H. rewrite H0. simpl. simpl_entail.
-        (* Pause. *)
         by_lean.
-        (* Pause. *)
         
         refl.
-        (* Pause. *)
 
     judge_swap.
     r_meas_sample id.
@@ -64,6 +61,21 @@ QED.
 (* example 2 *)
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
+
+
+Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
+
+    intro x. simpl. refl.
+
+QED.
+
+Prove Lemma2 : forall (x : CVAR[BIT]), forall (y : CVAR[BIT]), 
+    forall (H : ~ (x == y) = true), (x == y) = false.
+
+    intro x. intro y. intro H.
+    rewrite <- Lemma1 @ (x == y).
+    rewrite H0. simpl. refl.
+QED.
 
 Prove Pf2 : 
     forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
@@ -92,26 +104,104 @@ Prove Pf2 :
 
     {~(x == x' /\ y == y') -> 0O[BIT]_(q1, q1) | 0O[BIT]_(q1, q1)}.
 
+
     intro x. intro x'. intro y. intro y'.
     intro q1. intro q1'. intro q2. intro q2'. intro U.
-
     expand Psym2.
-
     r_seq -1 -1 (~(x == x') -> 0O[BIT]_(q1, q1) /\ ((x == x') -> Psym2_((q2, q2'), (q2, q2')))) | 0O[BIT]_(q1, q1).
 
     choose 2. expand Psym2.
-
+    
     r_meas_meas id.
 
-        simpl. refl.
+    simpl. refl.
 
-        split. split.
-            intro H.
+    split. split. 
+        intro H. 
+        rewrite Lemma2 @ x @ x' @ H0.
+        dirac. simpl. dirac.
+        (* this obligation involves quantum coupling and it's not sure how to deal with it for now *)
+        by_lean.
+
     
-    sorry.
-    sorry.
-    sorry.
-    sorry.
+        intro H. 
+        rewrite Lemma2 @ x @ x' @ H0.
+        dirac. simpl. dirac.
+        (* same as before *)
+        by_lean.
+        
+
+        split.
+        intro H.
+        rewrite H0. simpl. dirac.
+        (* same as before *)
+        by_lean.
+
+        (* same as before *)
+        by_lean.
+
+    r_seq 2 -1 (~(x == x') -> 0O[BIT]_(q1, q1) 
+                /\ ((x == false /\ x' == false) -> Psym2_((q2, q2'), (q2, q2'))) 
+                /\ ((x == true /\ x' == true) -> U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2))) | 0O[BIT]_(q1, q1).
+
+    choose 2.
+
+    r_if q1.
+
+        sorry.
+
+        r_skip.
+        (* Pause. *)
+          simpl_entail. 
+          split. cq_entail. split.
+            (* *)
+            intro H. rewrite H0. simpl.
+
+            rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
+            rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
+            rwrule A /\ 0O[BIT, BIT]_(q1, q1) --> 0O[BIT, BIT]_(q1, q1).
+            simpl_entail. refl.
+
+            (* *)
+            intro H. rewrite H0. simpl.
+            rwrule 1O[BIT]_(q1, q1) /\ A --> A.
+            
+            (* problem: need to use a lemma of <= *)
+            by_lean.
+        
+            refl.
+
+    r_seq 1 0 true -> 
+        ((|(false, false)> @ <(false, false)|)_((q1, q1'), (q1, q1')) /\ Psym2_((q2, q2'), (q2, q2')) 
+        \/ (|(true, true)> @ <(true, true)|)_((q1, q1'), (q1, q1')) /\ U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2)) | 0O[BIT]_(q1, q1).
+
+    r_unitary.
+    dirac. simpl_entail. split. simpl.
+
+    (* crazy obligation that requires adjusting labels *)
+    by_lean.
+
+    (* *)
+    rwrule A @ 0O[BIT, BIT]_(q1, q1) --> 0O[BIT, BIT]_(q1, q1).
+
+    rwrule 0O[BIT, BIT]_(q1, q1) @ A --> 0O[BIT, BIT]_(q1, q1).
+
+    simpl_entail. refl.
+
+    r_meas_meas id. refl.
+
+    simpl. split.
+        (* *)
+        intro H.
+        (* crazy obligation *)
+        by_lean.
+
+        (* *)
+        intro H.
+        (* crazy obligation *)
+        by_lean.
+
+    (* Pause. *)
 QED.
 
 
@@ -179,7 +269,10 @@ Prove Pf3 :
 
     {~(r == r') -> 0O[BIT]_(q1, q1) | 0O[BIT]_(q1, q1)}.
 
+
+
     sorry.
+
 
 QED.
 
@@ -204,6 +297,7 @@ Prove Pf4 :
         unitary X q;
     {true -> Psym2_((q, q'), (q, q')) | 0O[BIT]_(q, q)}.
 
+    Pause.
     sorry.
 
 QED.

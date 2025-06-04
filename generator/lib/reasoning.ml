@@ -6,14 +6,25 @@ open Parser_utils
 open Typing
 
 (** the term rewriting rules in *)
-let simpl_rules = [
+let simpl_rules = [  
+  parse_rw_rule "false /\\ false --> false";
   parse_rw_rule "true -> false --> false";
+  parse_rw_rule "true -> A --> A";
+  parse_rw_rule "false -> A --> true";
+  parse_rw_rule "~ ~ A --> A";
+  parse_rw_rule "~ A -> A --> A";
+  parse_rw_rule "A /\\ true --> A";
+  parse_rw_rule "true /\\ A --> A";
+
   parse_rw_rule "true |-> A --> A";
   parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 1O[T]_q";
   parse_rw_rule "true -> true --> true";
   parse_rw_rule "A == A --> true";
+  parse_rw_rule "true == false --> false";
+  parse_rw_rule "false == true --> false";
   parse_rw_rule "A : CTERM[BIT] |- ~ A \\/ A --> true";
   parse_rw_rule "~ true --> false";
+  parse_rw_rule "~ false --> true";
 ]
 
 
@@ -151,11 +162,18 @@ let forall_label_remove (wfctx: wf_ctx) (t : terms) : terms option =
 
 (** the term rewriting rules in *)
 let dirac_rules = [
+
   parse_rw_rule "x^D^D --> x";
 
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+
+  parse_rw_rule "1O[T] @ A --> A";
+  parse_rw_rule "A @ 1O[T] --> A";
+
   parse_rw_rule "0O[T, T] /\\ B --> 0O[T, T]";
   parse_rw_rule "1O[T] /\\ B --> B";
+  parse_rw_rule "1O[BIT]_(q, q) /\\ 1O[BIT]_(q, q) --> 1O[BIT]_(q, q)";
+
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
   parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
 

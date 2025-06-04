@@ -666,6 +666,13 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
+  (* top and bottom *)
+  | Symbol sym when sym = _top ->
+    Type (Fun {head= _dtype; args=[Fun{head=_list; args=[]}; Fun{head=_list; args=[]}]})
+
+  | Symbol sym when sym = _bottom ->
+    Type (Fun {head= _dtype; args=[Fun{head=_list; args=[]}; Fun{head=_list; args=[]}]})
+
   (* uset *)
   | Fun {head; args=[t]} when head = _uset ->
     begin

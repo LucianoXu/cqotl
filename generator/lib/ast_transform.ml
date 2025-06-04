@@ -88,12 +88,6 @@ let rec matchs (pairs : (terms * terms) list) (s : subst) : subst option =
   | _ -> None                                                  (* every other mismatch *)
 
 
-type rewriting_rule = {
-  lhs: terms;  (* left-hand side of the rule *)
-  rhs: terms;  (* right-hand side of the rule *)
-  typings: (terms * terms) list;  (* optional typing information *)
-}
-
 
 let rwrule2str (r: rewriting_rule) : string =
   match r with

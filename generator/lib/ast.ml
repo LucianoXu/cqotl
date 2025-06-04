@@ -26,11 +26,13 @@ and tactic =
   | Simpl
   | Rewrite_L2R of terms
   | Rewrite_R2L of terms
+  | RWRULE of rewriting_rule
 
   | R_SKIP
   | R_SEQ of int * int * terms
   | R_INITQ
   | R_UNITARY
+  | R_IF of terms
   | R_MEAS_MEAS of bool
   | R_MEAS_SAMPLE of bool
 
@@ -43,6 +45,13 @@ and terms =
   | Symbol of string
   | Fun of {head: string; args: terms list}
   | Opaque
+
+and rewriting_rule = {
+  lhs: terms;  (* left-hand side of the rule *)
+  rhs: terms;  (* right-hand side of the rule *)
+  typings: (terms * terms) list;  (* optional typing information *)
+}
+
 
 (* The reserved term symbols *)
 let _type   = "Type"
@@ -85,6 +94,9 @@ let _oneo = "ONEO"
 let _plus = "PLUS"
 let _sum = "SUM"
 let _tr = "tr"
+
+let _top = "TOP"
+let _bottom = "BOT"
 
 let _uset = "USET"
 
@@ -157,6 +169,8 @@ let reserved_symbols = [
   _plus;
   _sum;
   _tr;
+  _top;
+  _bottom;
 
   _subscript;
 

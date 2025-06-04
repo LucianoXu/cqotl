@@ -13,8 +13,8 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY EXPAND REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
-%token R_SKIP R_SEQ R_INITQ R_UNITARY R_MEAS_MEAS R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
+%token SORRY EXPAND REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE RWRULE
+%token R_SKIP R_SEQ R_INITQ R_UNITARY R_IF R_MEAS_MEAS R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
 %token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
 
 %token FORALL FUN TYPE TR
@@ -55,7 +55,7 @@
 %start command_list terms_eof rewriting_rule_eof
 %type <Ast.command list> command_list
 %type <Ast.terms> terms_eof
-%type <Ast_transform.rewriting_rule> rewriting_rule_eof
+%type <Ast.rewriting_rule> rewriting_rule_eof
 
 %%
 
@@ -68,8 +68,11 @@ terms_eof:
 
 rewriting_rule_eof:
   (* Note that variable names are prefixed by '$' *)
-  | t1 = terms LONGARROW t2 = terms EOF { rwrule_fresh_name {lhs=t1; rhs=t2; typings =[]} }
-  | ts = typings VDASH t1 = terms LONGARROW t2 = terms EOF { rwrule_fresh_name {lhs=t1; rhs=t2; typings = ts} }
+  | r = rewriting_rule EOF { r }
+
+rewriting_rule:
+  | t1 = terms LONGARROW t2 = terms { rwrule_fresh_name {lhs=t1; rhs=t2; typings =[]} }
+  | ts = typings VDASH t1 = terms LONGARROW t2 = terms { rwrule_fresh_name {lhs=t1; rhs=t2; typings = ts} }
 
 typings:
   | t = terms COLON t2 = terms { [(t, t2)] }
@@ -102,11 +105,13 @@ tactic:
   | SIMPL PERIOD { Simpl }
   | REWRITE t = terms PERIOD { Rewrite_L2R t }
   | REWRITE LARROW t = terms PERIOD { Rewrite_R2L t }
+  | RWRULE r = rewriting_rule PERIOD { RWRULE r }
 
   | R_SKIP PERIOD { R_SKIP }
   | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
   | R_INITQ PERIOD { R_INITQ }
   | R_UNITARY PERIOD { R_UNITARY }
+  | R_IF qs = terms PERIOD { R_IF qs }
   | R_MEAS_MEAS SWITCH_ID PERIOD { R_MEAS_MEAS true }
   | R_MEAS_MEAS SWITCH_SWAP PERIOD { R_MEAS_MEAS false }
   | R_MEAS_SAMPLE SWITCH_ID PERIOD { R_MEAS_SAMPLE true }

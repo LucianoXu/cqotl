@@ -44,12 +44,16 @@ and tactic2str (t: tactic) : string =
   | Simpl -> "simpl."
   | Rewrite_L2R e -> Printf.sprintf "rewrite %s." (term2str e)
   | Rewrite_R2L e -> Printf.sprintf "rewrite <- %s." (term2str e)
+  | RWRULE r -> Printf.sprintf "rwrule %s." (rwrule2str r)
+
   | R_SKIP -> "r_skip."
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
   | R_INITQ         -> "r_initq."
   | R_UNITARY       -> "r_unitary."
+  | R_IF qs          -> Printf.sprintf "r_if %s." (term2str qs)
   | R_MEAS_MEAS switch -> if switch then "r_meas_meas id." else "r_meas_meas swap."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
+
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
@@ -182,3 +186,14 @@ and term2str (e: terms) : string =
 
     | Opaque ->
         Printf.sprintf "<opaque>"
+
+and rwrule2str (r: rewriting_rule) : string =
+  match r with
+  | {lhs; rhs; typings = []} ->
+      Printf.sprintf "%s --> %s" (term2str lhs) (term2str rhs)
+  
+  | {lhs; rhs; typings} ->
+    let typings_str =
+        (List.map (fun (x, t) -> Printf.sprintf "%s : %s" (term2str x) (term2str t)) typings)
+    |> String.concat ", " in
+    Printf.sprintf "%s |- %s --> %s" typings_str (term2str lhs) (term2str rhs)
