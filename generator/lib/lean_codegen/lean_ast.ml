@@ -60,8 +60,3 @@ type lean_file = {
   imports       : decl list;
   declarations  : decl list;
 }
-
-(* Sugar *)
-let v x                 = Var x
-let app f x             = App (f, x)
-let app_curried f args  = List.fold_left app f args
