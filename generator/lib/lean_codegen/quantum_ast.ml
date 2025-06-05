@@ -3,9 +3,26 @@
 (* To be implemented                                                                *)
 (************************************************************************************)
 
-(* High-level strategy                              *)
-(* Have an AST to represent Quantum stuff           *)
-(* Pattern match on the ambiguous AST of the prover *)
-(* and turn it into a non-ambiguous robust AST      *)
-open Ast
+type binOp  =
+  | Add
+  | Sub
+  | Mult
+  | Outer
+  | Tensor
+  | KetBra
+ 
+type unOp =
+  | Adjoint
+  | Supp
+  | Image
+  | Trace
+  | PartialTrace1
+  | PartialTrace2
 
+type quantumTerm =
+  | Ket0
+  | Ket1
+  | IdOperator
+  | ZeroOperator
+  | UnaryOp       of unOp  * quantumTerm
+  | BinaryOp      of binOp * quantumTerm * quantumTerm
