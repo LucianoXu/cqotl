@@ -5,6 +5,7 @@ open Utils
 open Parser_utils
 open Typing
 
+
 (** the term rewriting rules in *)
 let simpl_rules = [  
   parse_rw_rule "false /\\ false --> false";
@@ -15,6 +16,10 @@ let simpl_rules = [
   parse_rw_rule "~ A -> A --> A";
   parse_rw_rule "A /\\ true --> A";
   parse_rw_rule "true /\\ A --> A";
+  parse_rw_rule "true \\/ A --> true";
+  parse_rw_rule "A \\/ true --> true";
+  parse_rw_rule "false \\/ A --> A";
+  parse_rw_rule "A \\/ false --> A";
 
   parse_rw_rule "true |-> A --> A";
   parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 1O[T]_q";
@@ -25,6 +30,8 @@ let simpl_rules = [
   parse_rw_rule "A : CTERM[BIT] |- ~ A \\/ A --> true";
   parse_rw_rule "~ true --> false";
   parse_rw_rule "~ false --> true";
+
+  parse_rw_rule "(~ b1 -> 0O[T, T]_(q, q)) /\\ (~ b2 -> 0O[T, T]_(q, q)) --> (~ (b1 /\\ b2) -> 0O[T, T]_(q, q))";
 ]
 
 
@@ -175,6 +182,7 @@ let dirac_rules = [
   parse_rw_rule "1O[BIT]_(q, q) /\\ 1O[BIT]_(q, q) --> 1O[BIT]_(q, q)";
 
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
+  parse_rw_rule "A_q -> B_q --> (A -> B)_q";
   parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
 
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
@@ -205,9 +213,9 @@ let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t :
     
 
 let simpl_entail_rules = [
+  parse_rw_rule "A <= A --> true = true";
   parse_rw_rule "psi | A <= phi | B --> (phi <= psi) /\\ (A <= B)";
   parse_rw_rule "A_q <= B_q --> (A <= B)";
-  parse_rw_rule "A <= A --> true = true";
   parse_rw_rule "0O[T1, T2] <= A --> true = true";
 ]
 

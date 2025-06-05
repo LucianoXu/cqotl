@@ -242,7 +242,10 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   (* bit *)
   | Symbol sym when sym = _bit ->
     Type (Symbol _ctype)
-  
+
+  (* int *)
+  | Symbol sym when sym = _int ->
+    Type (Symbol _ctype)
 
   (* QVList *)
   | Symbol sym when sym = _qvlist ->

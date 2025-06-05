@@ -58,6 +58,122 @@ Prove Pf1 :
 
 QED.
 
+Var lt : forall (i : CTERM[INT]), forall (j : CTERM[INT]), CTERM[BIT].
+Var iADD : forall (i : CTERM[INT]), forall (j : CTERM[BIT]), CTERM[INT].
+
+Prove WrappedPf1 : 
+    
+    forall (n : CTERM[INT]), forall (m : CTERM[INT]),
+    forall (i : CVAR[INT]), forall (i' : CVAR[INT]),
+    forall (x : CVAR[INT]), forall (x' : CVAR[INT]),
+    forall (b : CVAR[BIT]), forall (b' : CVAR[BIT]), 
+    forall (q : QREG[BIT]),
+    {~(x == x') -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)} 
+        i := n;
+        while lt @ i @ m do
+            b <-$ miu;
+            x := iADD @ x @ b;
+        end;
+            ~ 
+        i' := n;
+        while lt @ i' @ m do
+            init q; 
+            unitary H q; 
+            b' := meas (P0, P1) q; 
+            x' := iADD @ x' @ b';
+        end;
+    {~(x == x') -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)}.
+
+
+    intro n. intro m. intro i. intro i'. intro x. intro x'.
+    intro b. intro b'. intro q.
+
+    r_seq 1 0 ~(x == x' /\ i == n) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q).
+
+        r_assign. simpl. simpl_entail. refl.
+
+    r_seq 0 1 ~(x == x' /\ i == i') -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q).
+
+        r_assign. simpl_entail. refl.
+
+    (** while-while rule *)
+    r_while_while q (((~ (x == x' /\ i == i')) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT, BIT]_(q, q)).
+    simpl.
+
+    (* pre order *)
+    simpl_entail. split. (* lemma needed here *) sorry. refl.
+
+    (* post order *)
+    simpl_entail. split. simpl. (* lemma needed here *) sorry. refl.
+
+
+    r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[BIT]_(q,q).
+
+    r_initq.
+
+        simpl. simpl_entail. split. refl.
+        dirac.simpl_entail. refl.
+
+(* 
+        cq_entail. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+
+        dirac. simpl_entail. refl. *)
+
+    r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[BIT]_(q,q).
+
+        r_unitary. dirac. simpl_entail. split.
+            cq_entail. split.
+                intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+                intro H. simpl.
+                (* more simplication here *)
+                by_lean.
+
+            refl.
+
+    r_seq 1 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[BIT, BIT]_(q, q) | 0O[BIT, BIT]_(q, q).
+
+    judge_swap.
+    r_meas_sample id.
+        simpl. refl.
+        split. split.
+            intro H. dirac. by_lean.
+            intro H. dirac. by_lean.
+            split.
+            intro H. dirac. by_lean.
+            intro H. dirac. by_lean.
+
+            cq_entail. split.
+                simpl. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+                simpl. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+
+
+    r_pre (((~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iADD @ x @ b == iADD @ x' @ b')))) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT, BIT]_(q, q)).
+
+    sorry.
+
+    r_seq 1 0 (((~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == iADD @ x' @ b') /\ (i == i')))) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT, BIT]_(q, q)).
+
+    r_assign.
+
+        simpl_entail. split.
+        (* an lemma needed here. *)
+        sorry.
+        refl.
+
+    
+    r_assign.
+
+        simpl_entail. split. simpl. simpl_entail. refl.
+
+        refl.
+
+QED.
+        
+
+Pause.
+
+
+
 (* example 2 *)
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.

@@ -88,11 +88,15 @@ rule token = parse
     | "rewrite"                     { REWRITE }
     | "rwrule"                      { RWRULE }
 
+    | "r_pre"                       { R_PRE }
+    | "r_post"                      { R_POST }
     | "r_skip"                      { R_SKIP }
     | "r_seq"                       { R_SEQ }
+    | "r_assign"                    { R_ASSIGN }
     | "r_initq"                     { R_INITQ }
     | "r_unitary"                   { R_UNITARY }
     | "r_if"                        { R_IF }
+    | "r_while_while"               { R_WHILE_WHILE }
     | "r_meas_meas"                 { R_MEAS_MEAS }
     | "r_meas_sample"               { R_MEAS_SAMPLE }
     | "id"                          { SWITCH_ID }

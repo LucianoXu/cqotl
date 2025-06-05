@@ -28,11 +28,15 @@ and tactic =
   | Rewrite_R2L of terms
   | RWRULE of rewriting_rule
 
+  | R_PRE of terms
+  | R_POST of terms
   | R_SKIP
   | R_SEQ of int * int * terms
+  | R_ASSIGN
   | R_INITQ
   | R_UNITARY
   | R_IF of terms
+  | R_WHILE_WHILE of terms * terms
   | R_MEAS_MEAS of bool
   | R_MEAS_SAMPLE of bool
 
@@ -65,6 +69,7 @@ let _cterm = "CTERM"
 let _pdist = "PDIST"  (* Probability distribution. *)
 let _set = "SET"
 let _bit = "BIT"
+let _int = "INT"
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
 let _qreg   = "QREG"
