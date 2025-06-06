@@ -21,10 +21,11 @@
   typing
   reasoning
   prover
-  examples
+  lean_examples
   lean_ast
   lean_generator
   lean_printer
+  lean_commons
   mapper)
  (libraries menhirLib) 
 )

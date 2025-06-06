@@ -50,8 +50,16 @@ Prove Pf1 :
         split.
             intro H.
             (* A problem here. We don't have types for density operators yet. *)
-            dirac. by_lean.
-            intro H. dirac. by_lean.
+            dirac. 
+            (* Pause. *)
+            by_lean.
+            (* Pause. *)
+            intro H. 
+            (* Pause. *)
+            dirac. 
+            (* Pause. *)
+            by_lean.
+            (* Pause. *)
             cq_entail. split.
                 simpl. intro H. destruct H0.
                 simpl. intro H. destruct H0.

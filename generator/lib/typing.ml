@@ -16,9 +16,9 @@ let rec get_qvlist (qreg : terms) : termls_result =
     let t2_list = get_qvlist t2 in
     (
       match t1_list, t2_list with
-      | TermList l1, TermList l2 -> TermList (l1 @ l2)
-      | TermError msg, _ -> TermError msg
-      | _, TermError msg -> TermError msg
+      | TermList l1, TermList l2  -> TermList (l1 @ l2)
+      | TermError msg, _          -> TermError msg
+      | _, TermError msg          -> TermError msg
     )
   | _ -> TermError "Cannot calculate the quantum variable list for the given term."
 

@@ -194,13 +194,11 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_tactic p t
     | QED ->
         eval_QED p
-
     (* | _ -> raise (Failure "Command not implemented yet") *)
   in match res with
     | ProverError msg -> 
         ProverError (msg ^ "\n\nFor the command:\n" ^ (command2str cmd))
     | _ -> res
-
 
 and eval_def (p: prover) (name: string) (t: terms) (e: terms) : eval_result =
   let frame = get_frame p in

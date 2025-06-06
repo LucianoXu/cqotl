@@ -66,13 +66,13 @@ let _forall = "FORALL"
 let _fun    = "FUN"
 let _apply  = "APPLY"
 
-let _ctype = "CTYPE"
-let _cvar = "CVAR"
-let _cterm = "CTERM"
-let _pdist = "PDIST"  (* Probability distribution. *)
-let _set = "SET"
-let _bit = "BIT"
-let _int = "INT"
+let _ctype  = "CTYPE"
+let _cvar   = "CVAR"
+let _cterm  = "CTERM"
+let _pdist  = "PDIST"  (* Probability distribution. *)
+let _set    = "SET"
+let _bit    = "BIT"
+let _int    = "INT"  (* Integer type. *)
 let _qvlist = "QVLIST"
 let _optpair = "OPTPAIR"
 let _qreg   = "QREG"
@@ -151,6 +151,7 @@ let reserved_symbols = [
   _pdist;
   _set;
   _bit;
+  _int;
 
   _qvlist;
   _optpair;
