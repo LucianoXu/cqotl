@@ -28,6 +28,12 @@ let rec repeat_transforms (transforms: transform list) (t: terms) : terms =
 (** substitution type *)
 type subst = (string * terms) list
 
+let subst_remove (s: subst) (x: string) : subst =
+  List.filter (fun (y, _) -> y <> x) s
+
+let subst_exist (s: subst) (x: string) : bool =
+  List.exists (fun (y, _) -> y = x) s
+
 (** apply a substitution to a term *)
 let rec apply_subst (s: subst) (t: terms) : terms =
   match t with
@@ -64,7 +70,7 @@ let app (s : subst) (x : string) : terms =
   | None   -> failwith "internal error: variable not in substitution"
 
 (** The heart of the algorithm – straight from Fig. 4.6             *)
-let rec matchs (pairs : (terms * terms) list) (s : subst) : subst option =
+let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : subst option =
   match pairs with
   | [] -> Some s                                                   (* all done *)
   | (Symbol x, t) :: ls when is_var x ->                     (* V x ↦ t  *)
@@ -112,6 +118,20 @@ let rec term_fresh_name (boundvars: string list) (t: terms) : terms =
         let args' = List.map (term_fresh_name boundvars) args in
         Fun {head; args = args'}
     | Opaque -> Opaque
+
+let rec term_fresh_bound_name (boundvars: string list) (t: terms) : terms =
+  match t with
+  | Symbol x when List.mem x boundvars -> Symbol ("$" ^ x)  (* prepend '$' to variable names *)
+  | Symbol x -> Symbol x  (* keep other symbols unchanged *)
+  | Fun {head; args = [Symbol v; t; s]} when head = _forall || head = _fun ->
+      let new_t = term_fresh_bound_name boundvars t in
+      let new_s = term_fresh_bound_name (v::boundvars) s in
+      Fun {head; args = [Symbol ("$" ^ v); new_t; new_s]}
+  | Fun {head; args} ->
+      let args' = List.map (term_fresh_bound_name boundvars) args in
+      Fun {head; args = args'}
+  | Opaque -> Opaque
+
 
 
 (** Apply the substitution. Modify the variable name so that they will never conflict with values in the substitution. *)

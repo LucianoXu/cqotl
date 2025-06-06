@@ -20,6 +20,8 @@ and tactic =
   | Refl
   | Destruct  of string
   | Intro     of string
+  | Revert    of string
+  | Apply     of terms
   | Choose    of int
   | Split
   | ByLean
@@ -44,6 +46,7 @@ and tactic =
   | CQ_ENTAIL
   | DIRAC
   | SIMPL_ENTAIL
+  | ENTAIL_TRANS of terms
 
 and terms = 
   | Symbol of string

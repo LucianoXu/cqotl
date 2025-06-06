@@ -81,6 +81,8 @@ rule token = parse
     | "refl"                        { REFL }
     | "destruct"                    { DESTRUCT }
     | "intro"                       { INTRO }
+    | "revert"                      { REVERT }
+    | "apply"                       { APPLY }
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
@@ -106,6 +108,7 @@ rule token = parse
     | "cq_entail"                   { CQ_ENTAIL }
     | "dirac"                       { DIRAC }
     | "simpl_entail"                { SIMPL_ENTAIL }
+    | "entail_trans"                { ENTAIL_TRANS }
 
 
     (* terms *)

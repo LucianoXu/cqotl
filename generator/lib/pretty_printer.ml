@@ -38,6 +38,8 @@ and tactic2str (t: tactic) : string =
   | Refl -> "refl."
   | Destruct v -> Printf.sprintf "destruct %s." v
   | Intro v -> Printf.sprintf "intro %s." v
+  | Revert v -> Printf.sprintf "revert %s." v
+  | Apply e -> Printf.sprintf "apply %s." (term2str e)
   | Choose i -> Printf.sprintf "choose %d." i
   | Split -> "split."
   | ByLean -> "by_lean."
@@ -62,6 +64,7 @@ and tactic2str (t: tactic) : string =
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
   | SIMPL_ENTAIL -> "simpl_entail."
+  | ENTAIL_TRANS e -> Printf.sprintf "entail_trans %s." (term2str e)
 
 and term2str (e: terms) : string =
     match e with

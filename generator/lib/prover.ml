@@ -356,6 +356,8 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | Refl          -> eval_tac_refl proof_f
           | Destruct v    -> eval_tac_destruct proof_f v
           | Intro v       -> eval_tac_intro proof_f v
+          | Revert v      -> eval_tac_revert proof_f v
+          | Apply e       -> eval_tac_apply proof_f e
           | Choose i      -> eval_tac_choose proof_f i
           | Split         -> eval_tac_split proof_f
           | ByLean        -> eval_tac_by_lean proof_f
@@ -380,10 +382,7 @@ and eval_tactic (p: prover) (tac : tactic) : eval_result =
           | CQ_ENTAIL     -> eval_tac_CQ_ENTAIL proof_f
           | DIRAC         -> eval_tac_DIRAC proof_f
           | SIMPL_ENTAIL  -> eval_tac_SIMPL_ENTAIL proof_f
-
-          (*
-          | R_UNITARY1 -> eval_tac_R_UNITARY1 proof_f *)
-          (* | _ -> raise (Failure "Tactic not implemented yet") *)
+          | ENTAIL_TRANS e -> eval_tac_ENTAIL_TRANS proof_f e
         end
         in 
         match tac_res with
@@ -481,6 +480,117 @@ and eval_tac_intro (f: proof_frame) (v: string) : tactic_result =
         } in
         Success (ProofFrame new_frame)
       | _ -> TacticError (Printf.sprintf "The tactic is not applicable to the current goal")
+  
+and eval_tac_revert (f: proof_frame) (v: string) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    (* Check whether the given premise v is in the context *)
+    let rec aux (reverted: envItem list) (unrelated: envItem list) (remaining: envItem list) : (envItem list * envItem list) option =
+      match remaining with
+      | [] -> None
+      | item :: rest ->
+        match item with
+        | Assumption {name; _} when name = v ->
+          Some (item :: reverted, unrelated @ rest)
+        (* if the assumption depends on the symbol to revert, then is should also be reverted *)
+        | Assumption {t;_ } when List.mem v (get_symbols t) ->
+          aux (item :: reverted) unrelated rest
+        | Assumption _ ->
+          aux reverted (item :: unrelated) rest
+        | Definition {t; e; _} when List.mem v (get_symbols t) || List.mem v (get_symbols e) -> 
+          None
+        | Definition _ ->
+          aux reverted (item :: unrelated) rest
+    in
+    match aux [] [] ctx with
+    | Some (reverted, remaining) ->
+      let rec add_forall (t: terms) (reverted: envItem list) : terms =
+        match reverted with
+        | [] -> t
+        | Assumption {name; t = tt} :: ls ->
+          let new_t = add_forall t ls in
+          Fun {head = _forall; args = [Symbol name; tt; new_t]}
+
+        (* will never revert definitions *)
+        | _ -> 
+          failwith "Unexpected item in context during revert."
+      in
+      let new_goal = add_forall hd reverted in
+      let new_frame = {
+        env         = f.env;
+        proof_name  = f.proof_name;
+        proof_prop  = f.proof_prop;
+        goals       = (remaining, new_goal) :: tl;
+        lean_goals  = f.lean_goals
+      } in
+      Success (ProofFrame new_frame)
+    | None ->
+      TacticError (Printf.sprintf "The variable %s is not in the context." v)
+
+(* because we don't allow existential variables to be unified, we will limit the premises to A -> (B -> ...) only. *)
+and eval_tac_apply (f: proof_frame) (e: terms) : tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    (* Check whether the term e is a valid witness for the current goal *)
+    let wfctx = get_pf_wfctx f in
+    let rec get_premise (vars: string list) (pattern: terms) : (terms * subst) option =
+      (* first check whether the goal can be matched *)
+      let is_var v = List.mem v vars in
+      let res = matchs ~is_var:is_var 
+        [(pattern, hd)]
+        []
+      in
+      match res with
+      | Some s ->
+        Some (Fun{head=_eq; args=[Symbol _true; Symbol _true]}, s)
+      | None ->
+        match pattern with
+        (* if the subterm is forall, look into it*)
+        | Fun {head; args=[Symbol v; t; t']} when head = _forall ->
+          begin
+            match get_premise (v::vars) t' with
+            | Some (pre', s) ->
+              (* check whether the symbol v is free in pre' *)
+              (* if v appears in pre' then we cannot support apply the lemma because existential instantiation is not supported *)
+              if List.mem v (get_symbols pre') then
+                None
+              else 
+                let new_s = List.filter (fun (y, _) -> y <> v) s in
+                (* else, if v appears in the substitution, it means the variable is already instantiated. we just forward the premise. *)
+                if subst_exist s v then
+                (* remove the item of v *)
+                Some (pre', new_s)
+              else
+                (* else, v goes into the premise. *)
+                let new_pre = Fun {head=_wedge; args=[
+                  apply_subst s t;
+                  pre';
+                ]} in
+                Some (new_pre, new_s)
+            | None -> None
+          end
+        | _ -> None
+    in
+    match calc_type wfctx e with
+    | TypeError msg -> 
+      TacticError (Printf.sprintf "The term %s is not well typed: %s" (term2str e) msg)
+    | Type t ->
+      match get_premise [] (term_fresh_bound_name [] t) with
+      | Some (pre, _) ->
+        let new_frame = {
+          env         = f.env;
+          proof_name  = f.proof_name;
+          proof_prop  = f.proof_prop;
+          goals       = (ctx, pre) :: tl;
+          lean_goals  = f.lean_goals;
+        } in
+        Success (ProofFrame new_frame)
+      | None ->
+        TacticError (Printf.sprintf "The term %s is not a valid witness for the current goal: %s" (term2str e) (term2str hd))
+    
+
 
 and eval_tac_choose (f: proof_frame) (i: int) : tactic_result =
   if i < 1 || i > List.length f.goals then
@@ -1243,6 +1353,37 @@ and eval_tac_SIMPL_ENTAIL (f: proof_frame) : tactic_result =
       lean_goals  = f.lean_goals
     } in
     Success (ProofFrame new_frame)
+
+and eval_tac_ENTAIL_TRANS (f: proof_frame) (e: terms): tactic_result =
+  match f.goals with
+  | [] -> TacticError "Nothing to prove."
+  | (ctx, hd) :: tl ->
+    match hd with
+    | Fun {head; args=[a; b]} when head = _entailment ->
+      begin
+        let wfctx = get_pf_wfctx f in
+        match calc_type wfctx e with
+        | TypeError msg -> 
+          TacticError (Printf.sprintf "The term %s is not well typed. It should indicate error in the prover system. %s" (term2str e) msg)
+        | Type t ->
+          match type_check wfctx e t with
+          | Type _ ->
+            let new_goal1 = Fun {head=_entailment; args=[a; e]} in
+            let new_goal2 = Fun {head=_entailment; args=[e; b]} in
+            let new_frame = {
+              env         = f.env;
+              proof_name  = f.proof_name;
+              proof_prop  = f.proof_prop;
+              goals       = (ctx, new_goal1) :: (ctx, new_goal2) :: tl;
+              lean_goals  = f.lean_goals;
+            } in
+            Success (ProofFrame new_frame)
+          | TypeError msg ->
+            TacticError (Printf.sprintf "The term %s is not well typed as %s. %s" (term2str e) (term2str t) msg)
+      end
+    | _ ->
+      TacticError (Printf.sprintf "The tactic must apply on entailment goals, but got %s." (term2str hd))
+    
 
 let get_status (p: prover) (eval_res: eval_result) : string =
   let prover_status = prover2str p in

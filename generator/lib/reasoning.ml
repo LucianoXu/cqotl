@@ -8,10 +8,16 @@ open Typing
 
 (** the term rewriting rules in *)
 let simpl_rules = [  
+  parse_rw_rule "X /\\ (true = true) --> X";
+  parse_rw_rule "(true = true) /\\ X --> X";
+
   parse_rw_rule "false /\\ false --> false";
   parse_rw_rule "true -> false --> false";
-  parse_rw_rule "true -> A --> A";
-  parse_rw_rule "false -> A --> true";
+  parse_rw_rule "A : CTERM[BIT] |- true -> A --> A";
+  parse_rw_rule "A : CTERM[BIT] |- false -> A --> true";
+  parse_rw_rule "A -> true --> true";
+  parse_rw_rule "A -> false --> ~ A";
+
   parse_rw_rule "~ ~ A --> A";
   parse_rw_rule "~ A -> A --> A";
   parse_rw_rule "A /\\ true --> A";
@@ -217,6 +223,8 @@ let simpl_entail_rules = [
   parse_rw_rule "psi | A <= phi | B --> (phi <= psi) /\\ (A <= B)";
   parse_rw_rule "A_q <= B_q --> (A <= B)";
   parse_rw_rule "0O[T1, T2] <= A --> true = true";
+  parse_rw_rule "X : DTYPE[ls1, ls2] |- A /\\ X <= X --> true = true";
+  parse_rw_rule "X : DTYPE[ls1, ls2] |- X /\\ A <= X --> true = true";
 ]
 
 let simpl_entail (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =

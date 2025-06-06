@@ -58,8 +58,44 @@ Prove Pf1 :
 
 QED.
 
+(*********************************************************************)
+
 Var lt : forall (i : CTERM[INT]), forall (j : CTERM[INT]), CTERM[BIT].
 Var iADD : forall (i : CTERM[INT]), forall (j : CTERM[BIT]), CTERM[INT].
+
+
+
+Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
+
+    intro x. simpl. refl.
+
+QED.
+
+Prove Lemma2 : forall (x : CTERM[BIT]), 
+    forall (H : ~ x = true), x = false.
+
+    intro x. intro H.
+    rewrite <- Lemma1 @ x.
+    rewrite H0. simpl. refl.
+QED.
+
+Prove Lemma3 : forall (a : CTERM[BIT]), forall (b: CTERM[BIT]),
+    forall (q : QREG[BIT]), forall (H: (a -> b) = true),
+        ~a -> 0O[BIT]_(q,q) <= ~b -> 0O[BIT]_(q,q).
+
+    intro a. intro b. intro q. intro H.
+    cq_entail. intro H. rewrite H1. simpl.
+    revert H0. rewrite Lemma2 @ b @ H1. simpl.
+    intro H. rewrite H0. simpl. simpl_entail. refl.
+
+QED.
+
+Prove Lemma4 : forall (a : CTERM[BIT]), forall (q: QREG[BIT]), forall (H: a = true),
+    a |-> 0O[BIT, BIT]_(q, q) <= 0O[BIT, BIT]_(q, q).
+
+    intro a. intro q. intro H.
+    rewrite H0. simpl. simpl_entail. refl.
+QED.
 
 Prove WrappedPf1 : 
     
@@ -101,34 +137,27 @@ Prove WrappedPf1 :
     simpl.
 
     (* pre order *)
-    simpl_entail. split. (* lemma needed here *) sorry. refl.
+    simpl_entail. simpl. apply Lemma3. simpl. by_lean.
 
     (* post order *)
-    simpl_entail. split. simpl. (* lemma needed here *) sorry. refl.
+    simpl_entail. simpl. apply Lemma3. simpl. by_lean.
 
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[BIT]_(q,q).
 
     r_initq.
-
-        simpl. simpl_entail. split. refl.
-        dirac.simpl_entail. refl.
-
-(* 
-        cq_entail. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
-
-        dirac. simpl_entail. refl. *)
+        simpl. simpl_entail. simpl. dirac. simpl_entail. refl.
+        
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[BIT]_(q,q).
 
-        r_unitary. dirac. simpl_entail. split.
-            cq_entail. split.
-                intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
-                intro H. simpl.
-                (* more simplication here *)
-                by_lean.
+        r_unitary. dirac. simpl_entail. simpl. cq_entail. simpl. split.
+            intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+            intro H. 
+            entail_trans (|false> @ <false|)_(q, q).
+            simpl_entail. refl.
 
-            refl.
+            simpl_entail. by_lean.
 
     r_seq 1 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[BIT, BIT]_(q, q) | 0O[BIT, BIT]_(q, q).
 
@@ -149,16 +178,16 @@ Prove WrappedPf1 :
 
     r_pre (((~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iADD @ x @ b == iADD @ x' @ b')))) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT, BIT]_(q, q)).
 
-    sorry.
+        simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl. 
+        
+        apply Lemma4. simpl. by_lean.
 
     r_seq 1 0 (((~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == iADD @ x' @ b') /\ (i == i')))) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT, BIT]_(q, q)).
 
     r_assign.
 
-        simpl_entail. split.
-        (* an lemma needed here. *)
-        sorry.
-        refl.
+        simpl_entail. simpl.
+        apply Lemma3. simpl. by_lean.
 
     
     r_assign.
@@ -166,7 +195,6 @@ Prove WrappedPf1 :
         simpl_entail. split. simpl. simpl_entail. refl.
 
         refl.
-
 QED.
         
 
@@ -178,20 +206,6 @@ Pause.
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
 
-
-Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
-
-    intro x. simpl. refl.
-
-QED.
-
-Prove Lemma2 : forall (x : CVAR[BIT]), forall (y : CVAR[BIT]), 
-    forall (H : ~ (x == y) = true), (x == y) = false.
-
-    intro x. intro y. intro H.
-    rewrite <- Lemma1 @ (x == y).
-    rewrite H0. simpl. refl.
-QED.
 
 Prove Pf2 : 
     forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
