@@ -193,6 +193,49 @@ let apply_rewriting_rule
       (* if not matched, return None *)
       None
 
+let rec apply_trans_all (trans: wf_ctx -> terms -> terms option) (wfctx: wf_ctx) (t: terms) : terms option =
+  match trans wfctx t with
+  | Some t' -> Some t'  (* hit at the root *)
+  | None ->
+      match t with
+      (* special handling for forall and fun (wfctx adjustment) *)
+      | Fun { head; args = [Symbol v; t; s]} when head = _fun || head = _forall ->
+        begin
+          match apply_trans_all trans wfctx t with
+          | Some t_rewritten -> 
+              Some (Fun { head; args = [Symbol v; t_rewritten; s] })
+          | None ->
+              let new_wfctx = {
+                env = wfctx.env;
+                ctx = Assumption {name = v; t = t} :: wfctx.ctx;
+              } in
+              begin match apply_trans_all trans new_wfctx s with
+              | Some s_rewritten -> Some (Fun { head; args = [Symbol v; t; s_rewritten] })
+              | None -> None
+              end
+        end
+      
+      | Fun { head; args } ->
+          (* walk through the argument list until one rewrites *)
+          let rec search done_so_far todo =
+            match todo with
+            | [] -> None                       (* no sub-term matches *)
+            | a :: rest ->
+                begin match apply_trans_all trans wfctx a with
+                | Some a' ->                   (* rewrite inside a *)
+                    let args' =
+                      List.rev done_so_far @ (a' :: rest) in
+                    Some (Fun { head; args = args' })
+                | None ->
+                    search (a :: done_so_far) rest
+                end
+          in
+          search [] args
+
+      | _ -> None                              (* Symbol / Opaque – leaves *)
+
+        
+
 (**  Depth-first, left-to-right search.
      – If the rule matches the whole term, rewrite immediately.
      – Otherwise descend into the first sub-term that can be rewritten

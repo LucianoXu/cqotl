@@ -19,6 +19,7 @@ and tactic =
   | Expand of string
   | Refl
   | Destruct  of string
+  | Case      of terms
   | Intro     of string
   | Revert    of string
   | Apply     of terms
@@ -37,7 +38,9 @@ and tactic =
   | R_ASSIGN
   | R_INITQ
   | R_UNITARY
+  | R_MEAS
   | R_IF of terms
+  | R_WHILE of terms * terms
   | R_WHILE_WHILE of terms * terms
   | R_MEAS_MEAS of bool
   | R_MEAS_SAMPLE of bool
@@ -47,6 +50,7 @@ and tactic =
   | DIRAC
   | SIMPL_ENTAIL
   | ENTAIL_TRANS of terms
+  | CYLINDER_EXT of terms
 
 and terms = 
   | Symbol of string
