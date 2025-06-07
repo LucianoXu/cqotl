@@ -2,11 +2,6 @@ open Ast
 open Pretty_printer
 open Utils
 
-(* QVList Calculation *)
-type termls_result =
-  | TermList of terms list
-  | TermError of string
-
 (** the function to calculate the qvlist from the qreg term *)
 let rec get_qvlist (qreg : terms) : termls_result =
   match qreg with
@@ -30,14 +25,10 @@ let fresh_name_for_ctx (ctx: wf_ctx) (prefix : string): string =
       | Assumption {name; _} -> name
       | Definition {name; _} -> name
     ) env
-  in
-  
+  in  
   (* Get all symbols from both ctx and env *)
   let all_symbols = get_symbols_from_env ctx.ctx @ get_symbols_from_env ctx.env in
   fresh_name all_symbols prefix
-
-(** Create a well-formed context from an environment with empty context. *)
-let env2wfctx env = {env=env; ctx=[]}
 
 (** Find the item in the well-formed context. *)
 let find_item (wfctx: wf_ctx) (name: string) : envItem option =
@@ -57,10 +48,6 @@ let find_item (wfctx: wf_ctx) (name: string) : envItem option =
     match env_res with
     | Some _ -> env_res
     | None -> None
-
-type typing_result =
-  | Type        of terms
-  | TypeError   of string
 
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
 let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result = 

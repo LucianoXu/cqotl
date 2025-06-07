@@ -59,6 +59,80 @@ and rewriting_rule = {
   typings: (terms * terms) list;  (* optional typing information *)
 } [@@deriving show]
 
+type envItem =
+  | Assumption of {name: string; t: terms}
+  | Definition of {name: string; t: terms; e: terms}
+  [@@deriving show]
+
+type normal_frame = {
+  env: envItem list;
+}
+[@@deriving show]
+
+(* The environment for the whole proof *)
+type proof_frame = {
+  env       : envItem list;
+  proof_name: string;
+  proof_prop: terms;
+  goals     : (envItem list * terms) list;
+  lean_goals: (envItem list * terms) list;
+}
+[@@deriving show]
+
+type frame = 
+  | NormalFrame of normal_frame
+  | ProofFrame  of proof_frame
+[@@deriving show]
+
+(** The prover. 
+  Initially it has empty stack and the frame is described by empty_frame. *)
+type prover = {
+  mutable stack: frame list;  (* The new frames *)
+}
+[@@deriving show]
+  
+type tactic_result =
+  | Success of frame
+  | TacticError of string
+  [@@deriving show]
+  
+type eval_result = 
+  | Success
+  | ProverError of string
+  | Pause
+  [@@deriving show]
+
+type ('a, 'b) lean4Result = Result of 'a | LeanTranslationError of 'b [@@deriving show]
+
+(* The well-formed environment and context *)
+type wf_ctx = {
+  env: envItem list; 
+  ctx: envItem list
+}[@@deriving show]
+
+type obligation_proof_frame = {
+  env         : envItem list;
+  context     : envItem list;
+  goal        : terms;
+}
+[@@deriving show]
+
+(** transformation type *)
+type transform = terms -> terms option [@@deriving show]
+
+(** substitution type *)
+type subst = (string * terms) list [@@deriving show]
+
+(* Type Definitions for the `typing.ml` *)
+
+(* QVList Calculation *)
+type termls_result =
+  | TermList of terms list
+  | TermError of string
+
+type typing_result =
+  | Type        of terms
+  | TypeError   of string
 
 (* The reserved term symbols *)
 
@@ -216,7 +290,6 @@ let reserved_symbols = [
   _judgement;
   _qcoupling;]
 
-
 (** return the substitution result t\[v/x\] *)
 let rec substitute (t : terms) (x: string) (v: terms) : terms =
   match t with
@@ -282,18 +355,6 @@ let fresh_name (symbol_ls: string list) (prefix : string) : string =
 let fresh_name_for_term (t : terms) (prefix : string) : string =
   let t_symbols = get_symbols t in
   fresh_name t_symbols prefix
-
-
-type envItem =
-  | Assumption of {name: string; t: terms}
-  | Definition of {name: string; t: terms; e: terms}
-  [@@deriving show]
-
-(* The well-formed environment and context *)
-type wf_ctx = {
-  env: envItem list; 
-  ctx: envItem list
-}[@@deriving show]
 
 let find_symbol (wfctx : wf_ctx) (x : string) : envItem option =
   let rec find_in_env env =

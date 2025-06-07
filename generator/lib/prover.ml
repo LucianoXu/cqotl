@@ -5,30 +5,14 @@ open Typing
 open Reasoning
 open Utils
 open Parser_utils
+open Transformer
 
-type normal_frame = {
-  env: envItem list;
-}
-[@@deriving show]
-
-(* The environment for the whole proof *)
-type proof_frame = {
-  env       : envItem list;
-  proof_name: string;
-  proof_prop: terms;
-  goals     : (envItem list * terms) list;
-  lean_goals: (envItem list * terms) list;
-}
-[@@deriving show]
-
-type frame = 
-  | NormalFrame of normal_frame
-  | ProofFrame  of proof_frame
-[@@deriving show]
+(** Create a well-formed context from an environment with empty context. *)
+let env2wfctx env = {env=env; ctx=[]}
 
 let get_pf_wfctx (pf : proof_frame) : wf_ctx =
   match pf.goals with
-  | [] -> env2wfctx pf.env
+  | []          -> env2wfctx pf.env
   | (ctx, _)::_ -> 
       {env = pf.env; ctx = ctx}
   
@@ -83,13 +67,6 @@ let add_goal (f: proof_frame) (goal: terms) : proof_frame =
   new_frame
 
 (*************************************************************)
-
-(** The prover. 
-    Initially it has empty stack and the frame is described by empty_frame. *)
-type prover = {
-  mutable stack: frame list;  (* The new frames *)
-}
-[@@deriving show]
 
 (** Initialize the prover with an empty stack. *)
 let init_prover () : prover = 
@@ -161,17 +138,6 @@ let prover2str (p: prover): string =
   let frame = get_frame p in
     (frame2str frame)
     |> Printf.sprintf "%s" 
-
-type tactic_result =
-  | Success of frame
-  | TacticError of string
-  [@@deriving show]
-
-type eval_result = 
-  | Success
-  | ProverError of string
-  | Pause
-  [@@deriving show]
 
 (***********************************************************************)
 (* The main function that evaluates the command and updates the state. *)
@@ -639,17 +605,24 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
   | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
   | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
       
-      let new_frame = {
+      let obligation_frame = proof_frame_to_lean_frame f 
+      in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
+      in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
+      in  let () = 
+            match obligation_frame with
+              | LeanTranslationError err  -> Printf.printf "%s\n" err
+              | Result lean_frame         -> 
+                  let symbolsInGoal = extract_symbols_from_goal lean_frame.goal
+                  in  let () = Printf.printf "Symbols: %s\n" ("[" ^ (String.concat ", " symbolsInGoal) ^ "]")  
+                  in  Printf.printf "%s\n" (show_obligation_proof_frame lean_frame)
+      in  let () = Printf.printf "--------------------------------------------\n"
+      in  let new_frame = {
             env         = f.env;
             proof_name  = f.proof_name;
             proof_prop  = f.proof_prop;
             goals       = rest_goals;
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
           }
-      in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
-      in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
-      in  let () = Printf.printf "%s\n" (show_proof_frame new_frame) 
-      in  let () = Printf.printf "--------------------------------------------\n"
       in  Success (ProofFrame new_frame)
 
 

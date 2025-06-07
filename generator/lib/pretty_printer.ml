@@ -69,11 +69,12 @@ and tactic2str (t: tactic) : string =
 and term2str (e: terms) : string =
     match e with
     (* special case, nondependent forall is printed as arrow *)
-    | Fun {head; args=[Symbol x; t; t']} when head = _forall && not (List.mem x (get_symbols t')) ->
-        Printf.sprintf "(%s -> %s)" (term2str t) (term2str t')
+    (* | Fun {head; args=[Symbol x; t; t']} when head = _forall && not (List.mem x (get_symbols t')) ->
+        Printf.sprintf "(%s -> %s)" (term2str t) (term2str t') *)
 
     | Fun {head; args=[Symbol x; t; t']} when head = _forall->
         Printf.sprintf "(forall (%s : %s), %s)" x (term2str t) (term2str t')
+    
     | Fun {head; args=[Symbol x; t; e]} when head = _fun->
         Printf.sprintf "(fun (%s : %s) => %s)" x (term2str t) (term2str e)
     | Fun {head; args=[f; t]} when head = _apply->

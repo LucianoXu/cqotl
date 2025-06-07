@@ -7,22 +7,48 @@ open Quantum_ast
 open Typing
 
 (* Frame to hold relevant information for generating LEAN4 file *)
-type obligation_proof_frame = {
-    env         : envItem list;
-    context     : envItem list;
-    goal        : terms;
-}
-[@@deriving show]
-
-type ('a, 'b) lean4Result       = Result of 'a | LeanTranslationError of 'b
 type transform_quantum_result   = (quantumTerm, string) lean4Result
 type transform_prop_result      = (proposition, string) lean4Result
-
+type obligation_frame_result    = (obligation_proof_frame, string) lean4Result [@@deriving show]
 
 (* We assume this function doesn't has non-empty goals *)
-(* let proof_frame_to_lean_frame (f : proof_frame) : obligation_proof_frame =  *)
+let proof_frame_to_lean_frame (f : proof_frame) : obligation_frame_result =
+    match f.goals with
+    | []                -> LeanTranslationError "No proof obligation to be translated to LEAN."
+    | (ctx, goal_term) :: rest_goals ->
+        (* only the first goal goes to LEAN *)
+        let obligation_frame = {
+            env     = f.env;
+            context = ctx;
+            goal    = goal_term;
+        }
+        in  Result (obligation_frame)
+
+(* This function will return the list of symbols/free variables in the AST *)
+let extract_symbols_from_goal (s : terms) : string list =
+    let rec aux acc term =
+        match term with
+        | Symbol sym            ->
+            if List.mem sym reserved_symbols || List.mem sym acc then
+                acc
+            else
+                sym :: acc
+        | Fun {head = _; args}  ->
+            List.fold_left aux acc args
+        | Opaque                -> acc
+    in List.rev (aux [] s)
+
+    (* match s with
+    |   Symbol sym ->
+        (* if sym in reserved_symbols *)
+        (* then, don't add in the result list *)
+        (* else return [sym] *)
+    |   Fun {head; args}    ->
+            (* apply extract symbols in all the args *)
+            only return a list with unique symbols, e.g. ["a", "a"] not allowed, but ["a"] is good *)
 
 
+(* let transform_term_to_prop () *)
 let transform_term_to_prop (wfctx : wf_ctx) (s : terms) : transform_prop_result =
   match s with
     | Symbol sym when sym = _type                               ->

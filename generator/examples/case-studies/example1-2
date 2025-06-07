@@ -88,7 +88,7 @@ Prove WrappedPf1 :
     
     (* Pause. *)
     by_lean.
-    Pause.
+    (* Pause. *)
     
     (* post order *)
     simpl_entail. simpl. apply Lemma3. simpl. 
@@ -124,6 +124,7 @@ Prove WrappedPf1 :
         simpl. refl.
         split. split.
             intro H. dirac. 
+            
             (* Pause. *)
             by_lean.
             (* Pause. *)
@@ -134,7 +135,8 @@ Prove WrappedPf1 :
             (* Pause. *)
             
             split.
-            intro H. dirac. 
+            intro H. dirac.
+
             (* Pause. *)
             by_lean.
             (* Pause. *)
@@ -154,6 +156,7 @@ Prove WrappedPf1 :
         simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl. 
         
         apply Lemma4. simpl. 
+        
         (* Pause. *)
         by_lean.
         (* Pause. *)
@@ -166,7 +169,7 @@ Prove WrappedPf1 :
         apply Lemma3. simpl. 
         (* Pause. *)
         by_lean.
-        (* Pause. *)
+        Pause.
             
     
     r_assign.
