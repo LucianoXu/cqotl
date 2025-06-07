@@ -5,7 +5,7 @@ synopsis:
   "Generator for Proof obligations on Quantum While language with Classical variables."
 description:
   "The implementation utilizes a program logic and discharges proof obligation using a theorem prover."
-maintainer: ["Jam Kabeer Ali Khan"]
+maintainer: ["-"]
 authors: ["Jam Kabeer Ali Khan, Yingte Xu and Iván Renison"]
 license: "LICENSE"
 depends: [

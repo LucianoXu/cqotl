@@ -1,0 +1,9 @@
+Var T : CTYPE.
+Var A : OTYPE[T, T].
+Var B : OTYPE[T, T].
+
+Prove eqpf : (0O[BIT, BIT]) <= (0O[BIT, BIT]).
+    Pause.
+    by_lean.
+    Pause.
+QED.

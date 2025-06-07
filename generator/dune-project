@@ -8,7 +8,7 @@
 
 (authors "Jam Kabeer Ali Khan, Yingte Xu and Iván Renison")
 
-(maintainers "Jam Kabeer Ali Khan")
+(maintainers "-")
 
 (license LICENSE)
 (using menhir 3.0)

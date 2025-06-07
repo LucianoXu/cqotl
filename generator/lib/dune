@@ -26,7 +26,8 @@
   lean_generator
   lean_printer
   lean_commons
-  mapper)
+  transformer
+  quantum_ast)
  (libraries menhirLib) 
 )
 ; Disable warnings for unused variables

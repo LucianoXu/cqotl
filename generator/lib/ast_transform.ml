@@ -72,11 +72,11 @@ let app (s : subst) (x : string) : terms =
 (** The heart of the algorithm – straight from Fig. 4.6             *)
 let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : subst option =
   match pairs with
-  | [] -> Some s                                                   (* all done *)
-  | (Symbol x, t) :: ls when is_var x ->                     (* V x ↦ t  *)
+  | [] -> Some s                                              (* all done *)
+  | (Symbol x, t) :: ls when is_var x ->                      (* V x ↦ t  *)
       if indom x s then
-        if app s x = t then matchs ls s                        (* same binding – ok *)
-        else None                                                   (* incompatible *)
+        if app s x = t then matchs ls s                       (* same binding – ok *)
+        else None                                             (* incompatible *)
       else
         matchs ls ((x, t) :: s)                               (* extend θ *)
   | (_, Symbol x) :: _ when is_var x ->                       (* obj side var – forbid *)
@@ -92,7 +92,6 @@ let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : 
   | (Opaque, Opaque) :: ls ->                                  (* identical opaques *)
       matchs ls s
   | _ -> None                                                  (* every other mismatch *)
-
 
 
 let rwrule2str (r: rewriting_rule) : string =
@@ -154,44 +153,33 @@ let apply_rewriting_rule
   (rule: rewriting_rule) (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t: terms) : terms option =
   (* match the left-hand side of the rule against the term t *)
   match matchs [(rule.lhs, t)] [] with
-  | Some subst ->
-      (* check all the typing conditions *)
-      let rec check_typings typings subst : subst option =
-        match typings with
-        | [] -> Some subst  (* all typing conditions satisfied *)
-        | (t1, t2) :: rest ->
-            let t1_substituted = apply_subst subst t1 in
-            let t2_substituted = apply_subst subst t2 in
-            
-            match typing wfctx t1_substituted with 
-            | None ->
-                (* if the typing fails, return None *)
-                None
+    | Some subst ->
+        (* check all the typing conditions *)
+        let rec check_typings typings subst : subst option =
+          match typings with
+          | [] -> Some subst  (* all typing conditions satisfied *)
+          | (t1, t2) :: rest ->
+              let t1_substituted = apply_subst subst t1 in
+              let t2_substituted = apply_subst subst t2 in
+                match typing wfctx t1_substituted with 
+                | None -> None (* if the typing fails, return None *)
+                | Some type_t1 ->
+                  (* if the typing succeeds, try matching the typing condition. *)
+                  match matchs [(t2_substituted, type_t1)] subst with
+                  | Some new_subst ->
+                      (* if the typing condition is satisfied, continue with the rest *)
+                      check_typings rest new_subst
+                  | None -> None (* if the typing condition is not satisfied, return None *)
+        in  begin
+              match check_typings rule.typings subst with
+              | None        -> None  (* if typing conditions are not satisfied, return None *)
+              | Some subst  ->
+                (* if matched, apply the substitution to the right-hand side *)
+                let rhs_substituted = apply_subst subst rule.rhs in
+                  Some rhs_substituted
+            end
+    | None -> None  (* if not matched, return None *)
 
-            | Some type_t1 ->
-              (* if the typing succeeds, try matching the typing condition. *)
-              match matchs [(t2_substituted, type_t1)] subst with
-              | Some new_subst ->
-                  (* if the typing condition is satisfied, continue with the rest *)
-                  check_typings rest new_subst
-              | None ->
-                  (* if the typing condition is not satisfied, return None *)
-                  None
-      in
-      begin
-        match check_typings rule.typings subst with
-        | None ->
-            (* if typing conditions are not satisfied, return None *)
-            None
-
-        | Some subst ->
-        (* if matched, apply the substitution to the right-hand side *)
-        let rhs_substituted = apply_subst subst rule.rhs in
-          Some rhs_substituted
-      end
-  | None ->
-      (* if not matched, return None *)
-      None
 
 let rec apply_trans_all (trans: wf_ctx -> terms -> terms option) (wfctx: wf_ctx) (t: terms) : terms option =
   match trans wfctx t with
@@ -280,7 +268,6 @@ let rec apply_rewriting_rule_all
                 end
           in
           search [] wfctx args
-
       | _ -> None                              (* Symbol / Opaque – leaves *)
       end
 
