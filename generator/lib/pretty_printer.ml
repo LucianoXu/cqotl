@@ -156,16 +156,16 @@ and term2str (e: terms) : string =
     (* program statements *)
     | Symbol x when x = _skip ->
         "skip"
-  
+      
     | Fun {head; args=[Symbol x; t]} when head = _assign ->
         Printf.sprintf "%s := %s" x (term2str t)
 
     | Fun {head; args=[Symbol x; t]} when head = _passign ->
         Printf.sprintf "%s <-$ %s" x (term2str t)
-
+    
     | Fun {head; args=[q]} when head = _init_qubit ->
         Printf.sprintf "init %s" (term2str q)
-        
+    
     | Fun {head; args=[u_opt; qs]} when head = _unitary ->
         Printf.sprintf "unitary %s %s" (term2str u_opt) (term2str qs)
     

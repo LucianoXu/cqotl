@@ -632,13 +632,14 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
   match f.goals with
   | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
   | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
+      
       let new_frame = {
             env         = f.env;
             proof_name  = f.proof_name;
             proof_prop  = f.proof_prop;
             goals       = rest_goals;
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-          } 
+          }
       in  let () = Printf.printf "------- Lean obligations updated --------" 
       in  Success (ProofFrame new_frame)
     
