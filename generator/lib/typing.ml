@@ -39,7 +39,6 @@ let fresh_name_for_ctx (ctx: wf_ctx) (prefix : string): string =
 (** Create a well-formed context from an environment with empty context. *)
 let env2wfctx env = {env=env; ctx=[]}
 
-
 (** Find the item in the well-formed context. *)
 let find_item (wfctx: wf_ctx) (name: string) : envItem option =
   let find_item_single (env: envItem list) (name: string) : envItem option =
@@ -59,10 +58,9 @@ let find_item (wfctx: wf_ctx) (name: string) : envItem option =
     | Some _ -> env_res
     | None -> None
 
-
 type typing_result =
-  | Type of terms
-  | TypeError of string
+  | Type        of terms
+  | TypeError   of string
 
 (** Calculate the type of the term. Raise the corresponding error when typing failes. *)
 let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result = 
@@ -71,7 +69,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   (* Type *)
   | Symbol sym when sym = _type -> 
     Type (Symbol _type)
-
+  
   (* forall *)
   | Fun {head; args=[Symbol x; t; t']} when head = _forall ->
     begin
@@ -230,7 +228,6 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as CType. %s" (term2str s) (term2str t) msg)
     end
 
-
   (* Set *)
   | Fun {head; args=[t]} when head = _set ->
     begin
@@ -241,8 +238,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
   (* bit *)
   | Symbol sym when sym = _bit ->
-    Type (Symbol _ctype)
-  
+    Type (Symbol _ctype)  
 
   (* QVList *)
   | Symbol sym when sym = _qvlist ->
@@ -874,8 +870,6 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
-
-
   (* Eq *)
   | Fun {head; args=[t1; t2]} when head = _eq ->
     begin
@@ -931,6 +925,12 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           (* operator entailment *)
           | Fun {head=head1; _}, Fun {head=head2; _} when head1=_dtype && head2=_dtype ->
             Type (Symbol _type)
+
+          (* plain operator entailment *)
+          | Fun {head=head1; args=[t1; t2]}, Fun {head=head2; args=[t1'; t2']} when
+            head1 = _otype && head2 = _otype && t1 = t2 && t1 = t1' && t1' = t2' ->
+              Type (Symbol _type)
+
           | _ -> 
             TypeError (Printf.sprintf "%s typing failed. Entailment should between two assertions." (term2str s))
         end

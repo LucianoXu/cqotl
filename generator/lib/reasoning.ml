@@ -22,7 +22,6 @@ let simpl (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms)
   (* apply_rewriting_rule  *)
   repeat_transforms simpl_transforms t
 
-
 (* destruct the cq-assertion entailment *)
 let cq_entailment_destruct (t : terms) : terms option = 
   (* get /\_{i: cj -> bi} Pi *)

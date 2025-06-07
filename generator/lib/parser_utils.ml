@@ -31,7 +31,6 @@ type inc_parse_result =
 | Partial of command list * string
 
 (* Incremental Parser with loop and entry point *)
-(* Incremental Parser loop *)
 let rec loop lexbuf (checkpoint : command list I.checkpoint) (bst: best): inc_parse_result = 
   match checkpoint with
   | I.InputNeeded _env   ->
@@ -70,22 +69,20 @@ let rec loop lexbuf (checkpoint : command list I.checkpoint) (bst: best): inc_pa
 
 (*  Entry point for parsing the entire string using the incremental API *)
 let parse_top_inc (input : string) : inc_parse_result =
-  let lexbuf = Lexing.from_string input in
+  let lexbuf      = Lexing.from_string input in
   let checkpoint  = (Parser.Incremental.command_list lexbuf.lex_curr_p) in
-  let best0 = empty_best checkpoint in
+  let best0       = empty_best checkpoint in
   (* Drive the incremental parser loop until completion *)
   loop lexbuf checkpoint best0
 
-
 let parse_terms (input : string) : terms =
-  let lexbuf = Lexing.from_string input in
+  let lexbuf      = Lexing.from_string input in
   try Parser.terms_eof Lexer.token lexbuf with
-  | Parser.Error -> failwith ("Syntax error in terms: " ^ input)
+  | Parser.Error    -> failwith ("Syntax error in terms: " ^ input)
   | Lexer.Error msg -> failwith ("Lexer error: " ^ msg ^ " in terms: " ^ input)
 
 let parse_rw_rule (input : string) : rewriting_rule
-  =
-  let lexbuf = Lexing.from_string input in
-  try Parser.rewriting_rule_eof Lexer.token lexbuf with
-  | Parser.Error -> failwith ("Syntax error in rewriting rule: " ^ input)
-  | Lexer.Error msg -> failwith ("Lexer error: " ^ msg ^ " in rewriting rule: " ^ input)
+  = let lexbuf = Lexing.from_string input in
+    try Parser.rewriting_rule_eof Lexer.token lexbuf with
+      | Parser.Error -> failwith ("Syntax error in rewriting rule: " ^ input)
+      | Lexer.Error msg -> failwith ("Lexer error: " ^ msg ^ " in rewriting rule: " ^ input)
