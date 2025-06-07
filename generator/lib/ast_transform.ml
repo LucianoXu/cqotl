@@ -5,7 +5,7 @@ open Pretty_printer
 (* term transformation *)
 
 (** transformation type *)
-type transform = terms -> terms option
+type transform = terms -> terms option [@@deriving show]
 
 (** Repeatedly apply the list of transformation once on a term and return the result. *)
 let rec apply_transforms (transforms: transform list) (t: terms) : terms option =
@@ -26,7 +26,7 @@ let rec repeat_transforms (transforms: transform list) (t: terms) : terms =
 (* Term Rewriting System *)
 
 (** substitution type *)
-type subst = (string * terms) list
+type subst = (string * terms) list [@@deriving show]
 
 let subst_remove (s: subst) (x: string) : subst =
   List.filter (fun (y, _) -> y <> x) s
@@ -93,12 +93,6 @@ let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : 
       matchs ls s
   | _ -> None                                                  (* every other mismatch *)
 
-
-type rewriting_rule = {
-  lhs: terms;  (* left-hand side of the rule *)
-  rhs: terms;  (* right-hand side of the rule *)
-  typings: (terms * terms) list;  (* optional typing information *)
-}
 
 let rwrule2str (r: rewriting_rule) : string =
   match r with

@@ -17,4 +17,4 @@
  (name generator)
  (synopsis      "Generator for Proof obligations on Quantum While language with Classical variables.")
  (description   "The implementation utilizes a program logic and discharges proof obligation using a theorem prover.")
- (depends ocaml dune menhir))
+ (depends ocaml dune menhir ppx_deriving ppx_deriving_show))

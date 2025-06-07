@@ -9,32 +9,35 @@ open Parser_utils
 type normal_frame = {
   env: envItem list;
 }
+[@@deriving show]
 
 (* The environment for the whole proof *)
 type proof_frame = {
-  env : envItem list;
+  env       : envItem list;
   proof_name: string;
   proof_prop: terms;
-  goals: (envItem list * terms) list;
+  goals     : (envItem list * terms) list;
   lean_goals: (envItem list * terms) list;
 }
+[@@deriving show]
+
+type frame = 
+  | NormalFrame of normal_frame
+  | ProofFrame  of proof_frame
+[@@deriving show]
 
 let get_pf_wfctx (pf : proof_frame) : wf_ctx =
   match pf.goals with
   | [] -> env2wfctx pf.env
   | (ctx, _)::_ -> 
       {env = pf.env; ctx = ctx}
-
-type frame = 
-  | NormalFrame of normal_frame
-  | ProofFrame  of proof_frame
-
+  
 (** Get the environment from the frame. *)
 let get_frame_wfctx (f: frame) : wf_ctx =
   match f with
   | NormalFrame {env} -> env2wfctx env
   | ProofFrame  pf -> get_pf_wfctx pf
-
+  
 let add_envItem (f: normal_frame) (item: envItem) : frame =
   NormalFrame {env = item::f.env}
 
@@ -86,6 +89,7 @@ let add_goal (f: proof_frame) (goal: terms) : proof_frame =
 type prover = {
   mutable stack: frame list;  (* The new frames *)
 }
+[@@deriving show]
 
 (** Initialize the prover with an empty stack. *)
 let init_prover () : prover = 
@@ -161,11 +165,13 @@ let prover2str (p: prover): string =
 type tactic_result =
   | Success of frame
   | TacticError of string
+  [@@deriving show]
 
 type eval_result = 
   | Success
   | ProverError of string
   | Pause
+  [@@deriving show]
 
 (***********************************************************************)
 (* The main function that evaluates the command and updates the state. *)
@@ -640,22 +646,12 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             goals       = rest_goals;
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
           }
-      in  let () = Printf.printf "------- Lean obligations updated --------" 
+      in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
+      in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
+      in  let () = Printf.printf "%s\n" (show_proof_frame new_frame) 
+      in  let () = Printf.printf "--------------------------------------------\n"
       in  Success (ProofFrame new_frame)
-    
-    (*
-    and eval_tac_sorry (f: proof_frame) : tactic_result =
-      match f.goals with
-      | [] -> TacticError "Nothing to prove."
-      | _ :: _ ->
-          (* Add the proof to the frame. *)
-          let new_frame = discharge_first_goal f in
-          Success (ProofFrame new_frame)
-      
-    match goal_to_lean_ast wfctx ctx 
-  let output_code = frame2str (ProofFrame f) in
-  Printf.printf "Lean code (Hello World):\n%s\n" output_code;
-  eval_tac_sorry f *)
+
 
 and eval_tac_simpl (f: proof_frame) : tactic_result =
   match f.goals with

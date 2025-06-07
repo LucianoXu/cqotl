@@ -38,8 +38,10 @@ Prove Pf1 :
     r_unitary. dirac. simpl_entail. split.
 
         cq_entail. intro H. rewrite H0. simpl. simpl_entail.
+        (* Pause. *)
         by_lean.
-        
+        (* Pause. *)
+            
         refl.
 
     judge_swap.
@@ -70,8 +72,6 @@ QED.
 
 Var lt : forall (i : CTERM[INT]), forall (j : CTERM[INT]), CTERM[BIT].
 Var iADD : forall (i : CTERM[INT]), forall (j : CTERM[BIT]), CTERM[INT].
-
-
 
 Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
 
@@ -439,5 +439,3 @@ Prove Pf4 :
     sorry.
 
 QED.
-
-          

@@ -12,6 +12,7 @@ type command =
   | Prove of {x : string; p : terms}
   | Tactic of tactic
   | QED
+  [@@deriving show]
 
 and tactic =
   | Sorry
@@ -44,17 +45,19 @@ and tactic =
   | DIRAC
   | SIMPL_ENTAIL
   | ENTAIL_TRANS of terms
+  [@@deriving show]
 
 and terms = 
   | Symbol of string
   | Fun of {head: string; args: terms list}
   | Opaque
+  [@@deriving show]
 
 and rewriting_rule = {
   lhs: terms;  (* left-hand side of the rule *)
   rhs: terms;  (* right-hand side of the rule *)
   typings: (terms * terms) list;  (* optional typing information *)
-}
+} [@@deriving show]
 
 
 (* The reserved term symbols *)
@@ -284,12 +287,13 @@ let fresh_name_for_term (t : terms) (prefix : string) : string =
 type envItem =
   | Assumption of {name: string; t: terms}
   | Definition of {name: string; t: terms; e: terms}
+  [@@deriving show]
 
 (* The well-formed environment and context *)
 type wf_ctx = {
   env: envItem list; 
   ctx: envItem list
-}
+}[@@deriving show]
 
 let find_symbol (wfctx : wf_ctx) (x : string) : envItem option =
   let rec find_in_env env =

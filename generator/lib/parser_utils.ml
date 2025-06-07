@@ -26,9 +26,9 @@ let try_accept (cp : _ I.checkpoint) (pos : Lexing.position)
   | _              -> None           (* parser not complete here *)
 
 type inc_parse_result = 
-| Complete of command list
-| Partial of command list * string
-
+  | Complete of command list
+  | Partial of command list * string
+  
 (* Incremental Parser with loop and entry point *)
 let rec loop lexbuf (checkpoint : command list I.checkpoint) (bst: best): inc_parse_result = 
   match checkpoint with

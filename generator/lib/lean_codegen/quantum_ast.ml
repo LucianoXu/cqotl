@@ -1,7 +1,6 @@
-(************************************************************************************)
-(* This file holds the mechanism to generate LEAN4_AST from the CQOTL Prover syntax *)
-(* To be implemented                                                                *)
-(************************************************************************************)
+(************************************************************************************************)
+(* This file holds the specific intermediate AST for giving concise semantics to generate LEAN4 *)
+(************************************************************************************************)
 
 type quantumBinOp =
   | Q_Add           (* A + B *)

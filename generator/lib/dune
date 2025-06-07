@@ -27,8 +27,11 @@
   lean_printer
   lean_commons
   transformer
-  quantum_ast)
- (libraries menhirLib) 
+  quantum_ast
+  obligations)
+ (libraries menhirLib)
+ 
+ (preprocess (pps ppx_deriving.std ppx_deriving.show))
 )
 ; Disable warnings for unused variables
 (env

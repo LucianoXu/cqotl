@@ -1,0 +1,25 @@
+(* To be cleaned up *)
+
+Var X : OTYPE[BIT, BIT].
+
+Prove Pf4 :
+    forall (x : CVAR[BIT]),
+    forall (q : QREG[BIT]), forall (q' : QREG[BIT]),
+
+    { false -> 0O[BIT]_(q, q) | 0O[BIT]_(q, q)}
+        init q;
+        x := false;
+        while ~ x do 
+            unitary H q;
+            x := meas (P0, P1) q;
+        end;
+
+        ~
+        init q';
+        unitary X q;
+    {true -> Psym2_((q, q'), (q, q')) | 0O[BIT]_(q, q)}.
+
+    Pause.
+    sorry.
+
+QED.
