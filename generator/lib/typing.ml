@@ -238,7 +238,11 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
   (* bit *)
   | Symbol sym when sym = _bit ->
-    Type (Symbol _ctype)  
+    Type (Symbol _ctype)
+
+  (* int *)
+  | Symbol sym when sym = _int ->
+    Type (Symbol _ctype)
 
   (* QVList *)
   | Symbol sym when sym = _qvlist ->
@@ -640,6 +644,35 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as OType or DType." (term2str s) (term2str t))
     end
 
+  (* labelled trace *)
+  | Fun {head; args=[q; t]} when head = _tr ->
+    begin
+      match calc_type wfctx q, calc_type wfctx t with
+      | Type (Fun {head=head1; args=[_]}), 
+        Type (Fun {head=head2; args=[
+          Fun {args=ls1; _}; Fun {args=ls2; _}
+        ]}) when 
+        head1 = _qreg && head2 = _dtype && ls1 = ls2 ->
+          begin
+            match get_qvlist q with
+            | TermList qls ->
+              let new_ls1 = list_remove ls1 qls in
+              Type (Fun {head=_dtype; args=[
+                Fun {head=_list; args=new_ls1};
+                Fun {head=_list; args=new_ls1};
+              ]})
+            | _ -> TypeError (Printf.sprintf "%s typing failed. Cannot calculate qvlist of %s." (term2str s) (term2str q))
+          end
+      | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+    end
+
+  (* top and bottom *)
+  | Symbol sym when sym = _top ->
+    Type (Fun {head= _dtype; args=[Fun{head=_list; args=[]}; Fun{head=_list; args=[]}]})
+
+  | Symbol sym when sym = _bottom ->
+    Type (Fun {head= _dtype; args=[Fun{head=_list; args=[]}; Fun{head=_list; args=[]}]})
+
   (* uset *)
   | Fun {head; args=[t]} when head = _uset ->
     begin
@@ -737,7 +770,8 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end
-      | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
+      | TypeError msg, _ -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t1) msg)
+      | _, TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t2) msg)
     end
       
   (* vee *)
@@ -773,7 +807,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   (* not *)
   | Fun {head; args=[t]} when head = _not ->
     begin
-      match calc_type wfctx t with
+      match is_cterm wfctx t with
       | Type type_t ->
         begin
           if type_t = Fun {head=_cterm; args=[Symbol _bit]} then
@@ -948,7 +982,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           TypeError (Printf.sprintf "%s typing failed." (term2str s))
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
-  
+
+  (* qcoupling *)
+  | Fun {head; args=[left; p; post]} when head = _qcoupling ->
+    begin
+      match calc_type wfctx left, calc_type wfctx p, calc_type wfctx post with
+      | Type type_left, Type type_p, Type type_post ->
+        begin
+          match type_left, type_p, type_post with
+          (* qcoupling *)
+          | Fun {head=head1; _}, Fun {head=head2; _}, Fun {head=head3; _} when 
+            head1 = _dtype && head2 = _dtype && head3 = _dtype ->
+            Type (Symbol _type)
+          | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
+    end
+
   (* Variable *)
   | Symbol x ->
     begin
@@ -967,14 +1017,23 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result = 
   let calc_type_res = calc_type wfctx s in
   match calc_type_res with
-  (* the same type *)
-  | Type t' when t = t' -> Type t
-
-
-  | Type t' -> 
-      TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str t'))
   | TypeError msg -> TypeError msg
-  
+
+  | Type type_t ->
+
+    match type_t, t with
+
+    (* the same type *)
+    | _, _ when t = type_t -> Type t
+
+    (* cvar -> cterm *)
+    | Fun {head=head1; args=[t']}, Fun {head=head2; args=[t'']} when 
+      head1 = _cvar && head2 = _cterm && t' = t'' -> 
+        Type t
+
+    | _, _ -> 
+        TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
+    
 
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in

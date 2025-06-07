@@ -5,14 +5,39 @@ open Utils
 open Parser_utils
 open Typing
 
+
 (** the term rewriting rules in *)
-let simpl_rules = [
+let simpl_rules = [  
+  parse_rw_rule "X /\\ (true = true) --> X";
+  parse_rw_rule "(true = true) /\\ X --> X";
+
+  parse_rw_rule "false /\\ false --> false";
   parse_rw_rule "true -> false --> false";
+  parse_rw_rule "A : CTERM[BIT] |- true -> A --> A";
+  parse_rw_rule "A : CTERM[BIT] |- false -> A --> true";
+  parse_rw_rule "A -> true --> true";
+  parse_rw_rule "A -> false --> ~ A";
+
+  parse_rw_rule "~ ~ A --> A";
+  parse_rw_rule "~ A -> A --> A";
+  parse_rw_rule "A /\\ true --> A";
+  parse_rw_rule "true /\\ A --> A";
+  parse_rw_rule "true \\/ A --> true";
+  parse_rw_rule "A \\/ true --> true";
+  parse_rw_rule "false \\/ A --> A";
+  parse_rw_rule "A \\/ false --> A";
+
   parse_rw_rule "true |-> A --> A";
-  parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 0O[T, T]_q";
+  parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 1O[T]_q";
   parse_rw_rule "true -> true --> true";
   parse_rw_rule "A == A --> true";
+  parse_rw_rule "true == false --> false";
+  parse_rw_rule "false == true --> false";
+  parse_rw_rule "A : CTERM[BIT] |- ~ A \\/ A --> true";
   parse_rw_rule "~ true --> false";
+  parse_rw_rule "~ false --> true";
+
+  parse_rw_rule "(~ b1 -> 0O[T, T]_(q, q)) /\\ (~ b2 -> 0O[T, T]_(q, q)) --> (~ (b1 /\\ b2) -> 0O[T, T]_(q, q))";
 ]
 
 
@@ -149,11 +174,20 @@ let forall_label_remove (wfctx: wf_ctx) (t : terms) : terms option =
 
 (** the term rewriting rules in *)
 let dirac_rules = [
+
   parse_rw_rule "x^D^D --> x";
 
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+
+  parse_rw_rule "1O[T] @ A --> A";
+  parse_rw_rule "A @ 1O[T] --> A";
+
   parse_rw_rule "0O[T, T] /\\ B --> 0O[T, T]";
+  parse_rw_rule "1O[T] /\\ B --> B";
+  parse_rw_rule "1O[BIT]_(q, q) /\\ 1O[BIT]_(q, q) --> 1O[BIT]_(q, q)";
+
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
+  parse_rw_rule "A_q -> B_q --> (A -> B)_q";
   parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
 
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
@@ -184,9 +218,12 @@ let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t :
     
 
 let simpl_entail_rules = [
+  parse_rw_rule "A <= A --> true = true";
   parse_rw_rule "psi | A <= phi | B --> (phi <= psi) /\\ (A <= B)";
   parse_rw_rule "A_q <= B_q --> (A <= B)";
   parse_rw_rule "0O[T1, T2] <= A --> true = true";
+  parse_rw_rule "X : DTYPE[ls1, ls2] |- A /\\ X <= X --> true = true";
+  parse_rw_rule "X : DTYPE[ls1, ls2] |- X /\\ A <= X --> true = true";
 ]
 
 let simpl_entail (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
@@ -284,6 +321,13 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
   | _ -> None
 
 let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postproj: terms) (m_opt: terms) (q: terms) (switch: bool) : terms option =
+  let get_subst bi x y j fj =
+    let s = [
+      (x, j);
+      (y, fj);
+    ] in
+    apply_subst s bi
+  in
   let template = parse_terms "bisubst -> (Mj_(q, q) -> Pisubst)" in
   match m_opt with
   | Fun {head; args=[m0; m1]} when head = _pair ->
@@ -292,25 +336,21 @@ let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postpr
         match t with
         (* boundary condition *)
         | Fun {head; args=[bi; pi]} when head = _imply ->
-          let get_subst bi x y j =
-            let s = [
-              (x, j);
-              (y, j);
-            ] in
-            apply_subst s bi
-          in
+          let fj = _bijection_mapping switch (Symbol _false) in
           let s0 = [
-            ("bisubst", get_subst bi x y (Symbol _false));
+            ("bisubst", get_subst bi x y (Symbol _false) fj);
             ("Mj", m0);
             ("q", q);
-            ("Pisubst", get_subst pi x y (_bijection_mapping switch (Symbol _false)));
+            ("Pisubst", get_subst pi x y (Symbol _false) fj);
           ] in
           let term0 = apply_subst_unique_var s0 template in
+
+          let fj = _bijection_mapping switch (Symbol _true) in
           let s1 = [
-            ("bisubst", get_subst bi x y (Symbol _true));
+            ("bisubst", get_subst bi x y (Symbol _true) fj);
             ("Mj", m1);
             ("q", q);
-            ("Pisubst", get_subst pi x y (_bijection_mapping switch (Symbol _true)));
+            ("Pisubst", get_subst pi x y (Symbol _true) fj);
           ] in 
           let term1 = apply_subst_unique_var s1 template in
           Some (Fun {head=_wedge; args=[term0; term1]})
@@ -327,5 +367,120 @@ let _measure_sample_proj_goal (x : string) (y : string) (preproj: terms) (postpr
       | Some rhs ->
         Some (Fun {head = _entailment; args = [preproj; rhs]})
       | None -> None
+    end
+  | _ -> None
+
+let _meas_meas_coupling_goal (wfctx: wf_ctx) (x: string) (y: string) (preproj: terms) (postproj: terms) (m_opt1: terms) (qs1: terms) (m_opt2: terms) (qs2: terms) (switch: bool) : terms option =
+
+  let get_subst bi x y j k =
+    let s = [
+      (x, j);
+      (y, k);
+    ] in
+    apply_subst s bi
+  in
+
+  let qcoupling_mid_template = parse_terms "bksubst -> ~(bj') |-> Pksubst" in
+  let rec create_qcoupling_mid (bj': terms) (post: terms) (switch: bool) =
+    match post with
+    | Fun {head; args=[bk; pk]} when head = _imply ->
+      let fj = _bijection_mapping switch (Symbol _false) in
+      let bksubst = get_subst bk x y (Symbol _false) fj in
+      let pksubst = get_subst pk x y (Symbol _false) fj in
+      let s0 = [
+        ("x", Symbol _false);
+        ("y", fj);
+        ("bj'", bj');
+        ("bksubst", bksubst);
+        ("Pksubst", pksubst);
+      ] in
+      let term0 = apply_subst_unique_var s0 qcoupling_mid_template in
+      let fj = _bijection_mapping switch (Symbol _true) in
+      let bksubst = get_subst bk x y (Symbol _true) fj in
+      let pksubst = get_subst pk x y (Symbol _true) fj in
+      let s1 = [
+        ("x", Symbol _true);
+        ("y", fj);
+        ("bj'", bj');
+        ("bksubst", bksubst);
+        ("Pksubst", pksubst);
+      ] in
+      let term1 = apply_subst_unique_var s1 qcoupling_mid_template in
+      Some (Fun {head=_wedge; args=[term0; term1]})
+
+    | Fun {head; args=[t1; t2]} when head = _wedge ->
+      begin
+        match create_qcoupling_mid bj' t1 switch, create_qcoupling_mid bj' t2 switch with
+        | Some t1', Some t2' -> Some (Fun {head=_wedge; args=[t1'; t2']})
+        | _ -> None
+      end
+    | _ -> None
+  in
+  
+  (* The function that outputs 
+    bj' -> forall (rho in Pj'), 
+      (Mi_q1 tr_q2(rho) (Mi^D)_q1, 
+      /\_k (bk[i/x, fi/y] -> ~bj') |-> Pk[i/x, fi/y] #, 
+      Nfi_q2 tr_q1(rho) Nfi^D_q2)
+  *)
+  let aux (bj': terms) (pj': terms) (mi: terms) (q1: terms) (nfi: terms) (q2: terms): terms option = 
+    match calc_type wfctx pj' with
+    | Type (Fun {head; args=[ls1; ls2]}) when head = _dtype ->
+      begin
+        match create_qcoupling_mid bj' postproj switch with
+        | None -> None
+        | Some couping_mid ->
+
+          let name_pfbj' = fresh_name_for_ctx wfctx "pfbj'" in
+          let name_rho = fresh_name_for_ctx wfctx "rho" in
+          let name_pfspace = fresh_name_for_ctx wfctx "pfspace" in
+          let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DTYPE[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), (Mi_(q1, q1) @ tr_q2("^ name_rho ^") @ Mi^D_(q1, q1), couplingmid #, Nfi_(q2, q2) @ tr_q1("^ name_rho ^") @ Nfi^D_(q2, q2))") in
+
+          let s = [
+            ("bj'", bj');
+            ("ls1", ls1);
+            ("ls2", ls2);
+            ("Pj'", pj');
+            ("Mi", mi);
+            ("q1", q1);
+            ("Nfi", nfi);
+            ("q2", q2);
+            ("couplingmid", couping_mid);
+          ]
+          in
+          let goal = apply_subst_unique_var s template in
+          Some goal
+      end
+
+    | _ -> None
+  in
+  match m_opt1, m_opt2 with
+  | Fun {head=head1; args=[m0; m1]}, Fun {head=head2; args=[n0; n1]} when head1 = _pair && head2 = _pair ->
+    begin
+      let rec aux_pre preproj =
+        (* match the precondition *)
+        match preproj with
+        | Fun {head; args=[bj'; pj']} when head = _imply ->
+          begin
+            let nf0 = if switch then n0 else n1 in
+            let nf1 = if switch then n1 else n0 in
+            let termv0 = aux bj' pj' m0 qs1 nf0 qs2 in
+            let termv1 = aux bj' pj' m1 qs1 nf1 qs2 in
+            match termv0, termv1 with
+            | Some termv0', Some termv1' ->
+              (* return the goal *)
+              Some (Fun {head=_wedge; args=[termv0'; termv1']})
+            | _ -> None
+          end
+
+        | Fun {head; args=[t1; t2]} when head = _wedge ->
+          begin
+            match aux_pre t1, aux_pre t2 with
+            | Some t1', Some t2' -> Some (Fun {head=_wedge; args=[t1'; t2']})
+            | _ -> None
+          end
+        | _ -> None
+      in 
+      aux_pre preproj
     end
   | _ -> None

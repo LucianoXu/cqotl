@@ -38,21 +38,33 @@ and tactic2str (t: tactic) : string =
   | Refl -> "refl."
   | Destruct v -> Printf.sprintf "destruct %s." v
   | Intro v -> Printf.sprintf "intro %s." v
+  | Revert v -> Printf.sprintf "revert %s." v
+  | Apply e -> Printf.sprintf "apply %s." (term2str e)
   | Choose i -> Printf.sprintf "choose %d." i
   | Split -> "split."
   | ByLean -> "by_lean."
   | Simpl -> "simpl."
   | Rewrite_L2R e -> Printf.sprintf "rewrite %s." (term2str e)
   | Rewrite_R2L e -> Printf.sprintf "rewrite <- %s." (term2str e)
+  | RWRULE r -> Printf.sprintf "rwrule %s." (rwrule2str r)
+
+  | R_PRE e -> Printf.sprintf "r_pre %s." (term2str e)
+  | R_POST e -> Printf.sprintf "r_post %s." (term2str e)
   | R_SKIP -> "r_skip."
   | R_SEQ (n1, n2, t) -> Printf.sprintf "r_seq %d %d %s." n1 n2 (term2str t)
+  | R_ASSIGN      ->   "r_assign."
   | R_INITQ         -> "r_initq."
   | R_UNITARY       -> "r_unitary."
+  | R_IF qs          -> Printf.sprintf "r_if %s." (term2str qs)
+  | R_WHILE_WHILE (qs, phi) -> Printf.sprintf "r_while_while %s %s." (term2str qs) (term2str phi)
+  | R_MEAS_MEAS switch -> if switch then "r_meas_meas id." else "r_meas_meas swap."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
+
   | JUDGE_SWAP -> "judge_swap."
   | CQ_ENTAIL -> "cq_entail."
   | DIRAC -> "dirac."
   | SIMPL_ENTAIL -> "simpl_entail."
+  | ENTAIL_TRANS e -> Printf.sprintf "entail_trans %s." (term2str e)
 
 and term2str (e: terms) : string =
     match e with
@@ -95,6 +107,10 @@ and term2str (e: terms) : string =
 
     | Fun {head; args=[t1; t2]} when head = _plus ->
         Printf.sprintf "(%s + %s)" (term2str t1) (term2str t2)
+    
+    | Fun {head; args=[q; t2]} when head = _tr ->
+        Printf.sprintf "tr_%s(%s)" (term2str q) (term2str t2)
+
 
     | Fun {head; args=[t1; t2]} when head = _subscript ->
         Printf.sprintf "%s_%s" (term2str t1) (term2str t2)
@@ -132,6 +148,10 @@ and term2str (e: terms) : string =
     | Fun {head; args=[pre; s1; s2; post]} when head = _judgement ->
         Printf.sprintf "\n{%s}\n%s\n ~ \n%s\n{%s}" 
           (term2str pre) (term2str s1) (term2str s2) (term2str post)
+
+    | Fun {head; args=[t1; t2; t3]} when head = _qcoupling ->
+        Printf.sprintf "(%s, %s #, %s)" 
+          (term2str t1) (term2str t2) (term2str t3)
 
     (* program statements *)
     | Symbol x when x = _skip ->
@@ -173,3 +193,14 @@ and term2str (e: terms) : string =
 
     | Opaque ->
         Printf.sprintf "<opaque>"
+
+and rwrule2str (r: rewriting_rule) : string =
+  match r with
+  | {lhs; rhs; typings = []} ->
+      Printf.sprintf "%s --> %s" (term2str lhs) (term2str rhs)
+  
+  | {lhs; rhs; typings} ->
+    let typings_str =
+        (List.map (fun (x, t) -> Printf.sprintf "%s : %s" (term2str x) (term2str t)) typings)
+    |> String.concat ", " in
+    Printf.sprintf "%s |- %s --> %s" typings_str (term2str lhs) (term2str rhs)

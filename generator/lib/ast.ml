@@ -17,71 +17,95 @@ and tactic =
   | Sorry
   | Expand        of string
   | Refl
-  | Destruct      of string
-  | Intro         of string
-  | Choose        of int
+  | Destruct  of string
+  | Intro     of string
+  | Revert    of string
+  | Apply     of terms
+  | Choose    of int
   | Split
   | ByLean
   | Simpl
-  | Rewrite_L2R   of terms
-  | Rewrite_R2L   of terms
+  | Rewrite_L2R of terms
+  | Rewrite_R2L of terms
+  | RWRULE of rewriting_rule
+  | R_PRE of terms
+  | R_POST of terms
   | R_SKIP
-  | R_SEQ         of int * int * terms
+  | R_SEQ of int * int * terms
+  | R_ASSIGN
   | R_INITQ
   | R_UNITARY
+  | R_IF of terms
+  | R_WHILE_WHILE of terms * terms
+  | R_MEAS_MEAS of bool
   | R_MEAS_SAMPLE of bool
   | JUDGE_SWAP
   | CQ_ENTAIL
   | DIRAC
   | SIMPL_ENTAIL
+  | ENTAIL_TRANS of terms
 
 and terms = 
   | Symbol of string
   | Fun of {head: string; args: terms list}
   | Opaque
 
+and rewriting_rule = {
+  lhs: terms;  (* left-hand side of the rule *)
+  rhs: terms;  (* right-hand side of the rule *)
+  typings: (terms * terms) list;  (* optional typing information *)
+}
+
+
 (* The reserved term symbols *)
-let _type       = "Type"
-let _forall     = "FORALL"
-let _fun        = "FUN"
-let _apply      = "APPLY"
-let _ctype      = "CTYPE"
-let _cvar       = "CVAR"
-let _cterm      = "CTERM"
-let _pdist      = "PDIST"  (* Probability distribution. *)
-let _set        = "SET"
-let _bit        = "BIT"
-let _qvlist     = "QVLIST"
-let _optpair    = "OPTPAIR"
-let _qreg       = "QREG"
-let _stype      = "STYPE"
-let _ktype      = "KTYPE"
-let _btype      = "BTYPE"
-let _otype      = "OTYPE"
-let _dtype      = "DTYPE"
+
+let _type     = "Type"
+let _forall   = "FORALL"
+let _fun      = "FUN"
+let _apply    = "APPLY"
+
+let _ctype    = "CTYPE"
+let _cvar     = "CVAR"
+let _cterm    = "CTERM"
+let _pdist    = "PDIST"  (* Probability distribution. *)
+let _set      = "SET"
+let _bit      = "BIT"
+let _int      = "INT"  (* Integer type. *)
+let _qvlist   = "QVLIST"
+let _optpair  = "OPTPAIR"
+let _qreg     = "QREG"
+let _stype    = "STYPE"
+let _ktype    = "KTYPE"
+let _btype    = "BTYPE"
+let _otype    = "OTYPE"
+let _dtype    = "DTYPE"
+
 
 (** The type for a single program statement. *)
-let _progstt    = "PROGSTT"
+let _progstt  = "PROGSTT"
 
 (** The type for programs. *)
-let _prog       = "PROG"
-let _cqproj     = "CQPROJ"
-let _assn       = "ASSN"
+let _prog     = "PROG"
+let _cqproj   = "CQPROJ"
+let _assn     = "ASSN"
 
-let _star       = "STAR"
-let _pair       = "PAIR"
-let _list       = "LIST"
+let _star     = "STAR"
+let _pair     = "PAIR"
+let _list     = "LIST"
 
-let _ket        = "KET"
-let _bra        = "BRA"
-let _adj        = "ADJ"
-let _zeroo      = "ZEROO"
-let _oneo       = "ONEO"
-let _plus       = "PLUS"
-let _sum        = "SUM"
-let _tr         = "tr"
+let _ket      = "KET"
+let _bra      = "BRA"
+let _adj      = "ADJ"
+let _zeroo    = "ZEROO"
+let _oneo     = "ONEO"
+let _plus     = "PLUS"
+let _sum      = "SUM"
+let _tr       = "tr"
 
-let _uset       = "USET"
+let _top      = "TOP"
+let _bottom   = "BOT"
+
+let _uset     = "USET"
 
 let _subscript  = "SUBSCRIPT"
 
@@ -112,7 +136,9 @@ let _while      = "WHILE"
 let _eq         = "EQ"
 let _inspace    = "INSPACE"
 let _entailment = "ENTAILMENT"
+
 let _judgement  = "JUDGEMENT"
+let _qcoupling  = "QCOUPLING"
 
 let reserved_symbols = [
   _type;
@@ -125,6 +151,7 @@ let reserved_symbols = [
   _pdist;
   _set;
   _bit;
+  _int;
 
   _qvlist;
   _optpair;
@@ -151,6 +178,8 @@ let reserved_symbols = [
   _plus;
   _sum;
   _tr;
+  _top;
+  _bottom;
 
   _subscript;
 
@@ -181,7 +210,8 @@ let reserved_symbols = [
   _eq;
   _inspace;
   _entailment;
-  _judgement;]
+  _judgement;
+  _qcoupling;]
 
 
 (** return the substitution result t\[v/x\] *)

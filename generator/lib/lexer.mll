@@ -56,6 +56,7 @@ rule token = parse
     | "*"                           { STAR }
     | "@@"                          { ATAT }
     | "@"                           { AT }
+    | "#"                           { HASH }
     | "|"                           { VBAR }
     | ">"                           { RANGLE }
     | "<"                           { LANGLE }
@@ -80,16 +81,25 @@ rule token = parse
     | "refl"                        { REFL }
     | "destruct"                    { DESTRUCT }
     | "intro"                       { INTRO }
+    | "revert"                      { REVERT }
+    | "apply"                       { APPLY }
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
     | "simpl"                       { SIMPL }
     | "rewrite"                     { REWRITE }
+    | "rwrule"                      { RWRULE }
 
+    | "r_pre"                       { R_PRE }
+    | "r_post"                      { R_POST }
     | "r_skip"                      { R_SKIP }
     | "r_seq"                       { R_SEQ }
+    | "r_assign"                    { R_ASSIGN }
     | "r_initq"                     { R_INITQ }
     | "r_unitary"                   { R_UNITARY }
+    | "r_if"                        { R_IF }
+    | "r_while_while"               { R_WHILE_WHILE }
+    | "r_meas_meas"                 { R_MEAS_MEAS }
     | "r_meas_sample"               { R_MEAS_SAMPLE }
     | "id"                          { SWITCH_ID }
     | "swap"                        { SWITCH_SWAP }
@@ -98,12 +108,14 @@ rule token = parse
     | "cq_entail"                   { CQ_ENTAIL }
     | "dirac"                       { DIRAC }
     | "simpl_entail"                { SIMPL_ENTAIL }
+    | "entail_trans"                { ENTAIL_TRANS }
 
 
     (* terms *)
     | "Type"                        { TYPE }
     | "forall"                      { FORALL }
     | "fun"                         { FUN }
+    | "tr"                          { TR }
 
     | "skip"                        { SKIP }
     | "init"                        { INIT }

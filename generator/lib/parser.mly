@@ -7,17 +7,17 @@
 %token <int> NUM
 
 (* character symbols *)
-%token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT VBAR RANGLE LANGLE ADJ UNDERSCORE
+%token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT HASH VBAR RANGLE LANGLE ADJ UNDERSCORE
 
 (* token for commands *)
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
 
 (* token for tactics *)
-%token SORRY EXPAND REFL DESTRUCT INTRO CHOOSE SPLIT BYLEAN SIMPL REWRITE
-%token R_SKIP R_SEQ R_INITQ R_UNITARY R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
-%token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL
+%token SORRY EXPAND REFL DESTRUCT INTRO REVERT APPLY CHOOSE SPLIT BYLEAN SIMPL REWRITE RWRULE
+%token R_PRE R_POST R_SKIP R_SEQ R_ASSIGN R_INITQ R_UNITARY R_IF R_WHILE_WHILE R_MEAS_MEAS R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
+%token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL ENTAIL_TRANS
 
-%token FORALL FUN TYPE
+%token FORALL FUN TYPE TR
 
 (* token for Dirac notation *)
 %token ONEO ZEROO
@@ -55,7 +55,7 @@
 %start command_list terms_eof rewriting_rule_eof
 %type <Ast.command list> command_list
 %type <Ast.terms> terms_eof
-%type <Ast_transform.rewriting_rule> rewriting_rule_eof
+%type <Ast.rewriting_rule> rewriting_rule_eof
 
 %%
 
@@ -68,8 +68,11 @@ terms_eof:
 
 rewriting_rule_eof:
   (* Note that variable names are prefixed by '$' *)
-  | t1 = terms LONGARROW t2 = terms EOF { rwrule_fresh_name {lhs=t1; rhs=t2; typings =[]} }
-  | ts = typings VDASH t1 = terms LONGARROW t2 = terms EOF { rwrule_fresh_name {lhs=t1; rhs=t2; typings = ts} }
+  | r = rewriting_rule EOF { r }
+
+rewriting_rule:
+  | t1 = terms LONGARROW t2 = terms { rwrule_fresh_name {lhs=t1; rhs=t2; typings =[]} }
+  | ts = typings VDASH t1 = terms LONGARROW t2 = terms { rwrule_fresh_name {lhs=t1; rhs=t2; typings = ts} }
 
 typings:
   | t = terms COLON t2 = terms { [(t, t2)] }
@@ -96,17 +99,27 @@ tactic:
   | REFL PERIOD { Refl }
   | DESTRUCT v = ID PERIOD { Destruct v }
   | INTRO v = ID PERIOD { Intro v}
+  | REVERT v = ID PERIOD { Revert v }
+  | APPLY t = terms PERIOD { Apply t }
   | CHOOSE n = NUM PERIOD { Choose n }
   | SPLIT PERIOD { Split }
   | BYLEAN PERIOD { ByLean }
   | SIMPL PERIOD { Simpl }
   | REWRITE t = terms PERIOD { Rewrite_L2R t }
   | REWRITE LARROW t = terms PERIOD { Rewrite_R2L t }
+  | RWRULE r = rewriting_rule PERIOD { RWRULE r }
 
+  | R_PRE pre = terms PERIOD { R_PRE pre }
+  | R_POST post = terms PERIOD { R_POST post }
   | R_SKIP PERIOD { R_SKIP }
   | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
+  | R_ASSIGN PERIOD { R_ASSIGN }
   | R_INITQ PERIOD { R_INITQ }
   | R_UNITARY PERIOD { R_UNITARY }
+  | R_IF qs = terms PERIOD { R_IF qs }
+  | R_WHILE_WHILE qs = terms phi = terms PERIOD { R_WHILE_WHILE (qs, phi) }
+  | R_MEAS_MEAS SWITCH_ID PERIOD { R_MEAS_MEAS true }
+  | R_MEAS_MEAS SWITCH_SWAP PERIOD { R_MEAS_MEAS false }
   | R_MEAS_SAMPLE SWITCH_ID PERIOD { R_MEAS_SAMPLE true }
   | R_MEAS_SAMPLE SWITCH_SWAP PERIOD { R_MEAS_SAMPLE false }
 
@@ -114,6 +127,7 @@ tactic:
   | CQ_ENTAIL PERIOD { CQ_ENTAIL }
   | DIRAC PERIOD { DIRAC }
   | SIMPL_ENTAIL PERIOD { SIMPL_ENTAIL }
+  | ENTAIL_TRANS t = terms PERIOD { ENTAIL_TRANS t }
 
 // qvlist :
 //   | q = ID { [q] }
@@ -148,6 +162,10 @@ terms:
 
   | t1 = terms PLUS t2 = terms { Fun {head=_plus; args=[t1; t2]} }
 
+  (* labelled trace *)
+  | TR LBRACK t = terms RBRACK { Fun {head=_tr; args=[t]} }
+  | TR UNDERSCORE q = terms LPAREN t = terms RPAREN  { Fun {head=_tr; args = [q; t] } } 
+
   | t1 = terms EQEQ t2 = terms { Fun {head=_eqeq; args=[t1; t2]} }
   | t1 = terms WEDGE t2 = terms { Fun {head=_wedge; args=[t1; t2]} }
   | t1 = terms VEE t2 = terms { Fun {head=_vee; args=[t1; t2]} }
@@ -167,6 +185,9 @@ terms:
 
   | LBRACE pre = terms RBRACE s1 = terms TILDE s2 = terms LBRACE post = terms RBRACE
     { Fun {head=_judgement; args=[pre; s1; s2; post]} }
+
+  | LPAREN t1 = terms COMMA t2 = terms HASH COMMA t3 = terms RPAREN
+    { Fun {head=_qcoupling; args=[t1; t2; t3]} }
 
 
   | SKIP                                                        { Symbol _skip }
