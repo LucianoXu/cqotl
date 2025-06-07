@@ -94,12 +94,6 @@ let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : 
   | _ -> None                                                  (* every other mismatch *)
 
 
-type rewriting_rule = {
-  lhs: terms;  (* left-hand side of the rule *)
-  rhs: terms;  (* right-hand side of the rule *)
-  typings: (terms * terms) list;  (* optional typing information *)
-}
-
 let rwrule2str (r: rewriting_rule) : string =
   match r with
   | {lhs; rhs; typings = []} ->

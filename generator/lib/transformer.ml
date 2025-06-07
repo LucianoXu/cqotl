@@ -127,9 +127,9 @@ let transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quantum_r
         begin
             match t with
             | Symbol sym when sym = _false  ->
-                Obligation (Q_Ket0)
+                QuantumResult (Q_Ket0)
             | Symbol sym when sym = _true   ->
-                Obligation (Q_Ket1)
+                QuantumResult (Q_Ket1)
             | _ -> TranslationQuantumError "Expected |false> ~~> |0> or |true> ~~> |1> only."
         end
   (* bra *)
@@ -143,7 +143,7 @@ let transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quantum_r
         begin
             match calc_type wfctx t1, calc_type wfctx t2 with
             | Type (Symbol sym1), Type (Symbol sym2) when sym1 = _ctype && sym2 = _ctype ->
-                Obligation (Q_ZeroOperator)
+                QuantumResult (Q_ZeroOperator)
             | _ ->  TranslationQuantumError "Not implemented to LEAN4"
         end
   (* oneo *)
@@ -151,7 +151,7 @@ let transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quantum_r
         begin
             match calc_type wfctx t with
             | Type (Symbol sym1) when sym1 = _ctype ->
-                Obligation (Q_IdOperator)
+                QuantumResult (Q_IdOperator)
             | _     ->  TranslationQuantumError "Not implemented to LEAN4"
         end
   (* plus *)
