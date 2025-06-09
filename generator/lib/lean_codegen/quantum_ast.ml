@@ -49,7 +49,7 @@ type termType =
   | T_Complex         (* Complex numbers *)
   | T_Real            (* Real numbers *)
   | T_Int             (* Integers *)
-  | T_Bool
+  | T_Bool            
   | T_String
   | T_QuantumState    of int list (* List of dimensions, e.g., [2] for 1 qubit, [2; 2] for 2 qubits *)
   | T_QuantumOperator of int list (* Total dimension if square, e.g. [2;2] for 4x4 op *)
@@ -105,3 +105,44 @@ type proposition =
   | Prop_Iff              of proposition * proposition
   | Prop_Forall           of string * termType * proposition
   | Prop_Exists           of string * termType * proposition
+
+type typeIR =
+  | LinearOperator
+  | Boolean
+  | Natural
+  | Prop
+  | QBit            (* Simply vector *)
+  | Arrow           of typeIR * typeIR
+  
+(* There needs to be a structure to take obligation_frame to this intermediate AST *)
+(* Firstly, we have like the  *)
+(* type quantumIR = {
+  definitions : 
+} *)
+
+
+(* Type mapping
+  CQOTL            LEAN4
+  ----------------------
+  LeanTy(CVAR[INT])             ~~~> NAT
+  LeanTy(CTERM[INT])            ~~~> NAT
+  LeanTy(CVAR[BIT])             ~~~> BOOL
+  LeanTy(CTERM[BIT])            ~~~> BOOL
+  LeanTy(OTYPE[BIT, BIT])       ~~~> LINEAR OPERATOR QBIT -> QBIT
+  LeanTy(KTYPE[BIT])            ~~~> QBIT/K^2
+  LeanTy(PDIST[BIT])            ~~~> BOOL -> REAL
+  LeanTy(Forall (_ : T), tm)    ~~~> T -> LeanTy(tm)
+  
+Context: [
+  q : QREG[BIT]
+  b' : CVAR[BIT] (Bool)
+  b : CVAR[BIT] (Bool)
+  x' : CVAR[INT] (Int)
+  x : CVAR[INT]  (Int)
+  i' : CVAR[INT] (Int)
+  i : CVAR[INT] (Int)
+  m : CTERM[INT] (Int)
+  n : CTERM[INT] (Int)
+  ]
+
+*)

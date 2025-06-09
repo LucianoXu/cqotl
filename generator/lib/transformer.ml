@@ -38,14 +38,6 @@ let extract_symbols_from_goal (s : terms) : string list =
         | Opaque                -> acc
     in List.rev (aux [] s)
 
-    (* match s with
-    |   Symbol sym ->
-        (* if sym in reserved_symbols *)
-        (* then, don't add in the result list *)
-        (* else return [sym] *)
-    |   Fun {head; args}    ->
-            (* apply extract symbols in all the args *)
-            only return a list with unique symbols, e.g. ["a", "a"] not allowed, but ["a"] is good *)
 
 
 (* let transform_term_to_prop () *)

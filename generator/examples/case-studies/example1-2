@@ -11,12 +11,11 @@ Var P1 : OTYPE[BIT, BIT].
 Var miu : PDIST[BIT].
 
 Var lt : forall (i : CTERM[INT]), forall (j : CTERM[INT]), CTERM[BIT].
+
 Var iADD : forall (i : CTERM[INT]), forall (j : CTERM[BIT]), CTERM[INT].
 
 Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
-
     intro x. simpl. refl.
-
 QED.
 
 Prove Lemma2 : forall (x : CTERM[BIT]), 
@@ -86,14 +85,14 @@ Prove WrappedPf1 :
     (* pre order *)
     simpl_entail. simpl. apply Lemma3. simpl.
     
-    (* Pause. *)
+    Pause.
     by_lean.
     (* Pause. *)
     
     (* post order *)
     simpl_entail. simpl. apply Lemma3. simpl. 
     
-    (* Pause. *)
+    Pause.
     by_lean.
     (* Pause. *)
 
