@@ -4,6 +4,7 @@ open Ast_transform
 open Utils 
 open Parser_utils
 open Typing
+(* open Pretty_printer *)
 
 
 (** the term rewriting rules in *)
@@ -18,6 +19,7 @@ let simpl_rules = [
   parse_rw_rule "A -> true --> true";
   parse_rw_rule "A -> false --> ~ A";
 
+  parse_rw_rule "A -> A --> true";
   parse_rw_rule "~ ~ A --> A";
   parse_rw_rule "~ A -> A --> A";
   parse_rw_rule "A /\\ true --> A";
@@ -175,20 +177,33 @@ let forall_label_remove (wfctx: wf_ctx) (t : terms) : terms option =
 (** the term rewriting rules in *)
 let dirac_rules = [
 
+  parse_rw_rule "A : OTYPE[T2, T2] |- 0O[T1, T1] * A --> 0O[T1 * T2, T1 * T2]";
   parse_rw_rule "x^D^D --> x";
 
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+
+  parse_rw_rule "1O[T] /\\ A --> A";
+  parse_rw_rule "A /\\ 1O[T] --> A";
 
   parse_rw_rule "1O[T] @ A --> A";
   parse_rw_rule "A @ 1O[T] --> A";
 
   parse_rw_rule "0O[T, T] /\\ B --> 0O[T, T]";
   parse_rw_rule "1O[T] /\\ B --> B";
-  parse_rw_rule "1O[BIT]_(q, q) /\\ 1O[BIT]_(q, q) --> 1O[BIT]_(q, q)";
+  parse_rw_rule "B /\\ 1O[T] --> B";
+
+  parse_rw_rule "1O[T]_(q, q) /\\ B --> B";
+  parse_rw_rule "B /\\ 1O[T]_(q, q) --> B";
+
+  (* parse_rw_rule "1O[BIT]_(q, q) /\\ 1O[BIT]_(q, q) --> 1O[BIT]_(q, q)"; *)
 
   parse_rw_rule "A_q @ B_q --> (A @ B)_q";
+  parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
+  parse_rw_rule "A_q \\/ B_q --> (A \\/ B)_q";
   parse_rw_rule "A_q -> B_q --> (A -> B)_q";
   parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
+
+  parse_rw_rule "A : OTYPE[T, T] |- A -> A --> 1O[T]";
 
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
 
@@ -219,9 +234,11 @@ let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t :
 
 let simpl_entail_rules = [
   parse_rw_rule "A <= A --> true = true";
+  parse_rw_rule "A <= 1O[BIT] --> true = true";
   parse_rw_rule "psi | A <= phi | B --> (phi <= psi) /\\ (A <= B)";
   parse_rw_rule "A_q <= B_q --> (A <= B)";
-  parse_rw_rule "0O[T1, T2] <= A --> true = true";
+  parse_rw_rule "0O[T, T] <= A --> true = true";
+  parse_rw_rule "0O[T, T]_(q, q) <= A --> true = true";
   parse_rw_rule "X : DTYPE[ls1, ls2] |- A /\\ X <= X --> true = true";
   parse_rw_rule "X : DTYPE[ls1, ls2] |- X /\\ A <= X --> true = true";
 ]
@@ -232,6 +249,79 @@ let simpl_entail (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t 
   (* apply_rewriting_rule  *)
   repeat_transforms simpl_entail_transforms t
     
+
+  
+let _measure_wp_goal (x : string) (pre: terms) (post: terms) (m_opt: terms) (q: terms) : terms option =
+  let get_subst bi x j =
+    let s = [
+      (x, j);
+    ] in
+    apply_subst s bi
+  in
+  let template = parse_terms "bisubst -> (Mj_(q, q) -> Pisubst)" in
+  match m_opt, post with
+  | Fun {head=head_pair; args=[m0; m1]}, Fun {head=head_vbar; args=[phi; a]} when head_pair = _pair && head_vbar = _vbar ->
+    begin
+      (* the auxiliary function to calculate proj part *)
+      let rec aux_i (t: terms) : terms option =
+        match t with
+        (* boundary condition *)
+        | Fun {head; args=[bi; pi]} when head = _imply ->
+          let s0 = [
+            ("bisubst", get_subst bi x (Symbol _false));
+            ("Mj", m0);
+            ("q", q);
+            ("Pisubst", get_subst pi x (Symbol _false));
+          ] in
+          let term0 = apply_subst_unique_var s0 template in
+
+          let s1 = [
+            ("bisubst", get_subst bi x (Symbol _true));
+            ("Mj", m1);
+            ("q", q);
+            ("Pisubst", get_subst pi x (Symbol _true));
+          ] in 
+          let term1 = apply_subst_unique_var s1 template in
+          Some (Fun {head=_wedge; args=[term0; term1]})
+
+        | Fun {head; args=[phi1; phi2]} when head = _wedge ->
+          begin
+            match aux_i phi1, aux_i phi2 with
+            | Some p, Some q -> Some (Fun {head=_wedge; args=[p; q]})
+            | _ -> None
+          end
+        | _ -> None
+      in
+      let aux_a (a : terms) (m_opt_q: terms) (j : terms) : terms =
+        let asubst = apply_subst [(x, j)] a in
+          Fun {
+            head = _apply;
+            args = [
+              m_opt_q;
+              Fun {
+                head = _apply;
+                args = [
+                  asubst;
+                  m_opt_q;
+                ]
+              }
+            ]
+          }
+        in
+      match aux_i phi with
+      | Some rhs ->
+        let pair_q = 
+          Fun {head=_pair; args=[q; q]} in
+        let wp_a_false = 
+          aux_a a (Fun{head=_subscript; args=[m0; pair_q]}) (Symbol _false) in
+        let wp_a_true =
+          aux_a a (Fun{head=_subscript; args=[m1; pair_q]}) (Symbol _true) in
+        (* return the goal *)
+        let wp = Fun {head=_vbar; args=[rhs; Fun {head=_wedge; args=[wp_a_false; wp_a_true]};]} in
+        Some (Fun {head = _entailment; args = [wp; pre]})
+      | None -> None
+    end
+  | _ -> None
 
 
 (** Calculation for measure-sample rule 
@@ -483,4 +573,83 @@ let _meas_meas_coupling_goal (wfctx: wf_ctx) (x: string) (y: string) (preproj: t
       in 
       aux_pre preproj
     end
+  | _ -> None
+
+let cylinder_ext (wfctx : wf_ctx) (qs : terms) (s : terms) : terms option =
+  match s, calc_type wfctx s with
+  | Fun {head=head_subscript; args=[opt; Fun {args=[qs'1; qs'2]; _}]},
+    Type (Fun {head=head_dtype; _}) when
+      head_subscript = _subscript && qs'1 = qs'2 && head_dtype = _dtype
+     ->
+    begin match qs, calc_type wfctx qs with
+    | Fun {head=head_pair; args=[qsl; qsr]},
+      Type (Fun {head=head_qreg; args=[_]}) when
+      head_pair = _pair &&
+      head_qreg = _qreg ->
+      begin
+        (* extend on the right *)
+        if qs'1 = qsl then
+          match calc_type wfctx qsr with
+          | Type (Fun {head=head_qreg; args=[tt']}) when head_qreg = _qreg ->
+            Some (
+              Fun {
+                head = _subscript;
+                args = [
+                  (* tensor product *)
+                  Fun {
+                    head = _star;
+                    args = [
+                      opt;
+                      Fun {
+                        head = _oneo;
+                        args = [tt'];
+                      };
+                    ]
+                  }
+                  ;
+                  (* the extended quantum register *)
+                  Fun {
+                    head = _pair;
+                    args = [qs; qs]
+                  }
+                ]
+              }
+            )
+          | _ -> None
+
+        (* extend on the left *)
+        else if qs'1 = qsr then
+          match calc_type wfctx qsl with
+          | Type (Fun {head=head_qreg; args=[tt']}) when head_qreg = _qreg ->
+            Some (
+              Fun {
+                head = _subscript;
+                args = [
+                  (* tensor product *)
+                  Fun {
+                    head = _star;
+                    args = [
+                      Fun {
+                        head = _oneo;
+                        args = [tt'];
+                      };
+                      opt;
+                    ]
+                  }
+                  ;
+                  (* the extended quantum register *)
+                  Fun {
+                    head = _pair;
+                    args = [qs; qs]
+                  }
+                ]
+              }
+            )
+          | _ -> None
+        else
+          None
+      end
+    | _ -> None
+    end
+    
   | _ -> None

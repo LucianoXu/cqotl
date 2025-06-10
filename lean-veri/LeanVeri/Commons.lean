@@ -30,12 +30,6 @@ noncomputable def ketP : 𝕜² := (1/√2 : 𝕜) • (ket0 + ket1)
 /-- Ket minus, usually denoted as |-⟩. -/
 noncomputable def ketM : 𝕜² := (1/√2 : 𝕜) • (ket0 - ket1)
 
-/-- 0 operator -/
-noncomputable def zeroOperator : 𝕜² →ₗ[𝕜] 𝕜² := (0 : 𝕜² →ₗ[𝕜] 𝕜²)
-
-def cancel_eq_eq (P : 𝕜² →ₗ[𝕜] 𝕜²) : P - P = zeroOperator := by
-  simp only [sub_self]; unfold zeroOperator; rfl
-
 /-- Ket one times bra one, usually denoted as |1⟩⟨1|. -/
 def ketbra1 : 𝕜² →ₗ[𝕜] 𝕜² :=
   outerProduct 𝕜 ket1 ket1

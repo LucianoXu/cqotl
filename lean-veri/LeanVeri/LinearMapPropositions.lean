@@ -98,6 +98,9 @@ lemma isProjection.apply_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) {x :
 lemma isPositiveSemiDefinite.IsSymmetric (T : E →ₗ[𝕜] E) (hT : T.isPositiveSemiDefinite) : T.IsSymmetric :=
   (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
 
+lemma isProjection.IsSymmetric {T : E →ₗ[𝕜] E} (hT : T.isProjection) : T.IsSymmetric :=
+  hT.left.IsSymmetric
+
 lemma isPositiveSemiDefinite_add_of_isPositiveSemiDefinite {T S : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
     (hS : S.isPositiveSemiDefinite) : (T + S).isPositiveSemiDefinite := by
   apply And.intro
@@ -214,7 +217,7 @@ The proof works be decomposing `x` in the eigenbasis of `T`.
 -/
 lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
-  have hTsymm : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
+  have hTsymm : T.IsSymmetric := hT.IsSymmetric
   let n : ℕ := Module.finrank 𝕜 E
   have hn : Module.finrank 𝕜 E = n := rfl
   let base : OrthonormalBasis (Fin n) 𝕜 E := hTsymm.eigenvectorBasis hn
@@ -347,5 +350,11 @@ lemma LoewnerOrder_iff_of_isPositiveSemiDefinite' {T N : E →ₗ[𝕜] E} (hT :
   _ ↔ 0 ≤ RCLike.re (inner 𝕜 (N x) x - inner 𝕜 (T x) x) := by rw [inner_sub_left]
   _ ↔ 0 ≤ RCLike.re (inner 𝕜 (N x) x) - RCLike.re (inner 𝕜 (T x) x) := by rw [map_sub]
   _ ↔ RCLike.re (inner 𝕜 (T x) x) ≤ RCLike.re (inner 𝕜 (N x) x) := by apply sub_nonneg
+
+lemma reflexive_LoewnerOrder (T : E →ₗ[𝕜] E) :
+    T.LoewnerOrder T := by
+  unfold LoewnerOrder
+  rw [sub_self]
+  exact isPositiveSemiDefinite.zero
 
 end LinearMap

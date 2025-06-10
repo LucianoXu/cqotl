@@ -807,15 +807,26 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   
   (* imply *)
   | Fun {head; args=[t1; t2]} when head = _imply ->
-      begin
-        match calc_type wfctx t1, calc_type wfctx t2 with
-        | Type type_t1, Type type_t2 ->
-          begin
-            match type_t1, type_t2 with
-            (* boolean implication *)
-            | _ when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && type_t2 = type_t1 ->
-                Type (Fun {head=_cterm; args=[Symbol _bit]})
-                
+      begin match calc_type wfctx t1, calc_type wfctx t2 with
+      | Type type_t1, Type type_t2 ->
+        begin match type_check wfctx t1 (Fun {head=_cterm; args=[Symbol _bit]}) with
+        | Type _ -> 
+          (* boolean implication *)
+          begin match type_check wfctx t2 (Fun {head=_cterm; args=[Symbol _bit]}) with
+          | Type _ ->
+            Type (Fun {head=_cterm; args=[Symbol _bit]})
+          | _ -> 
+            begin match type_t2 with                
+            (* cq-projector *)
+            | Fun {head=head2; _} when head2=_dtype ->
+                Type (Symbol _cqproj)
+
+            | _ ->
+                TypeError (Printf.sprintf "%s typing failed." (term2str t2))
+            end
+          end
+        | _ ->
+          begin match type_t1, type_t2 with
             (* Sasaki implication (OType) *)
             | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _otype && head2 = _otype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
                 Type (Fun {head=_otype; args=[tt1; tt1]})
@@ -824,14 +835,11 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
             | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _dtype && head2 = _dtype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
                 Type (Fun {head=_dtype; args=[tt1; tt1]})
 
-            (* cq-projector *)
-            | _, Fun {head=head2; _} when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && head2=_dtype ->
-                Type (Symbol _cqproj)
-
             | _ ->
                 TypeError (Printf.sprintf "%s typing failed." (term2str s))
           end
-        | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
+        end
+      | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
       end
 
   (* guarded quantum operator *)
