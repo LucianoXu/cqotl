@@ -7,7 +7,15 @@ variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
 
 local notation "𝕜²" => ((EuclideanSpace 𝕜) (Fin 2))
 
-def lt : ℤ → ℤ → Bool := sorry
+def lt : ℤ → ℤ → Bool := fun x y => x < y
 
 lemma obligation (b b' : Bool) (x x' i i' m : ℤ) :
-  ¬ (((lt i) m) ∧ ((lt i') m) ∧ ((x = x' ∧ i = i') ∧ (b = b'))) := by sorry
+  ¬ (((lt i) m) ∧ ((lt i') m) ∧ ((x = x' ∧ i = i') ∧ (b = b'))) = true := by
+    rw [Bool.coe_sort_true]
+    simp only [eq_iff_iff, iff_true, not_and, and_imp]
+    unfold lt
+    simp only [decide_eq_true_eq]
+    intro H1 H2 H3 H4
+    cases H3 <;> cases H4
+    
+  sorry

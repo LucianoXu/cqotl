@@ -72,7 +72,7 @@ let example1_1 : lean_file  = {
   ];
   declarations = [
     functionDef "lt" (GenericRepr "ℤ → ℤ → Bool");
-    obligation []
+    obligation ()
  ]
 }
 

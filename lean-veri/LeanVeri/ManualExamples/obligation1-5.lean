@@ -13,4 +13,4 @@ def μ  : Bool → 𝕜 := sorry
 def P1 : 𝕜² →ₗ[𝕜] 𝕜² := ketbra1
 
 lemma obligation (ρ : 𝕜² →ₗ[𝕜] 𝕜²) (h1 : (LinearMap.isDensityOperator ρ)) (h2 : ((LinearMap.toSubmodule ρ) ≤ (LinearMap.toSubmodule zeroOperator))) :
- ((((LinearMap.trace 𝕜) 𝕜²) (P1 * ρ)) = (μ true)) := sorry
+  ((((LinearMap.trace 𝕜) 𝕜²) (P1 * ρ)) = (μ true)) := sorry

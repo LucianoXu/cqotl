@@ -3,12 +3,7 @@
 import LeanVeri.Commons
 import LeanVeri.LinearMapPropositions
 
-variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
+def lt : ℤ → ℤ → Bool := fun x y => x < y
 
-local notation "𝕜²" => ((EuclideanSpace 𝕜) (Fin 2))
-
-def lt : ℤ → ℤ → Bool := sorry
-
-lemma obligation (b' b : Bool) (x' x i' i m n : ℤ) :
-  !((x == x') ∧ (i == i')) ∨ ((((lt i) m)) ∧ ((x == x') ∧ (i == i'))) == true := by
-  sorry
+lemma obligation (b': Bool)  (b : Bool) (x' : ℤ) (x : ℤ) (i' : ℤ) (i : ℤ) (m : ℤ) (n : ℤ) :
+  !((x == x') ∧ (i == i')) ∨ ((((lt i) m) == ((lt i') m)) ∧ ((x == x') ∧ (i == i'))) == true := sorry

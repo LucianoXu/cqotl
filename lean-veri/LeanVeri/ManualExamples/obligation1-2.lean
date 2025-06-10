@@ -3,10 +3,6 @@
 import LeanVeri.Commons
 import LeanVeri.LinearMapPropositions
 
-variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
-
-local notation "𝕜²" => ((EuclideanSpace 𝕜) (Fin 2))
-
 def lt : ℤ → ℤ → Bool := sorry
 
 lemma obligation (b b' : Bool) (x x' i i' m : ℤ) :
