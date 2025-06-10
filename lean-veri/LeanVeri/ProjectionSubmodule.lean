@@ -3,7 +3,9 @@ Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
 import LeanVeri.LinearMapPropositions
+import Mathlib.Analysis.InnerProductSpace.Orthogonal
 import Mathlib.Analysis.InnerProductSpace.Projection
+import Mathlib.Analysis.InnerProductSpace.Trace
 
 /-!
 There is a one to one correspondence between the projection operators and the subspaces.
@@ -86,6 +88,26 @@ lemma LinearMap.isProjection.toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} 
       rw [← hT.toSubmodule_eq_range]
       exact hz
     exact (hT.apply_range hz').symm
+
+lemma LinearMap.eq_zero_of_toSubmodule_eq_bot (T : E →ₗ[𝕜] E) (h : T.toSubmodule = ⊥) :
+    T = 0 := by
+  unfold toSubmodule at h
+  rw [Submodule.orthogonal_eq_bot_iff] at h
+  exact ker_eq_top.mp h
+
+lemma LinearMap.eq_zero_of_toSubmodule_le_bot (T : E →ₗ[𝕜] E) (h : T.toSubmodule ≤ ⊥) :
+    T = 0 := by
+  rw [le_bot_iff] at h
+  exact eq_zero_of_toSubmodule_eq_bot T h
+
+omit [FiniteDimensional 𝕜 E] in
+lemma LinearMap.toSubmodule_zero : (0 : E →ₗ[𝕜] E).toSubmodule = ⊥ := by
+  rw [toSubmodule, ker_zero, Submodule.orthogonal_eq_bot_iff]
+
+omit [FiniteDimensional 𝕜 E] in
+lemma LinearMap.toSubmodule_one : (1 : E →ₗ[𝕜] E).toSubmodule = ⊤ := by
+  rw [toSubmodule, Submodule.orthogonal_eq_top_iff]
+  rfl
 
 /-- The projection corresponding to the orthogonal complement of the submodule of the given linear map. -/
 noncomputable def LinearMap.SubmoduleComplement (T : E →ₗ[𝕜] E) : E →ₗ[𝕜] E :=

@@ -3,7 +3,6 @@ Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
 import Mathlib.Analysis.InnerProductSpace.Projection
-import Mathlib
 /-!
 This file extends the file `Mathlib.Analysis.InnerProductSpace.Projection`.
 -/
@@ -11,31 +10,21 @@ This file extends the file `Mathlib.Analysis.InnerProductSpace.Projection`.
 variable {𝕜 E : Type*} [RCLike 𝕜]
 variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
 
-lemma Submodule.le_iff_orthogonal_le_orthogonal (K₀ K₁ : Submodule 𝕜 E) [K₀.HasOrthogonalProjection]
-    [K₁.HasOrthogonalProjection] : K₀ ≤ K₁ ↔ K₁ᗮ ≤ K₀ᗮ := by
-  apply Iff.intro
-  · intro h
-    intro x hx
-    rw [mem_orthogonal]
-    rw [mem_orthogonal] at hx
-    intro u hu
-    exact hx u (h hu)
-  · intro h
-    rw [← K₀.orthogonal_orthogonal, ← K₁.orthogonal_orthogonal]
-    intro x hx
-    rw [mem_orthogonal]
-    rw [mem_orthogonal] at hx
-    intro u hu
-    exact hx u (h hu)
+lemma Submodule.orthogonal_le_orthogonal_iff {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
+    [K₁.HasOrthogonalProjection] : K₀ᗮ ≤ K₁ᗮ ↔ K₁ ≤ K₀ :=
+  ⟨fun h ↦ by simpa using orthogonal_le h, orthogonal_le⟩
 
-lemma Submodule.orthogonal_le_iff_orthogonal_le (K₀ K₁ : Submodule 𝕜 E) [K₀.HasOrthogonalProjection]
+lemma Submodule.orthogonal_le_iff_orthogonal_le {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
     [K₁.HasOrthogonalProjection] : K₀ᗮ ≤ K₁ ↔ K₁ᗮ ≤ K₀ := by
-  rw [le_iff_orthogonal_le_orthogonal, orthogonal_orthogonal]
+  rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
 
-lemma Submodule.le_orthogonal_iff_le_orthogonal (K₀ K₁ : Submodule 𝕜 E) [K₀.HasOrthogonalProjection]
+lemma Submodule.le_orthogonal_iff_le_orthogonal {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
     [K₁.HasOrthogonalProjection] : K₀ ≤ K₁ᗮ ↔ K₁ ≤ K₀ᗮ := by
-  rw [le_iff_orthogonal_le_orthogonal, orthogonal_orthogonal]
+  rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
 
+lemma aux {K : Submodule 𝕜 E} [K.HasOrthogonalProjection] :
+    Kᗮ = ⊥ ↔ K = ⊤ := by
+  exact Submodule.orthogonal_eq_bot_iff
 
 open Module
 lemma Submodule.eq_orthogonal_of_finrank_add_of_orthogonal [FiniteDimensional 𝕜 E]
