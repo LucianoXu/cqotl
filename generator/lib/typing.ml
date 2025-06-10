@@ -927,8 +927,6 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed. %s or %s is not well typed." (term2str s) (term2str t1) (term2str t2))
     end
 
-
-    
   (* Entailment *)
   | Fun {head; args=[t1; t2]} when head = _entailment -> 
     begin
@@ -1020,7 +1018,6 @@ and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result =
 
     | _, _ -> 
         TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
-    
 
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in

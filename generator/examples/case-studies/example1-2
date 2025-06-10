@@ -4,8 +4,8 @@
 Var H : OTYPE[BIT, BIT].
 Var vplus : KTYPE[BIT].
 
-Var P0 : OTYPE[BIT, BIT].
-Var P1 : OTYPE[BIT, BIT].
+Def P0 : OTYPE[BIT, BIT] := |false> @ < false|.
+Def P1 : OTYPE[BIT, BIT] := |true> @ <true|.
 
 (* The uniform distribution on bit. *)
 Var miu : PDIST[BIT].
@@ -85,14 +85,14 @@ Prove WrappedPf1 :
     (* pre order *)
     simpl_entail. simpl. apply Lemma3. simpl.
     
-    Pause.
+    (* Pause. *)
     by_lean.
     (* Pause. *)
     
     (* post order *)
     simpl_entail. simpl. apply Lemma3. simpl. 
     
-    Pause.
+    (* Pause. *)
     by_lean.
     (* Pause. *)
 
@@ -140,8 +140,8 @@ Prove WrappedPf1 :
             by_lean.
             (* Pause. *)
             
-            intro H. dirac. 
-            (* Pause. *)
+            intro H. dirac.
+
             by_lean.
             (* Pause. *)
             
