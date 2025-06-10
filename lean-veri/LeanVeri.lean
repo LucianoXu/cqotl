@@ -1,4 +1,5 @@
 import LeanVeri.Commons
+import LeanVeri.CommonsTensor
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
 import LeanVeri.PartialTrace
