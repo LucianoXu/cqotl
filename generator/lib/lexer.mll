@@ -80,6 +80,7 @@ rule token = parse
     | "expand"                      { EXPAND }
     | "refl"                        { REFL }
     | "destruct"                    { DESTRUCT }
+    | "case"                        { CASE }
     | "intro"                       { INTRO }
     | "revert"                      { REVERT }
     | "apply"                       { APPLY }
@@ -97,7 +98,9 @@ rule token = parse
     | "r_assign"                    { R_ASSIGN }
     | "r_initq"                     { R_INITQ }
     | "r_unitary"                   { R_UNITARY }
+    | "r_meas"                      { R_MEAS }
     | "r_if"                        { R_IF }
+    | "r_while"                     { R_WHILE }
     | "r_while_while"               { R_WHILE_WHILE }
     | "r_meas_meas"                 { R_MEAS_MEAS }
     | "r_meas_sample"               { R_MEAS_SAMPLE }
@@ -109,6 +112,7 @@ rule token = parse
     | "dirac"                       { DIRAC }
     | "simpl_entail"                { SIMPL_ENTAIL }
     | "entail_trans"                { ENTAIL_TRANS }
+    | "cylinder_ext"                { CYLINDER_EXT }
 
 
     (* terms *)

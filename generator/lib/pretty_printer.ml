@@ -37,6 +37,7 @@ and tactic2str (t: tactic) : string =
   | Expand x -> Printf.sprintf "expand %s." x
   | Refl -> "refl."
   | Destruct v -> Printf.sprintf "destruct %s." v
+  | Case e -> Printf.sprintf "case %s." (term2str e)
   | Intro v -> Printf.sprintf "intro %s." v
   | Revert v -> Printf.sprintf "revert %s." v
   | Apply e -> Printf.sprintf "apply %s." (term2str e)
@@ -55,7 +56,9 @@ and tactic2str (t: tactic) : string =
   | R_ASSIGN      ->   "r_assign."
   | R_INITQ         -> "r_initq."
   | R_UNITARY       -> "r_unitary."
+  | R_MEAS          -> "r_meas."
   | R_IF qs          -> Printf.sprintf "r_if %s." (term2str qs)
+  | R_WHILE (qs, phi) -> Printf.sprintf "r_while %s %s." (term2str qs) (term2str phi)
   | R_WHILE_WHILE (qs, phi) -> Printf.sprintf "r_while_while %s %s." (term2str qs) (term2str phi)
   | R_MEAS_MEAS switch -> if switch then "r_meas_meas id." else "r_meas_meas swap."
   | R_MEAS_SAMPLE switch -> if switch then "r_meas_sample id." else "r_meas_sample swap."
@@ -65,6 +68,7 @@ and tactic2str (t: tactic) : string =
   | DIRAC -> "dirac."
   | SIMPL_ENTAIL -> "simpl_entail."
   | ENTAIL_TRANS e -> Printf.sprintf "entail_trans %s." (term2str e)
+  | CYLINDER_EXT e -> Printf.sprintf "cylinder_ext %s." (term2str e)
 
 and term2str (e: terms) : string =
     match e with

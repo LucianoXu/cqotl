@@ -4,8 +4,8 @@
 Var H : OTYPE[BIT, BIT].
 Var vplus : KTYPE[BIT].
 
-Var P0 : OTYPE[BIT, BIT].
-Var P1 : OTYPE[BIT, BIT].
+Def P0 : OTYPE[BIT, BIT] := |false> @ < false|.
+Def P1 : OTYPE[BIT, BIT] := |true> @ <true|.
 
 (* The uniform distribution on bit. *)
 Var miu : PDIST[BIT].
@@ -103,6 +103,31 @@ Prove Lemma4 : forall (a : CTERM[BIT]), forall (q: QREG[BIT]), forall (H: a = tr
 
     intro a. intro q. intro H.
     rewrite H0. simpl. simpl_entail. refl.
+QED.
+
+Prove Lemma5 : forall (a : CTERM[BIT]), forall (b : CTERM[BIT]), forall (H: (a == b) = true),
+    a = b.
+
+    intro a. intro b. 
+    case b. 
+    case a.
+    rewrite CASE0. rewrite CASE00. simpl. intro H. refl.
+    rewrite CASE1. rewrite CASE0. simpl. intro H. destruct H0.
+    
+    case a.
+    rewrite CASE1. rewrite CASE0. simpl. intro H. destruct H0.
+    rewrite CASE1. rewrite CASE10. simpl. intro H. refl.
+
+QED.
+
+Prove Lemma6 : forall (a : CTERM[BIT]), forall (H: (a == true) = false),
+    a = false.
+
+    intro a.
+    case a.
+    rewrite CASE0. simpl. intro H. destruct H0.
+    rewrite CASE1. simpl. intro H. refl.
+
 QED.
 
 Prove WrappedPf1 : 
@@ -204,143 +229,12 @@ Prove WrappedPf1 :
 
         refl.
 QED.
-        
-
-Pause.
 
 
 
 (* example 2 *)
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
-
-
-Prove Pf2 : 
-    forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
-    forall (y : CVAR[BIT]), forall (y' : CVAR[BIT]), 
-    forall (q1 : QREG[BIT]), forall (q1' : QREG[BIT]),
-    forall (q2 : QREG[BIT]), forall (q2' : QREG[BIT]),
-    forall (U : OTYPE[BIT, BIT]),
-
-    {true -> (
-        (|(false, false)>@<(false, false)| \/ |(true, true)>@<(true, true)|)_((q1, q1'), (q1, q1')) 
-        /\ Psym2_((q2, q2'), (q2, q2'))) | 0O[BIT]_(q1, q1)}
-
-        unitary ((|false> @ <false|) * 1O[BIT] + (|true> @ <true|) * U) (q1, q2);
-        x := meas (P0, P1) q1;
-        y := meas (P0, P1) q2;
-
-        ~
-
-        x' := meas (P0, P1) q1';
-        if x' then 
-            unitary U q2';
-        else
-            skip;
-        end;
-        y' := meas (P0, P1) q2';
-
-    {~(x == x' /\ y == y') -> 0O[BIT]_(q1, q1) | 0O[BIT]_(q1, q1)}.
-
-
-    intro x. intro x'. intro y. intro y'.
-    intro q1. intro q1'. intro q2. intro q2'. intro U.
-    expand Psym2.
-    r_seq -1 -1 (~(x == x') -> 0O[BIT]_(q1, q1) /\ ((x == x') -> Psym2_((q2, q2'), (q2, q2')))) | 0O[BIT]_(q1, q1).
-
-    choose 2. expand Psym2.
-    
-    r_meas_meas id.
-
-    simpl. refl.
-
-    split. split. 
-        intro H. 
-        rewrite Lemma2 @ x @ x' @ H0.
-        dirac. simpl. dirac.
-        (* this obligation involves quantum coupling and it's not sure how to deal with it for now *)
-        by_lean.
-
-    
-        intro H. 
-        rewrite Lemma2 @ x @ x' @ H0.
-        dirac. simpl. dirac.
-        (* same as before *)
-        by_lean.
-        
-
-        split.
-        intro H.
-        rewrite H0. simpl. dirac.
-        (* same as before *)
-        by_lean.
-
-        (* same as before *)
-        by_lean.
-
-    r_seq 2 -1 (~(x == x') -> 0O[BIT]_(q1, q1) 
-                /\ ((x == false /\ x' == false) -> Psym2_((q2, q2'), (q2, q2'))) 
-                /\ ((x == true /\ x' == true) -> U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2))) | 0O[BIT]_(q1, q1).
-
-    choose 2.
-
-    r_if q1.
-
-        sorry.
-
-        r_skip.
-        (* Pause. *)
-          simpl_entail. 
-          split. cq_entail. split.
-            (* *)
-            intro H. rewrite H0. simpl.
-
-            rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
-            rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
-            rwrule A /\ 0O[BIT, BIT]_(q1, q1) --> 0O[BIT, BIT]_(q1, q1).
-            simpl_entail. refl.
-
-            (* *)
-            intro H. rewrite H0. simpl.
-            rwrule 1O[BIT]_(q1, q1) /\ A --> A.
-            
-            (* problem: need to use a lemma of <= *)
-            by_lean.
-        
-            refl.
-
-    r_seq 1 0 true -> 
-        ((|(false, false)> @ <(false, false)|)_((q1, q1'), (q1, q1')) /\ Psym2_((q2, q2'), (q2, q2')) 
-        \/ (|(true, true)> @ <(true, true)|)_((q1, q1'), (q1, q1')) /\ U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2)) | 0O[BIT]_(q1, q1).
-
-    r_unitary.
-    dirac. simpl_entail. split. simpl.
-
-    (* crazy obligation that requires adjusting labels *)
-    by_lean.
-
-    (* *)
-    rwrule A @ 0O[BIT, BIT]_(q1, q1) --> 0O[BIT, BIT]_(q1, q1).
-
-    rwrule 0O[BIT, BIT]_(q1, q1) @ A --> 0O[BIT, BIT]_(q1, q1).
-
-    simpl_entail. refl.
-
-    r_meas_meas id. refl.
-
-    simpl. split.
-        (* *)
-        intro H.
-        (* crazy obligation *)
-        by_lean.
-
-        (* *)
-        intro H.
-        (* crazy obligation *)
-        by_lean.
-
-    (* Pause. *)
-QED.
 
 
 (* example 3*)
@@ -433,9 +327,131 @@ Prove Pf4 :
         ~
         init q';
         unitary X q;
-    {true -> Psym2_((q, q'), (q, q')) | 0O[BIT]_(q, q)}.
+    { true -> Psym2_((q, q'), (q, q')) | 0O[BIT]_(q, q) }.
 
-    Pause.
-    sorry.
+    intro x. intro q. intro q'.
+
+    r_post (~ (x == true) -> 0O[BIT]_(q, q)) /\ (x == true -> (|(true, true)> @ <(true, true)|)_((q, q'), (q, q'))) | 0O[BIT]_(q, q). 
+
+    simpl_entail. simpl. cq_entail. simpl. intro H. case x.
+        rewrite CASE0. simpl. dirac. simpl_entail. expand Psym2. by_lean.
+        rewrite CASE1. simpl. dirac. simpl_entail. refl.
+    
+    (* unitary X q'; *)
+    r_seq 4 -1 (~ (x == true) -> 0O[BIT]_(q, q)) /\ (x == true -> (|(true, false)> @ <(true, false)|)_((q, q'), (q, q'))) | 0O[BIT]_(q, q).
+
+    choose 2.
+
+    r_unitary.
+
+    dirac. simpl_entail. simpl.
+    cq_entail. simpl. split.
+        intro H. rewrite H0. simpl. dirac.
+
+        rewrite Lemma2 @ (x == true) @ H0. simpl. dirac. 
+        simpl_entail. refl.
+
+        intro H. rewrite H0. simpl. dirac.
+        cylinder_ext (q, q'). dirac. simpl_entail. by_lean.
+
+    (* init q'; *)
+    r_seq 4 -1 (~ (x == true) -> 0O[BIT]_(q, q)) /\ (x == true -> (|true> @ <true|)_(q, q)) | 0O[BIT]_(q, q).
+
+    choose 2.
+
+    r_initq.
+
+    simpl_entail. split.
+        cq_entail. simpl. split.
+            intro H. cylinder_ext (q, q'). 
+            case x.
+                rewrite CASE0. simpl. dirac. simpl_entail. refl.
+                rewrite CASE1. simpl. dirac. simpl_entail. refl.
+                
+            intro H. rewrite H0. simpl. dirac. cylinder_ext (q, q'). dirac. simpl_entail. by_lean.
+            cylinder_ext (q, q'). dirac. simpl_entail. refl.
+
+    r_seq 1 0 true -> (|false> @ <false|)_(q, q) | 0O[BIT]_(q, q).
+
+    r_initq.
+        simpl_entail. split.
+            cq_entail. simpl. intro H. dirac. simpl_entail. refl.
+            dirac. simpl_entail. refl.
+
+    r_seq 1 0 (~ (x == false) -> 0O[BIT, BIT]_(q, q)) /\ (x == false -> (|false> @ <false|)_(q, q)) | 0O[BIT]_(q, q). 
+
+    r_assign.
+        simpl_entail. simpl.
+        cq_entail. split. 
+            intro H. destruct H0.
+            intro H. simpl. simpl_entail. refl.
+
+    r_pre ((x == false) -> (|false>@<false|)_(q, q)) /\ ((x == true) -> (|true> @ <true|)_(q, q)) | 0O[BIT]_(q, q).
+
+        simpl_entail. simpl.
+        cq_entail. split.
+            intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
+            intro H. rewrite H0. rewrite Lemma5 @ x @ true @ H0. simpl. dirac. simpl_entail. refl.
+
+    (* while loop *)
+
+    r_while q ((x == false) -> (|false>@<false|)_(q, q)) /\ ((x == true) -> (|true> @ <true|)_(q, q)) | 0O[BIT]_(q, q).
+
+        simpl_entail. refl.
+        simpl_entail. simpl. cq_entail. split.
+            intro H. rewrite Lemma6 @ x @ (Lemma2 @ (x == true) @ H0). simpl. dirac. simpl_entail. refl.
+            intro H. rewrite Lemma5 @ x @ true @ H0. simpl. dirac. simpl_entail. refl.
+
+        simpl.
+
+        r_seq 1 0 ((x == false) -> (vplus @ vplus^D)_(q, q)) /\ ((x == true) -> 0O[BIT, BIT]_(q, q)) | 0O[BIT]_(q, q).
+
+        r_unitary. dirac. simpl_entail. simpl.
+            cq_entail. split.
+                intro H. rewrite Lemma5 @ x @ false @ H0. simpl. dirac. simpl_entail. by_lean.
+                intro H. rewrite Lemma5 @ x @ true @ H0. simpl. dirac. simpl_entail. refl.
+
+        
+        r_meas.
+
+            simpl. simpl_entail. split.
+                cq_entail. simpl. split. split.
+                    intro H. dirac. case x.
+                        rewrite CASE0. simpl. dirac. simpl_entail. refl.
+                        rewrite CASE1. simpl. dirac. simpl_entail. expand P0. dirac. simpl_entail. refl.
+                    intro H. destruct H0.
+                    split.
+                    intro H. destruct H0.
+                    intro H. dirac. case x.
+                        rewrite CASE0. simpl. dirac. simpl_entail. refl.
+                        rewrite CASE1. simpl. dirac. simpl_entail. expand P1. dirac. simpl_entail. refl.
+
+                    dirac. simpl_entail. refl.
+
+    Pause. 
 
 QED.
+
+
+(*
+
+    1)
+
+    measure - sampling by one sided rule (logical rule)
+
+    
+    x := meas (P0, P1) q; ~ x' <-$ {0, 1};
+    { (x == x') }
+
+ - duality ->
+
+
+    Var one_of : CTERM[BIT] -> STYPE.
+
+
+     ...... {<bottom> | (vplus @ vplus^D)_(q, q) * 1_{a = x} }
+    ---
+    forall a, {...} ... ~ ... { <bottom> | 1_{a = x} + 1_{x' <> a} }
+
+*)
+    
