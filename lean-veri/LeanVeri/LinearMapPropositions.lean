@@ -214,7 +214,7 @@ The proof works be decomposing `x` in the eigenbasis of `T`.
 -/
 lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
-  have hTsymm : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT.left
+  have hTsymm : T.IsSymmetric := hT.IsSymmetric
   let n : ℕ := Module.finrank 𝕜 E
   have hn : Module.finrank 𝕜 E = n := rfl
   let base : OrthonormalBasis (Fin n) 𝕜 E := hTsymm.eigenvectorBasis hn
