@@ -12,6 +12,8 @@ depends: [
   "ocaml"
   "dune" {>= "3.16"}
   "menhir"
+  "ppx_deriving"
+  "ppx_deriving_show"
   "odoc" {with-doc}
 ]
 build: [

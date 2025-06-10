@@ -3,12 +3,18 @@ module I  = Parser.MenhirInterpreter
 
 exception SyntaxError of string
 
+(* Type Definitions for the `parser_utils.ml` *)
 (* keep best commands *)
 type best = {
   cp   : command list I.checkpoint;   (* the checkpoint itself *)
   ast  : command list;                (* materialised AST      *)
   size : int;                         (* length of [ast]       *)
 }
+
+type inc_parse_result = 
+  | Complete of command list
+  | Partial of command list * string
+
 
 let empty_best init_cp = { cp = init_cp; ast = []; size = 0; }
 
@@ -24,11 +30,7 @@ let try_accept (cp : _ I.checkpoint) (pos : Lexing.position)
   match cp' with
   | I.Accepted ast -> Some ast
   | _              -> None           (* parser not complete here *)
-
-type inc_parse_result = 
-| Complete of command list
-| Partial of command list * string
-
+  
 (* Incremental Parser with loop and entry point *)
 let rec loop lexbuf (checkpoint : command list I.checkpoint) (bst: best): inc_parse_result = 
   match checkpoint with

@@ -14,5 +14,6 @@ def ket1bra1  : 𝕜² →ₗ[𝕜] 𝕜² := sorry
 
 def ketPbraP  : 𝕜² →ₗ[𝕜] 𝕜² := sorry
 
-lemma obligation1 (ρ1 : 𝕜² →ₗ[𝕜] 𝕜²) (h1 : (LinearMap.isDensityOperator ρ1)) (h2 : ((LinearMap.toSubmodule ρ1) ≤ (LinearMap.toSubmodule ketPbraP))) :
- ((((LinearMap.trace 𝕜) 𝕜²) (ket1bra1 * ρ1)) = (μ true)) := sorry
+lemma obligation1 :
+ ∀ (ρ1 : 𝕜² →ₗ[𝕜] 𝕜²) (h1 : (LinearMap.isDensityOperator ρ1)) (h2 : ((LinearMap.toSubmodule ρ1) ≤ (LinearMap.toSubmodule ketPbraP))),
+  ((((LinearMap.trace 𝕜) 𝕜²) (ket1bra1 * ρ1)) = (μ true)) := sorry

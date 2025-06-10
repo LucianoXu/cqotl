@@ -1,0 +1,70 @@
+(* To be cleaned up *)
+
+Var CX : OTYPE[BIT * BIT, BIT * BIT].
+Var sADD : forall (x : CTERM[BIT]), forall (y : CTERM[BIT]), CTERM[BIT].
+Var sSUB : forall (x : CTERM[BIT]), forall (y : CTERM[BIT]), CTERM[BIT].
+
+Def Psym4 := |((true, true), (true, true))> @ <((true, true), (true, true))| + 
+            |((true, true), (true, false))> @ <((true, false), (true, true))| +
+            |((true, true), (false, true))> @ <((false, true), (true, true))| +
+            |((true, true), (false, false))> @ <((false, false), (true, true))| +
+
+            |((true, false), (true, true))> @ <((true, true), (true, false))| +
+            |((true, false), (true, false))> @ <((true, false), (true, false))| +
+            |((true, false), (false, true))> @ <((false, true), (true, false))| +
+            |((true, false), (false, false))> @ <((false, false), (true, false))| +
+
+            |((false, true), (true, true))> @ <((true, true), (false, true))| +
+            |((false, true), (true, false))> @ <((true, false), (false, true))| +
+            |((false, true), (false, true))> @ <((false, true), (false, true))| +
+            |((false, true), (false, false))> @ <((false, false), (false, true))| +
+
+            |((false, false), (true, true))> @ <((true, true), (false, false))| +
+            |((false, false), (true, false))> @ <((true, false), (false, false))| +
+            |((false, false), (false, true))> @ <((false, true), (false, false))| +
+            |((false, false), (false, false))> @ <((false, false), (false, false))|.
+
+
+Prove Pf3 :
+    forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
+    forall (y : CVAR[BIT]), forall (y' : CVAR[BIT]), 
+    forall (a : CVAR[BIT]), forall (a' : CVAR[BIT]), 
+    forall (b : CVAR[BIT]), forall (b' : CVAR[BIT]), 
+    forall (r : CVAR[BIT]), forall (r' : CVAR[BIT]), 
+    forall (q1 : QREG[BIT]), forall (q1' : QREG[BIT]),
+    forall (q2 : QREG[BIT]), forall (q2' : QREG[BIT]),
+    forall (U : OTYPE[BIT * BIT, BIT * BIT]),
+    forall (U' : OTYPE[BIT, BIT]),
+
+    { true -> Psym4_(((q1, q2), (q1', q2')), ((q1, q2), (q1', q2'))) | 0O[BIT]_(q1, q1)}
+
+        unitary U (q1, q2);
+        unitary CX (q2, q1);
+        y := meas (P0, P1) q1;
+        if y then 
+            unitary U' q2;
+        else
+            skip;
+        end;
+
+        a := sADD @ x @ y;
+        b := sSUB @ y @ x;
+        r := sADD @ a @ b;
+
+        ~
+
+        unitary U (q1', q2');
+        x' := meas (P0, P1) q1';
+        y' := meas (P0, P1) q2';
+        a' := sADD @ x' @ y';
+        b' := sSUB @ y' @ x';
+        r' := sADD @ a' @ b';
+
+    {~(r == r') -> 0O[BIT]_(q1, q1) | 0O[BIT]_(q1, q1)}.
+
+
+
+    sorry.
+
+
+QED.

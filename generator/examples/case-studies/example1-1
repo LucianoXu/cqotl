@@ -1,0 +1,67 @@
+
+(* Example 1 - without While *)
+
+Var H : OTYPE[BIT, BIT].
+Var vplus : KTYPE[BIT].
+
+Var P0 : OTYPE[BIT, BIT].
+Var P1 : OTYPE[BIT, BIT].
+
+(* The uniform distribution on bit. *)
+Var miu : PDIST[BIT].
+
+Prove Pf1 :
+    forall (b1 : CVAR[BIT]), 
+    forall (b2 : CVAR[BIT]), 
+    forall (q : QREG[BIT]),
+    {false -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)} 
+        b1 <-$ miu;
+            ~ 
+        init q; 
+        unitary H q; 
+        b2 := meas (P0, P1) q; 
+    {~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)}.
+    
+    intro b1. intro b2. intro q.
+
+    r_seq -2 -2 true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
+
+    r_initq.
+
+        simpl_entail. split.
+
+        cq_entail. intro H. simpl. dirac. simpl_entail. refl.
+        dirac. simpl_entail. refl.
+
+    r_seq -1 1 true -> (vplus @ vplus^D)_(q,q) | 0O[BIT]_(q,q).
+
+    r_unitary. dirac. simpl_entail. split.
+
+        cq_entail. intro H. rewrite H0. simpl. simpl_entail.
+        by_lean.
+        
+        refl.
+
+    judge_swap.
+    r_meas_sample id.
+
+        refl.
+    
+        split.
+            intro H.
+            (* A problem here. We don't have types for density operators yet. *)
+            dirac. 
+            (* Pause. *)
+            by_lean.
+            (* Pause. *)
+            intro H. 
+            (* Pause. *)
+            dirac. 
+            (* Pause. *)
+            by_lean.
+            (* Pause. *)
+            cq_entail. split.
+                simpl. intro H. destruct H0.
+                simpl. intro H. destruct H0.
+    Pause.
+QED.
