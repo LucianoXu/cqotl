@@ -6,6 +6,7 @@ open Reasoning
 open Utils
 open Parser_utils
 open Transformer
+open Quantum_ast
 
 (** Create a well-formed context from an environment with empty context. *)
 let env2wfctx env = {env=env; ctx=[]}
@@ -632,7 +633,42 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
   match f.goals with
   | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
   | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
-      
+      Printf.printf "-------- ByLean Tactic Invokved --------\n";
+      let initial_obligation_frame  = proof_frame_to_lean_frame f   in
+      match initial_obligation_frame with
+      | LeanTranslationError err ->
+          Printf.printf "Error creating initial obligation frame: %s\n" err;
+          Printf.printf "-------------------------------------\n";
+          TacticError ("Failed to prepare goal for Lean: " ^ err)
+      | Result lean_frame ->
+          let refined_lean_frame  = refine_lean_frame lean_frame                      in
+          let symbolsInGoal       = extract_symbols_from_goal refined_lean_frame.goal in
+          Printf.printf "Refined Obligation Frame (using symbols: [%s])\n" (String.concat ", " symbolsInGoal);
+
+          Printf.printf "---- Attempting to transform the goal to Lean_obligaiton ----\n";
+          let lean_obligation_result = obligation_frame_to_lean_obligation refined_lean_frame in
+          begin
+            match lean_obligation_result with
+            | Result lean_obl ->
+                Printf.printf "Successfully transformed to lean_obligation:\n%s\n"
+                  (show_lean_obligation lean_obl)
+            | LeanTranslationError msg ->
+                Printf.printf "CRITICAL: Failed to create final lean_obligation structure: %s\n" msg
+          end;
+          Printf.printf "--- End of lean_obligation transformation ---\n";
+          
+          let new_frame_state = {
+            env         = f.env;
+            proof_name  = f.proof_name;
+            proof_prop  = f.proof_prop;
+            goals       = rest_goals;
+            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
+          }
+          in  Printf.printf "------- Goal moved to Lean obligations --------\n";
+              Success (ProofFrame new_frame_state);
+(* 
+      Printf.printf "Goal: %s\n" (term2str goal_term);
+
       let obligation_frame = proof_frame_to_lean_frame f 
       in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
       in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
@@ -640,9 +676,10 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             match obligation_frame with
               | LeanTranslationError err  -> Printf.printf "%s\n" err
               | Result lean_frame         -> 
-                  let symbolsInGoal = extract_symbols_from_goal lean_frame.goal
+                  let symbolsInGoal           = extract_symbols_from_goal lean_frame.goal
+                  in  let refined_lean_frame  = refine_lean_frame lean_frame
                   in  let () = Printf.printf "Symbols: %s\n" ("[" ^ (String.concat ", " symbolsInGoal) ^ "]")  
-                  in  Printf.printf "%s\n" (show_obligation_proof_frame lean_frame)
+                  in  Printf.printf "%s\n" (show_obligation_proof_frame refined_lean_frame)
       in  let () = Printf.printf "--------------------------------------------\n"
       in  let new_frame = {
             env         = f.env;
@@ -651,7 +688,7 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             goals       = rest_goals;
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
           }
-      in  Success (ProofFrame new_frame)
+      in  Success (ProofFrame new_frame) *)
 
 
 and eval_tac_simpl (f: proof_frame) : tactic_result =

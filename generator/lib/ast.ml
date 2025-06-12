@@ -106,12 +106,12 @@ type eval_result =
   | Pause
   [@@deriving show]
 
-type ('a, 'b) lean4Result = Result of 'a | LeanTranslationError of 'b [@@deriving show]
+type ('a, 'b) lean4Result   = Result of 'a | LeanTranslationError of 'b [@@deriving show]
 
 (* The well-formed environment and context *)
 type wf_ctx = {
-  env: envItem list; 
-  ctx: envItem list
+  env         : envItem list; 
+  ctx         : envItem list
 }[@@deriving show]
 
 type obligation_proof_frame = {
@@ -122,17 +122,17 @@ type obligation_proof_frame = {
 [@@deriving show]
 
 (** transformation type *)
-type transform = terms -> terms option [@@deriving show]
+type transform  = terms -> terms option [@@deriving show]
 
 (** substitution type *)
-type subst = (string * terms) list [@@deriving show]
+type subst      = (string * terms) list [@@deriving show]
 
 (* Type Definitions for the `typing.ml` *)
 
 (* QVList Calculation *)
 type termls_result =
-  | TermList of terms list
-  | TermError of string
+  | TermList    of terms list
+  | TermError   of string
 
 type typing_result =
   | Type        of terms
@@ -148,10 +148,10 @@ let _apply    = "APPLY"
 let _ctype    = "CTYPE"
 let _cvar     = "CVAR"
 let _cterm    = "CTERM"
-let _pdist    = "PDIST"  (* Probability distribution. *)
+let _pdist    = "PDIST"   (* Probability distribution. *)
 let _set      = "SET"
 let _bit      = "BIT"
-let _int      = "INT"  (* Integer type. *)
+let _int      = "INT"     (* Integer type. *)
 let _qvlist   = "QVLIST"
 let _optpair  = "OPTPAIR"
 let _qreg     = "QREG"
@@ -160,7 +160,6 @@ let _ktype    = "KTYPE"
 let _btype    = "BTYPE"
 let _otype    = "OTYPE"
 let _dtype    = "DTYPE"
-
 
 (** The type for a single program statement. *)
 let _progstt  = "PROGSTT"

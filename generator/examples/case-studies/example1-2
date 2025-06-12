@@ -142,6 +142,7 @@ Prove WrappedPf1 :
             
             intro H. dirac.
 
+            (* Pause. *)
             by_lean.
             (* Pause. *)
             
@@ -166,6 +167,7 @@ Prove WrappedPf1 :
 
         simpl_entail. simpl.
         apply Lemma3. simpl. 
+        
         (* Pause. *)
         by_lean.
         Pause.

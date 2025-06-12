@@ -20,4 +20,3 @@ lemma obligation (ρ : 𝕜² →ₗ[𝕜] 𝕜²) (h1 : (LinearMap.isDensityOpe
   have h1' := h1.right
   rw [LinearMap.map_zero (LinearMap.trace 𝕜 𝕜²)] at h1'
   simp at h1'
-
