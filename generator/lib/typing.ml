@@ -9,9 +9,8 @@ let rec get_qvlist (qreg : terms) : termls_result =
   | Fun {head; args=[t1; t2]} when head=_pair ->
     let t1_list = get_qvlist t1 in
     let t2_list = get_qvlist t2 in
-    (
-      match t1_list, t2_list with
-      | TermList l1, TermList l2  -> TermList (l1 @ l2)
+    ( match t1_list, t2_list with
+      | TermList l1,  TermList l2 -> TermList (l1 @ l2)
       | TermError msg, _          -> TermError msg
       | _, TermError msg          -> TermError msg
     )
@@ -49,46 +48,45 @@ let find_item (wfctx: wf_ctx) (name: string) : envItem option =
     | Some _ -> env_res
     | None -> None
 
-(** Calculate the type of the term. Raise the corresponding error when typing failes. *)
+(** Calculate the type of the term. Raise the corresponding error when typing fails. *)
 let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result = 
   match s with
-
   (* Type *)
   | Symbol sym when sym = _type -> 
-    Type (Symbol _type)
+      Type (Symbol _type)
   
   (* forall *)
   | Fun {head; args=[Symbol x; t; t']} when head = _forall ->
-    begin
-      match type_check wfctx t (Symbol _type) with
-      | Type _ -> 
-        begin
-          let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
-          match type_check new_wfctx t' (Symbol _type) with
-          | Type _ -> Type (Symbol _type)
-          | TypeError _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
-        end
-      | TypeError _ ->
-        TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
-    end
+      begin
+        match type_check wfctx t (Symbol _type) with
+        | Type _ -> 
+          begin
+            let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
+            match type_check new_wfctx t' (Symbol _type) with
+            | Type _ -> Type (Symbol _type)
+            | TypeError _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
+          end
+        | TypeError _ ->
+          TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
+      end
   
   (* function *)
   | Fun {head; args=[Symbol x; t; e]} when head = _fun ->
-    begin
-      match type_check wfctx t (Symbol _type) with
-      | Type _ ->
-        begin
-          let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
-          match calc_type new_wfctx e with
-          | Type type_e -> 
-            let sym = fresh_name_for_term type_e x in
-            Type (Fun {head=_forall; args=[Symbol sym; t; substitute type_e x (Symbol sym)]})
-          | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str e) msg)
-        end
-      | TypeError _ ->
-        TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
-    end
-    
+      begin
+        match type_check wfctx t (Symbol _type) with
+        | Type _ ->
+          begin
+            let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
+            match calc_type new_wfctx e with
+            | Type type_e -> 
+              let sym = fresh_name_for_term type_e x in
+              Type (Fun {head=_forall; args=[Symbol sym; t; substitute type_e x (Symbol sym)]})
+            | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str e) msg)
+          end
+        | TypeError _ ->
+          TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
+      end
+
   (* apply *)
   | Fun {head; args=[t1; t2]} when head = _apply ->
     begin
@@ -1030,11 +1028,8 @@ and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result =
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in
   match calc_type_res with
-  | Type (Fun {head; args=[t']}) when head = _cterm -> Type (Fun {head=_cterm; args=[t']})
-
-  (* cvar is cterm *)
-  | Type (Fun {head; args=[t']}) when head = _cvar -> Type (Fun {head=_cterm; args=[t']})
-
-  | Type t' -> 
+  | Type (Fun {head; args=[t']}) when (head = _cterm || head = _cvar) ->
+      Type (Fun {head=_cterm; args=[t']})
+  | Type t'                                                           -> 
       TypeError (Printf.sprintf "The term %s is not typed as CTerm, but %s." (term2str s) (term2str t'))
   | TypeError msg -> TypeError msg

@@ -23,3 +23,5 @@ lib/parser.ml
 lib/parser.mli
 lib/lean_codegen/cqotl_path.config
 .DS_Store
+
+type_checker.md

@@ -66,26 +66,26 @@ let app (s : subst) (x : string) : terms =
 (** The heart of the algorithm – straight from Fig. 4.6             *)
 let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : subst option =
   match pairs with
-  | [] -> Some s                                              (* all done *)
-  | (Symbol x, t) :: ls when is_var x ->                      (* V x ↦ t  *)
+  | [] -> Some s                                                (* all done *)
+  | (Symbol x, t) :: ls when is_var x ->                        (* V x ↦ t  *)
       if indom x s then
-        if app s x = t then matchs ls s                       (* same binding – ok *)
-        else None                                             (* incompatible *)
+        if app s x = t then matchs ls s                         (* same binding – ok *)
+        else None                                               (* incompatible *)
       else
-        matchs ls ((x, t) :: s)                               (* extend θ *)
-  | (_, Symbol x) :: _ when is_var x ->                       (* obj side var – forbid *)
+        matchs ls ((x, t) :: s)                                 (* extend θ *)
+  | (_, Symbol x) :: _ when is_var x ->                         (* obj side var – forbid *)
       None
   | (Fun {head = f; args = ts}, Fun {head = g; args = us}) :: ls ->
       if f = g && List.length ts = List.length us then
         let zipped = List.combine ts us in
-        matchs (zipped @ ls) s                                (* descend *)
+        matchs (zipped @ ls) s                                  (* descend *)
       else
         None
-  | (Symbol c1, Symbol c2) :: ls ->                            (* constants *)
+  | (Symbol c1, Symbol c2) :: ls ->                             (* constants *)
       if c1 = c2 then matchs ls s else None
-  | (Opaque, Opaque) :: ls ->                                  (* identical opaques *)
+  | (Opaque, Opaque) :: ls ->                                   (* identical opaques *)
       matchs ls s
-  | _ -> None                                                  (* every other mismatch *)
+  | _ -> None                                                   (* every other mismatch *)
 
 
 let rwrule2str (r: rewriting_rule) : string =

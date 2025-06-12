@@ -41,7 +41,7 @@ Prove Pf1 :
         (* Pause. *)
         by_lean.
         (* Pause. *)
-            
+        
         refl.
 
     judge_swap.

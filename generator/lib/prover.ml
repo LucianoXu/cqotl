@@ -640,9 +640,10 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             match obligation_frame with
               | LeanTranslationError err  -> Printf.printf "%s\n" err
               | Result lean_frame         -> 
-                  let symbolsInGoal = extract_symbols_from_goal lean_frame.goal
+                  let symbolsInGoal           = extract_symbols_from_goal lean_frame.goal
+                  in  let refined_lean_frame  = refine_lean_frame lean_frame
                   in  let () = Printf.printf "Symbols: %s\n" ("[" ^ (String.concat ", " symbolsInGoal) ^ "]")  
-                  in  Printf.printf "%s\n" (show_obligation_proof_frame lean_frame)
+                  in  Printf.printf "%s\n" (show_obligation_proof_frame refined_lean_frame)
       in  let () = Printf.printf "--------------------------------------------\n"
       in  let new_frame = {
             env         = f.env;

@@ -142,6 +142,7 @@ Prove WrappedPf1 :
             
             intro H. dirac.
 
+            (* Pause. *)
             by_lean.
             (* Pause. *)
             
