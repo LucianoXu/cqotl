@@ -296,10 +296,8 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   (* CQProj *)
   | Symbol sym when sym = _cqproj -> Type (Symbol _type)
 
-
   (* Assn *)
   | Symbol sym when sym = _assn -> Type (Symbol _type)
-
 
   (*** typing for program statements ***)
   (* seq *)
