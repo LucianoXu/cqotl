@@ -1,17 +1,17 @@
 let obligation1 = 
   { Ast.env =
-  [Ast.Assumption {name = "lt";
-     t =
-     Ast.Fun {head = "FORALL";
-       args =
-       [(Ast.Symbol "i");
-         Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-         Ast.Fun {head = "FORALL";
-           args =
-           [(Ast.Symbol "j");
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
-         ]}}
+    [Ast.Assumption {name = "lt";
+      t =
+      Ast.Fun {head = "FORALL";
+        args =
+        [(Ast.Symbol "i");
+          Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+          Ast.Fun {head = "FORALL";
+            args =
+            [(Ast.Symbol "j");
+              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
+          ]}}
     ];
   context =
   [Ast.Assumption {name = "x'";

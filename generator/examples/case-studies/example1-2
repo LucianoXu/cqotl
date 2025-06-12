@@ -92,7 +92,7 @@ Prove WrappedPf1 :
     (* post order *)
     simpl_entail. simpl. apply Lemma3. simpl. 
     
-    (* Pause. *)
+    Pause.
     by_lean.
     (* Pause. *)
 
