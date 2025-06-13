@@ -19,7 +19,7 @@ let rec qtype_to_lean_expr (qt : qType) : (Lean_ast.expr, string) lean4Result =
   | TyArrow (t1, t2)      ->
       qtype_to_lean_expr t1 >>= fun t1_lean ->
       qtype_to_lean_expr t2 >>= fun t2_lean ->
-      Result (tensorType t1_lean t2_lean)
+      Result (arrowType t1_lean t2_lean)
   | TyProjectorType       -> Result (linearMapType)
   | TyDensityOperatorType -> Result (linearMapType)
   | _                     -> 
