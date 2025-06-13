@@ -462,7 +462,7 @@ let transform_env_item (wfctx : wf_ctx) (item :envItem) : (quantumEnv, string) l
             Result (QuantumAssumption { name = name; t = q_type })
     | Definition { name; t; e }     ->
         transform_term_to_qtype t     >>= fun q_type  -> 
-        transform_term_to_quantum wfctx e   >>= fun e'      -> 
+        ast_cqotl_to_expr e           >>= fun e'      -> 
             Result (QuantumDefinition { name = name; t = q_type; e = e' })
     
 (* Transform a list of environment items to a list of quantum environment items *)

@@ -93,7 +93,7 @@ type proposition    =
 (* Definition ~~~> Definition with quantum Term *)
 type quantumEnv   =
   | QuantumAssumption of {name: string; t: qType}                 (* ~~~> Def with sorry *)
-  | QuantumDefinition of {name: string; t: qType; e: quantumTerm} (* ~~~> Def with concrete specification *)
+  | QuantumDefinition of {name: string; t: qType; e: expr}        (* ~~~> Def with concrete specification *)
   [@@deriving show]
 
 type lean_obligation = {

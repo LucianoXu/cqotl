@@ -7,6 +7,7 @@ open Utils
 open Parser_utils
 open Transformer
 open Quantum_ast
+open Mapper
 
 (** Create a well-formed context from an environment with empty context. *)
 let env2wfctx env = {env=env; ctx=[]}
@@ -641,21 +642,43 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
           Printf.printf "-------------------------------------\n";
           TacticError ("Failed to prepare goal for Lean: " ^ err)
       | Result lean_frame ->
-          let refined_lean_frame  = refine_lean_frame lean_frame                      in
-          let symbolsInGoal       = extract_symbols_from_goal refined_lean_frame.goal in
+          let refined_lean_frame      = refine_lean_frame lean_frame                      in
+          let symbolsInGoal           = extract_symbols_from_goal refined_lean_frame.goal in
           Printf.printf "Refined Obligation Frame (using symbols: [%s])\n" (String.concat ", " symbolsInGoal);
-
           Printf.printf "---- Attempting to transform the goal to Lean_obligaiton ----\n";
-          let lean_obligation_result = obligation_frame_to_lean_obligation refined_lean_frame in
+          let lean_obligation_result  = obligation_frame_to_lean_obligation refined_lean_frame in
           begin
             match lean_obligation_result with
-            | Result lean_obl ->
+            | LeanTranslationError msg  ->
+                Printf.printf "CRITICAL: Failed to create Quantum_ast.lean_obligation: %s\n" msg; (* Semicolon added *)
+                Printf.printf "-------------------------------------\n";
+                TacticError ("Failed to create intermediate Lean obligation: " ^ msg)
+            | Result lean_obl           ->
                 Printf.printf "Successfully transformed to lean_obligation:\n%s\n"
-                  (show_lean_obligation lean_obl)
-            | LeanTranslationError msg ->
-                Printf.printf "CRITICAL: Failed to create final lean_obligation structure: %s\n" msg
+                  (show_lean_obligation lean_obl);
+                Printf.printf "--- End of Quantum_ast.lean_obligation transformation ---\n\n";
+                Printf.printf "---- Transforming to Lean_ast.lean_file and generating Lean code ----\n";
+                let obligation_name = Printf.sprintf "obligation_%d" (List.length f.lean_goals + 1)
+                in  let lean_file_ast_result = transform_obligation_to_lean_file obligation_name  lean_obl in
+                match lean_file_ast_result with
+                | LeanTranslationError msg ->
+                    Printf.printf "CRITICAL: Failed to transform to Lean_ast.lean_file: %s\n" msg;
+                    Printf.printf "-------------------------------------\n";
+                    TacticError ("Failed to transform to Lean_ast.lean_file: " ^ msg)
+                | Result lean_file_ast ->
+                    let lean_code_string = Lean_printer.lean_ast_to_lean_file lean_file_ast in
+                    Printf.printf "\n--- Generated Lean 4 Code ---\n%s\n-----------------------------\n\n" lean_code_string;
+                    let new_frame_state = {
+                      env         = f.env;
+                      proof_name  = f.proof_name;
+                      proof_prop  = f.proof_prop;
+                      goals       = rest_goals;
+                      lean_goals  = f.lean_goals @ [(ctx, goal_term)]
+                    } in
+                    Printf.printf "------- Goal processed for Lean and moved from active goals --------\n\n";
+                    Success (ProofFrame new_frame_state)
           end;
-          Printf.printf "--- End of lean_obligation transformation ---\n\n";
+          (* Printf.printf "--- End of lean_obligation transformation ---\n\n";
           
           let new_frame_state = {
             env         = f.env;
@@ -665,7 +688,7 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
           }
           in  Printf.printf "------- Goal moved to Lean obligations --------\n\n";
-              Success (ProofFrame new_frame_state);
+              Success (ProofFrame new_frame_state); *)
 (* 
       Printf.printf "Goal: %s\n" (term2str goal_term);
 
