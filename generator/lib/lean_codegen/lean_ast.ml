@@ -21,6 +21,7 @@ type expr =
   | LitString     of string
   | Annotation    of expr   * expr
   | Lambda        of ident  * expr * expr
+  | Forall        of ident  * expr * expr
   | Prod          of expr list
   | GenericRepr   of string
   | Hole
