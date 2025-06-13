@@ -633,7 +633,7 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
   match f.goals with
   | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
   | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
-      Printf.printf "-------- ByLean Tactic Invokved --------\n";
+      Printf.printf "-------- ByLean Tactic Invokved --------\n\n";
       let initial_obligation_frame  = proof_frame_to_lean_frame f   in
       match initial_obligation_frame with
       | LeanTranslationError err ->
@@ -655,7 +655,7 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             | LeanTranslationError msg ->
                 Printf.printf "CRITICAL: Failed to create final lean_obligation structure: %s\n" msg
           end;
-          Printf.printf "--- End of lean_obligation transformation ---\n";
+          Printf.printf "--- End of lean_obligation transformation ---\n\n";
           
           let new_frame_state = {
             env         = f.env;
@@ -664,7 +664,7 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
             goals       = rest_goals;
             lean_goals  = f.lean_goals @ [(ctx, goal_term)]
           }
-          in  Printf.printf "------- Goal moved to Lean obligations --------\n";
+          in  Printf.printf "------- Goal moved to Lean obligations --------\n\n";
               Success (ProofFrame new_frame_state);
 (* 
       Printf.printf "Goal: %s\n" (term2str goal_term);

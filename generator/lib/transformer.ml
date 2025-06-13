@@ -5,17 +5,13 @@
 open Ast
 open Quantum_ast
 open Typing
+open Pretty_printer
 
 (* Frame to hold relevant information for generating LEAN4 file *)
 type transform_quantum_result   = (quantumTerm, string) lean4Result [@@deriving show]
 type transform_prop_result      = (proposition, string) lean4Result [@@deriving show]
 type obligation_frame_result    = (obligation_proof_frame, string) lean4Result [@@deriving show]
 type lean_obligation_result     = (lean_obligation, string) lean4Result [@@deriving show]
-
-let (>>=) (res : ('a, 'b) lean4Result) (f : 'a -> ('c, 'b) lean4Result) : ('c, 'b) lean4Result =
-  match res with
-  | Result v                    -> f v
-  | LeanTranslationError msg    -> LeanTranslationError msg
 
 (* We assume this function doesn't has non-empty goals *)
 let proof_frame_to_lean_frame (f : proof_frame) : obligation_frame_result =
@@ -93,45 +89,115 @@ let ktypeIntType    = Fun {head = "KTYPE"; args = [(Symbol "BIT")]}
 
 (* Common type mappings *)
 let type_mappings = [
-    (operatorType,  Q_OperatorType);
-    (cvarbitType,   Q_Bool);
-    (cvarintType,   Q_Int);
-    (ctermbitType,  Q_Bool);
-    (ctermintType,  Q_Int);
-    (pdistType,     Q_Arrow (Q_Bool, Q_KField));
-    (ktypeIntType,  Q_VectorType);
+    (operatorType,  TyOperatorType);
+    (cvarbitType,   TyBool);
+    (cvarintType,   TyInt);
+    (ctermbitType,  TyBool);
+    (ctermintType,  TyInt);
+    (pdistType,     TyArrow (TyBool, TyKField));
+    (ktypeIntType,  TyVectorType);
 ]
 
-(* wf_ctx is not utilized currently -- may be deleted later *)
-let rec transform_term_to_qtype (wfctx : wf_ctx) (t : terms) : (qType, string) lean4Result = 
+let rec transform_term_to_qtype (t : terms) : (qType, string) lean4Result = 
     match List.assoc_opt t type_mappings with
     | Some qt   -> Result qt
     | None      ->
         match t with
         | Fun {head; args=[Symbol x; var_ty; body]} when head = _forall     ->
-            transform_term_to_qtype wfctx var_ty >>= 
-                fun qt ->   transform_term_to_qtype {wfctx with ctx = Assumption {name = x; t = var_ty} :: wfctx.ctx} body >>= 
-                    fun body_qt -> Result (Q_Arrow (qt, body_qt))
+            transform_term_to_qtype var_ty >>= 
+                fun qt ->   transform_term_to_qtype body >>= 
+                    fun body_qt -> Result (TyArrow (qt, body_qt))
         | Fun {head; args=[Symbol x; var_ty; body]} when head = _fun        ->
             LeanTranslationError "Type translation for FUN[...] not implemented to LEAN4."
         | Symbol sym when sym = _bit                                        ->
-            Result Q_Bool
+            Result TyBool
         | Symbol sym when sym = _int                                        ->
-            Result Q_Int
+            Result TyInt
         | _                                                                 ->
             LeanTranslationError ("Unsopported type for LEAN4 translation: " ^ (show_terms t))
 
-(* The reserved symbols for the LEAN4 translation *)
+let rec ast_cqotl_to_expr (term : terms) : (expr, string) lean4Result =
+    match term with
+    | Ast.Symbol s ->
+        begin
+            match s with
+            | "true"    -> Result (EBool true)
+            | "false"   -> Result (EBool false)
+            | _         -> Result (EVar s)
+        end
+    | Ast.Fun {head; args}  ->
+        begin
+            match head, args with
+            | "EQ", [t1; t2]    ->  
+                ast_cqotl_to_expr t1 >>= fun e1 ->
+                ast_cqotl_to_expr t2 >>= fun e2 ->
+                Result (E_Eq (e1, e2))
+            | "EQEQ", [t1; t2]  ->
+                ast_cqotl_to_expr t1 >>= fun e1 ->
+                ast_cqotl_to_expr t2 >>= fun e2 ->
+                Result (E_Eqeq (e1, e2))
+            | "IMPLY", [t1; t2] ->
+                ast_cqotl_to_expr t1 >>= fun e1 ->
+                ast_cqotl_to_expr t2 >>= fun e2 ->
+                Result (EImply (e1, e2))
+            | "WEDGE", [t1; t2]  ->
+                ast_cqotl_to_expr t1 >>= fun e1 ->
+                ast_cqotl_to_expr t2 >>= fun e2 ->
+                Result (EAnd (e1, e2))
+            | "VEE", [t1; t2]    ->
+                ast_cqotl_to_expr t1 >>= fun e1 ->
+                ast_cqotl_to_expr t2 >>= fun e2 ->
+                Result (EOr (e1, e2))
+            | "APPLY", [f; t] ->
+                ast_cqotl_to_expr f >>= fun e1 ->
+                ast_cqotl_to_expr t >>= fun e2 ->
+                Result (EApply (e1, e2))
+            | "FORALL", [Symbol x; t; body] ->
+                transform_term_to_qtype t >>= fun qt          ->
+                ast_cqotl_to_expr body >>= fun body_e ->
+                Result (EForall (x, qt, body_e))
+            | "NOT", [t] ->
+                ast_cqotl_to_expr t >>= fun e ->
+                Result (ENot e)
+            | _ -> LeanTranslationError ("Unsupported function head: " ^ head)
+        end
+    | Ast.Opaque ->
+        LeanTranslationError "Opaque terms are not supported in LEAN4 translation."
 
-(* PDIST[CTYPE] *)
-(* PDIST[BIT] *)
+(* This function is not implemented yet, as the focus is on quantum terms and propositions. *)
+let rec transform_term_to_classical (wfctx : wf_ctx) (t : terms) : (classicalTerm, string) lean4Result =
+    match t with
+    | Symbol x ->
+        begin
+            match find_item wfctx x with
+            | Some (Assumption {name; t})           -> Result (C_ClassicalVar name)
+            | Some (Definition {name; t; e=_})      -> Result (C_ClassicalVar name)
+            | None                                  -> LeanTranslationError ("Symbol " ^ x ^ " not found in context.")
+        end
+    (* We need to deal with the case when something is applied *)
+    | Fun {head; args=[t1; t2]} when head = _apply      ->
+        transform_term_to_classical wfctx t1 >>= fun c1 ->
+        transform_term_to_classical wfctx t2 >>= fun c2 ->
+        Result (C_Apply (c1, c2))
+    
+    | Fun {head; args}                                  ->
+        LeanTranslationError ("Classical term translation not implemented for Fun term: " ^ (show_terms t))
+    | Opaque                                            ->
+        LeanTranslationError ("Classical term translation not implemented for Opaque term: " ^ (show_terms Opaque))
+
+
+(* The reserved symbols for the LEAN4 translation *)
 let rec transform_term_to_prop (wfctx : wf_ctx) (s : terms) : transform_prop_result =
     match s with
         | Symbol sym when sym = _type                               ->
             LeanTranslationError "_type is not a proposition to LEAN4."
-        (*          Γ, a : T₁ ⊢ e : T₂ ~~~~> e'
-            ---------------------------------------------------
-            Γ ⊢ FORALL a : T₁, e : T₁ → T₂ ~~~> ∀ a : |T₁|,  e' *)
+        (* true *)
+        | Symbol sym when sym = _true   -> 
+            Result (Prop_True)
+        (* false *)
+        | Symbol sym when sym = _false  -> 
+            Result (Prop_False)
+        (* Forall *)
         | Fun {head; args=[Symbol x; t; t']} when head = _forall    ->
             begin
                 match type_check wfctx t (Symbol _type) with
@@ -140,7 +206,7 @@ let rec transform_term_to_prop (wfctx : wf_ctx) (s : terms) : transform_prop_res
                         let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
                         match transform_term_to_prop new_wfctx t' with
                         | Result prop ->
-                            transform_term_to_qtype new_wfctx t >>=
+                            transform_term_to_qtype t >>=
                                 fun q_type  ->  Result (Prop_Forall (x, q_type, prop))
                         | LeanTranslationError msg ->
                             LeanTranslationError msg
@@ -148,16 +214,71 @@ let rec transform_term_to_prop (wfctx : wf_ctx) (s : terms) : transform_prop_res
                 | TypeError msg ->
                     LeanTranslationError msg
             end
-        | Fun {head; args=[Symbol x; t; t']} when head = _fun       ->
-            LeanTranslationError "Not implemented to LEAN4"
-        | Fun {head; args=[Symbol x; t; t']} when head = _apply     ->
-            LeanTranslationError "Not implemented to LEAN4"
         (* eqeq = equality for booleans *)
         | Fun {head; args=[t1; t2]} when head = _eqeq               ->
-            LeanTranslationError "_eqeq is correct proposition to LEAN4. To be implemented."
+            begin
+                match is_cterm wfctx t1, is_cterm wfctx t2 with
+                | Type type_t1, Type type_t2 when type_t1 = type_t2 ->
+                    begin
+                        match type_t1 with
+                        | Fun {head=head; args=[Symbol _]} when head = _cterm   ->
+                            transform_term_to_classical wfctx t1 >>= fun c1     ->
+                            transform_term_to_classical wfctx t2 >>= fun c2     ->
+                            Result (Prop_EqualsC (c1, c2))
+                        | _                                                     ->
+                            LeanTranslationError "LEAN4 Translation Failed."
+                    end
+                | _ ->
+                    LeanTranslationError "Not a valid equality proposition."
+            end
+        (* Eq between propositions *)
+        (* This needs adding cases where both terms are not simply propositions *)
+        (* In this case, we need to keep attempting conversion of *)
+        (* term1 to prop *)
+        (* if failed, then term1 to quantum term *)
+        (* if failed, then it actually fails *)
+        | Fun {head; args=[t1; t2]} when head = _eq         ->
+            begin
+                transform_term_to_prop wfctx t1 >>= fun prop1 ->
+                transform_term_to_prop wfctx t2 >>= fun prop2 ->
+                Result (Prop_EqualsP (prop1, prop2))
+            end
         (* wedge -- conjunction *)
-        | Fun {head; args=[t1; t2]} when head = _wedge              ->
-            LeanTranslationError "_wedge is correct proposition to LEAN4. To be implemented."
+        | Fun {head; args=[t1; t2]} when head = _wedge          ->
+            begin
+                match calc_type wfctx t1, calc_type wfctx t2 with
+                | Type type_t1, Type type_t2    ->
+                    begin
+                        match type_t1, type_t2 with
+                        (* type conjunction *)
+                        | _ when type_t1 = Symbol _type && type_t2 = Symbol _type ->
+                            LeanTranslationError "Type conjunction not implemented to LEAN4."
+                        (* boolean conjunction *)
+                        | _ when type_t1 = Fun {head=_cterm; args=[Symbol _bit]} && type_t2 = type_t1 ->
+                            transform_term_to_classical wfctx t1 >>= fun c1 ->
+                            transform_term_to_classical wfctx t2 >>= fun c2 ->
+                            Result (Prop_AndC (c1, c2))
+                        (* cq-projector conjunction *)
+                        | _ when type_t1 = Symbol _cqproj && type_t2 = Symbol _cqproj ->
+                            LeanTranslationError "Conjunction for CQ-Projector not implemented to LEAN4."
+                        (* otype projector conjunction *)
+                        | Fun {head=head1; _} , _ when head1 = _otype && type_t1 = type_t2 ->
+                            LeanTranslationError "Otype projector conjunction not implemented to LEAN4."
+                        (* dtype projector conjunction *)
+                        | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]},
+                          Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when head1 = _dtype && head2 = _dtype && s1 = s2 && s1' = s2' ->
+                            LeanTranslationError "Dtype projector conjunction not implemented to LEAN4."
+                        | _ ->
+                            LeanTranslationError "Not a valid conjunction proposition to send to LEAN4."
+
+                    end
+                | TypeError msg, _ ->
+                    LeanTranslationError (Printf.sprintf "LEAN4 Translation failed %s is not well typed. %s" (term2str s) msg)
+                | _, _             ->
+                    LeanTranslationError (Printf.sprintf "LEAN4 Translation failed %s is not well typed." (term2str s))
+            end
+        (* guarded *)
+        (* |  *)
         (* vee -- disjunction *)
         | Fun {head; args=[t1; t2]} when head = _vee                ->
             LeanTranslationError "_vee is correct proposition to LEAN4. To be implemented."
@@ -166,15 +287,17 @@ let rec transform_term_to_prop (wfctx : wf_ctx) (s : terms) : transform_prop_res
             LeanTranslationError "_not is correct proposition to LEAN4. To be implemented."
         (* imply *)
         | Fun {head; args=[t1; t2]} when head = _imply              ->
-            LeanTranslationError "_imply is correct proposition to LEAN4. To be implemented."
-        (* Eq *)
-        | Fun {head; args=[t1; t2]} when head = _eq                 ->
-            LeanTranslationError "_eq is an equality between general terms (hence, prop); not implemented to LEAN4"
+            begin 
+            transform_term_to_prop wfctx t1 >>= fun prop1 ->
+            transform_term_to_prop wfctx t2 >>= fun prop2 ->
+            (* Terms are already well-typed, and only boolean implication we assume *)
+                Result (Prop_Implies (prop1, prop2))
+            end
         (* Inspace *)
         | Fun {head; args=[t1; t2]} when head = _inspace            ->
             LeanTranslationError "_inspace means whether one is a subspace; not implemented to LEAN4"
         | _     ->
-            LeanTranslationError "Not a proposition."
+            LeanTranslationError (Printf.sprintf "Not a proposition. %s" (term2str s))
 
 let rec transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quantum_result = 
     match s with  
@@ -335,10 +458,10 @@ let rec transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quant
 let transform_env_item (wfctx : wf_ctx) (item :envItem) : (quantumEnv, string) lean4Result =
     match item with
     | Assumption { name; t }        ->
-        transform_term_to_qtype wfctx t     >>= fun q_type  -> 
+        transform_term_to_qtype t     >>= fun q_type  -> 
             Result (QuantumAssumption { name = name; t = q_type })
     | Definition { name; t; e }     ->
-        transform_term_to_qtype wfctx t     >>= fun q_type  -> 
+        transform_term_to_qtype t     >>= fun q_type  -> 
         transform_term_to_quantum wfctx e   >>= fun e'      -> 
             Result (QuantumDefinition { name = name; t = q_type; e = e' })
     
@@ -346,7 +469,7 @@ let transform_env_item (wfctx : wf_ctx) (item :envItem) : (quantumEnv, string) l
 let transform_context_to_variable (wfctx : wf_ctx) (item : envItem) : ((string * qType), string) lean4Result =
     match item with
     | Assumption {name; t}      ->
-        transform_term_to_qtype wfctx t     >>= fun q_type  -> 
+        transform_term_to_qtype t     >>= fun q_type  -> 
             Result (name, q_type)
     | _                         ->
         LeanTranslationError ("Unsupported context item (only assumptions supported) for LEAN4 translation: " ^ (show_envItem item))
@@ -387,9 +510,10 @@ let obligation_frame_to_lean_obligation (frame : obligation_proof_frame) : lean_
     let (q_variables, var_errors)   = create_variable_list frame.env frame.context  in
     List.iter (fun err -> Printf.eprintf "Error in ENV conversion during LEAN4 generation: %s\n" err)       def_errors;
     List.iter (fun err -> Printf.eprintf "Error in Context conversion during LEAN4 generation: %s\n" err)   var_errors;
-    (* Goal transformation to be implemented *)
+    (* Here we assume that the goal is a proposition, and we need to convert it *)
+    ast_cqotl_to_expr frame.goal >>= fun goal_expr ->
     Result {
         definitions = q_definitions;
         variables   = q_variables;
-        goal        = Prop_True; (* Place holder for now *)
+        goal        = goal_expr; (* Place holder for now *)
     }

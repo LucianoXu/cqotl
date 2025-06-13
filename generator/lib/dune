@@ -28,7 +28,8 @@
   lean_commons
   transformer
   quantum_ast
-  obligations)
+  obligations
+  mapper)
  (libraries menhirLib)
  
  (preprocess (pps ppx_deriving.std ppx_deriving.show))

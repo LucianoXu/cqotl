@@ -5,6 +5,7 @@
 
 open Lean_ast
 open Printf
+open Lean_printer
 
 let commonsImport         = Import "LeanVeri.Commons"
 let propositionImport     = Import "LeanVeri.LinearMapPropositions"
@@ -19,7 +20,8 @@ let vectorType            = GenericRepr "𝕜²"
 let rcLikeType            = GenericRepr "𝕜"
 let intType               = GenericRepr "ℤ"
 let boolType              = GenericRepr "Bool"
-
+let arrowType t1 t2       = GenericRepr (sprintf "(%s → %s)" (expr_to_string t1) (expr_to_string t2))
+let tensorType t1 t2      = GenericRepr (sprintf "(%s ⊗ₗ %s)" (expr_to_string t1) (expr_to_string t2))
 let lessThan_v            = v "lt" 
 let ket0bra0_v            = v "ket0bra0"
 let ketPlus_v             = v "ketPlus"
