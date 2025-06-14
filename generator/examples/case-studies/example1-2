@@ -85,8 +85,8 @@ Prove WrappedPf1 :
     (* pre order *)
     simpl_entail. simpl. apply Lemma3. simpl.
     
-    (* Pause. *)
     by_lean.
+    
     (* Pause. *)
     
     (* post order *)
@@ -94,26 +94,30 @@ Prove WrappedPf1 :
     
     (* Pause. *)
     by_lean.
-    Pause.
+    (* Pause. *)
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[BIT]_(q,q).
 
     r_initq.
-        simpl. simpl_entail. simpl. dirac. simpl_entail. refl.
+        simpl. simpl_entail. simpl. 
+        dirac. simpl_entail. refl.
         
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[BIT]_(q,q).
-
+        
         r_unitary. dirac. simpl_entail. simpl. cq_entail. simpl. split.
             intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
             intro H. 
             entail_trans (|false> @ <false|)_(q, q).
             simpl_entail. refl.
 
-            simpl_entail. 
+            simpl_entail.
+            (* Pause.  *)
+         
             
             (* Pause. *)
-            by_lean.
+            (* by_lean. *)
+            sorry.
             (* Pause. *)
 
     r_seq 1 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[BIT, BIT]_(q, q) | 0O[BIT, BIT]_(q, q).
@@ -122,11 +126,13 @@ Prove WrappedPf1 :
     r_meas_sample id.
         simpl. refl.
         split. split.
-            intro H. dirac. 
+            intro H. 
+            (* Pause. *)
+            dirac. 
             
             (* Pause. *)
             by_lean.
-            (* Pause. *)
+            Pause.
             intro H. dirac.
 
             (* Pause. *)

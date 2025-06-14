@@ -1,7 +1,7 @@
 open Quantum_ast
 open Lean_ast
-(* open Printf *)
 open Lean_commons
+(* open Printf *)
 open Ast
 
 (* Function to convert a Quantum Type to a LEAN Type *)
@@ -29,8 +29,14 @@ let rec qtype_to_lean_expr (qt : qType) : (Lean_ast.expr, string) lean4Result =
 (* Function to convert a Intermediate Quantum Expr to a LEAN Expression *)
 let rec quantum_expr_to_lean_expr (qe : Quantum_ast.expr) : (Lean_ast.expr, string) lean4Result =
   match qe with
-  | EBool false           -> Result (GenericRepr "true") (* Using Int to represent Bool *)
+  | EBool false           -> Result (GenericRepr "true")  (* Using Int to represent Bool *)
   | EBool true            -> Result (GenericRepr "false") (* Using Int to represent Bool *)
+  | EKet (EBool false)    -> Result (ket0_v)
+  | EKet (EBool true)     -> Result (ket1_v)
+  | EApply (EKet (EBool false), EBra (EBool false))
+                          -> Result (ketbra0_v)
+  | EApply (EKet (EBool true), EBra (EBool true))
+                          -> Result (ketbra1_v)
   | EInt n                -> Result (LitInt n)
   | EVar x                -> Result (v x)
   | EScalarMult (n, e)    ->
@@ -63,12 +69,25 @@ let rec quantum_expr_to_lean_expr (qe : Quantum_ast.expr) : (Lean_ast.expr, stri
       quantum_expr_to_lean_expr x >>= fun x_lean  ->
       Result (app f_lean x_lean)
   | EForall (x, qt, e)    ->
-      qtype_to_lean_expr qt       >>= fun qt_lean ->
-      quantum_expr_to_lean_expr e >>= fun e_lean  ->
+      quantum_expr_to_lean_expr qt  >>= fun qt_lean ->
+      quantum_expr_to_lean_expr e   >>= fun e_lean  ->
       Result (Lambda (x, qt_lean, e_lean))
-  | ENot e               ->
+  | ENot e                ->
       quantum_expr_to_lean_expr e >>= fun e_lean ->
       Result (lean_not e_lean)
+  | EType qty             ->
+      qtype_to_lean_expr qty
+  | ESubspace (p1, p2)    ->
+      quantum_expr_to_lean_expr p1 >>= fun p1_lean ->
+      quantum_expr_to_lean_expr p2 >>= fun p2_lean ->
+      Result (BinOp ("≤", supp p1_lean, image p2_lean))
+  | EZeroOp               ->
+      Result (v "0")
+  | ETrace qt              ->
+      quantum_expr_to_lean_expr qt >>= fun qt_lean ->
+      Result (trace qt_lean)
+  | e                     ->
+      LeanTranslationError ("Expr to LEAN4 Translation not supported yet: " ^ (show_expr e))
 
 (* Helper function to map over a list and collect results monadically *)
 let map_m (f : 'a -> ('b, 'e) lean4Result) (lst : 'a list) : ('b list, 'e) lean4Result =

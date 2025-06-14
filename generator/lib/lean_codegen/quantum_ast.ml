@@ -16,9 +16,13 @@ type qType        =
   [@@deriving show]
 
 type expr =
+  | EZeroOp
+  | EIdentOp
   | EBool             of bool
   | EInt              of int
   | EVar              of string
+  | EKet              of expr
+  | EBra              of expr
   | EScalarMult       of int * expr
   | EAdjoint          of expr
   | E_Eq              of expr * expr
@@ -27,8 +31,11 @@ type expr =
   | EAnd              of expr * expr
   | EOr               of expr * expr
   | EApply            of expr * expr  
-  | EForall           of string * qType * expr
+  | EForall           of string * expr * expr
+  | EType             of qType
   | ENot              of expr
+  | ESubspace         of expr * expr
+  | ETrace            of expr
   [@@deriving show]
 
   type quantumTerm    =
