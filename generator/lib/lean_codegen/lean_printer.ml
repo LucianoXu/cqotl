@@ -25,6 +25,8 @@ let rec expr_to_string expr =
         sprintf "(%s)" (String.concat ", " elem_strings)
     | Lambda (name, ty, body) ->
         sprintf "fun (%s : %s) => %s" name (expr_to_string ty) (expr_to_string body)
+    | Forall (name, ty, body) ->
+        sprintf "∀ (%s : %s), %s" name (expr_to_string ty) (expr_to_string body)
     | StructInst fields   ->
         let field_strings = List.map (fun (name, value) -> sprintf "%s := %s" name (expr_to_string value)) fields in
         sprintf "{ %s }" (String.concat ", " field_strings)

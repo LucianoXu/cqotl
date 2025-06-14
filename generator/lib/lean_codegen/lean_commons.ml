@@ -5,6 +5,7 @@
 
 open Lean_ast
 open Printf
+open Lean_printer
 
 let commonsImport         = Import "LeanVeri.Commons"
 let propositionImport     = Import "LeanVeri.LinearMapPropositions"
@@ -13,13 +14,14 @@ let projectionImport      = Import "LeanVeri.ProjectionSubmodule"
 let v x                   = Var x
 let app f x               = App (f, x)
 let app_curried f args    = List.fold_left app f args
-
+let forall name ty body   = Forall (name, ty, body)
 let linearMapType         = GenericRepr "𝕜² →ₗ[𝕜] 𝕜²"
 let vectorType            = GenericRepr "𝕜²"
 let rcLikeType            = GenericRepr "𝕜"
 let intType               = GenericRepr "ℤ"
 let boolType              = GenericRepr "Bool"
-
+let arrowType t1 t2       = GenericRepr (sprintf "(%s → %s)" (expr_to_string t1) (expr_to_string t2))
+let tensorType t1 t2      = GenericRepr (sprintf "(%s ⊗ₗ %s)" (expr_to_string t1) (expr_to_string t2))
 let lessThan_v            = v "lt" 
 let ket0bra0_v            = v "ket0bra0"
 let ketPlus_v             = v "ketPlus"
@@ -39,6 +41,10 @@ let isDensityOperator op  = app (v "LinearMap.isDensityOperator") op
 let mult e1 e2            = BinOp ("*", e1, e2)
 let add e1 e2             = BinOp ("+", e1, e2)
 let equal e1 e2           = BinOp ("=", e1, e2)
+let imply e1 e2           = BinOp ("→", e1, e2)
+let lean_and e1 e2        = BinOp ("∧", e1, e2)
+let lean_or e1 e2         = BinOp ("∨", e1, e2)
+let lean_not e            = UnOp  ("¬", e)
 
 let declarationRCLikeK    = Variable [
                             { name = "𝕜";     type_b = Type; style = Implicit };

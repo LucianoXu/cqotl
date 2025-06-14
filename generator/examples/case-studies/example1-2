@@ -94,7 +94,7 @@ Prove WrappedPf1 :
     
     (* Pause. *)
     by_lean.
-    (* Pause. *)
+    Pause.
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[BIT, BIT]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[BIT]_(q,q).
 
@@ -157,7 +157,7 @@ Prove WrappedPf1 :
         
         apply Lemma4. simpl. 
         
-        (* Pause. *)
+        Pause.
         by_lean.
         (* Pause. *)
     

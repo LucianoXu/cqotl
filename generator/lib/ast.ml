@@ -121,6 +121,11 @@ type obligation_proof_frame = {
 }
 [@@deriving show]
 
+let (>>=) (res : ('a, 'b) lean4Result) (f : 'a -> ('c, 'b) lean4Result) : ('c, 'b) lean4Result =
+  match res with
+  | Result v                    -> f v
+  | LeanTranslationError msg    -> LeanTranslationError msg
+
 (** transformation type *)
 type transform  = terms -> terms option [@@deriving show]
 

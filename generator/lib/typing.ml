@@ -718,7 +718,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* wedge *)
-  | Fun {head; args=[t1; t2]} when head = _wedge ->
+  | Fun {head; args=[t1; t2]} when head = _wedge        ->
     begin
       match calc_type wfctx t1, calc_type wfctx t2 with
       | Type type_t1, Type type_t2 ->
@@ -992,34 +992,27 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
   | Symbol x ->
     begin
       match find_item wfctx x with
-      | Some (Assumption {name=_; t}) -> Type t
-      | Some (Definition {name=_; t; e=_}) -> Type t
+      | Some (Assumption {name=_; t})       -> Type t
+      | Some (Definition {name=_; t; e=_})  -> Type t
       | None -> TypeError (Printf.sprintf "The term %s is not defined or assumed." x)
     end
 
   (* default *)
   | _ -> TypeError (Printf.sprintf "Cannot calculate type of %s." (term2str s))
 
-    
-
 
 and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result = 
   let calc_type_res = calc_type wfctx s in
   match calc_type_res with
   | TypeError msg -> TypeError msg
-
   | Type type_t ->
-
-    match type_t, t with
-
-    (* the same type *)
-    | _, _ when t = type_t -> Type t
-
-    (* cvar -> cterm *)
-    | Fun {head=head1; args=[t']}, Fun {head=head2; args=[t'']} when 
-      head1 = _cvar && head2 = _cterm && t' = t'' -> 
-        Type t
-
+      match type_t, t with
+      (* the same type *)
+      | _, _ when t = type_t -> Type t
+      (* cvar -> cterm *)
+      | Fun {head=head1; args=[t']}, Fun {head=head2; args=[t'']} when 
+        head1 = _cvar && head2 = _cterm && t' = t'' -> 
+          Type t
     | _, _ -> 
         TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
 

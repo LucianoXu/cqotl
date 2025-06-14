@@ -3,16 +3,35 @@
 (************************************************************************************************)
 
 type qType        =
-  | Q_Bool
-  | Q_Int               
-  | Q_KField
-  | Q_VectorType
-  | Q_OperatorType    (* Always Qbit to Qbit *)
-  | Q_TensorType      of qType * qType
-  | Q_Arrow           of qType * qType
+  | TyBool
+  | TyInt               
+  | TyKField
+  | TyVectorType
+  | TyOperatorType    (* Always Qbit to Qbit *)
+  | TyTensorType      of qType * qType
+  | TyArrow           of qType * qType
+  | TyProjectorType
+  | TyDensityOperatorType
+  | TyProp
   [@@deriving show]
 
-type quantumTerm    =
+type expr =
+  | EBool             of bool
+  | EInt              of int
+  | EVar              of string
+  | EScalarMult       of int * expr
+  | EAdjoint          of expr
+  | E_Eq              of expr * expr
+  | E_Eqeq            of expr * expr
+  | EImply            of expr * expr
+  | EAnd              of expr * expr
+  | EOr               of expr * expr
+  | EApply            of expr * expr  
+  | EForall           of string * qType * expr
+  | ENot              of expr
+  [@@deriving show]
+
+  type quantumTerm    =
   | Q_Ket0
   | Q_Ket1
   | Q_Bra0
@@ -36,24 +55,28 @@ type quantumTerm    =
   [@@deriving show]
 
 type classicalTerm  =
-  | C_Bool           of bool
-  | C_Int            of int
-  | C_ClassicalVar   of string
-  | C_QuantumVar     of string
-  | C_ScalarMult     of int * classicalTerm
-  | C_Add            of classicalTerm * classicalTerm
-  | C_Sub            of classicalTerm * classicalTerm
-  | C_Mul            of classicalTerm * classicalTerm
-  | C_Div            of classicalTerm * classicalTerm
-  | C_Equals         of classicalTerm * classicalTerm
-  [@@deriving show]
+| C_Bool           of bool
+| C_Int            of int
+| C_ClassicalVar   of string
+| C_ScalarMult     of int * classicalTerm
+| C_Apply          of classicalTerm * classicalTerm  (* (a b) *)
+| C_Add            of classicalTerm * classicalTerm
+| C_Sub            of classicalTerm * classicalTerm
+| C_Mul            of classicalTerm * classicalTerm
+| C_Div            of classicalTerm * classicalTerm
+| C_Equals         of classicalTerm * classicalTerm
+[@@deriving show]
+
 
 type proposition    =
   | Prop_True                                         (* True *)
   | Prop_False                                        (* False *)  
-  | Prop_EqualsQ    of quantumTerm * quantumTerm      (* A = B *)
   | Prop_EqualsC    of classicalTerm * classicalTerm  (* a = b *)
-  | Prop_And        of proposition * proposition      (* P ∧ Q *)
+  | Prop_EqualsQ    of quantumTerm * quantumTerm      (* A = B *)
+  | Prop_EqualsP    of proposition * proposition      (* P = Q *)
+  | Prop_AndC       of classicalTerm * classicalTerm  (* a ∧ b *) 
+  | Prop_AndQ       of quantumTerm * quantumTerm      (* A ∧ B *)
+  | Prop_AndP       of proposition * quantumTerm      (* P ∧ Q *)
   | Prop_Not        of proposition                    (* ¬P *)
   | Prop_Implies    of proposition * proposition      (* P ⇒ Q *)
   | Prop_Or         of proposition * proposition      (* P ∨ Q *)
@@ -70,11 +93,11 @@ type proposition    =
 (* Definition ~~~> Definition with quantum Term *)
 type quantumEnv   =
   | QuantumAssumption of {name: string; t: qType}                 (* ~~~> Def with sorry *)
-  | QuantumDefinition of {name: string; t: qType; e: quantumTerm} (* ~~~> Def with concrete specification *)
+  | QuantumDefinition of {name: string; t: qType; e: expr}        (* ~~~> Def with concrete specification *)
   [@@deriving show]
 
 type lean_obligation = {
     definitions : quantumEnv list;
     variables   : (string * qType) list;
-    goal        : proposition;
+    goal        : expr;
   }[@@deriving show]
