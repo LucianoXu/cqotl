@@ -54,6 +54,12 @@ noncomputable def ketbraP : 𝕜² →ₗ[𝕜] 𝕜² :=
 noncomputable def ketbraM : 𝕜² →ₗ[𝕜] 𝕜² :=
   outerProduct 𝕜 ketM ketM
 
+noncomputable def ketPbraM : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ketP ketM
+
+noncomputable def ketMbraP : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ketM ketP
+
 noncomputable def Hadamard : 𝕜² →ₗ[𝕜] 𝕜² := outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketM
 
 /-- Ket plus equals !₂[1/√2, 1/√2] -/
@@ -317,6 +323,18 @@ lemma inner_ketM_ketP : @inner 𝕜 𝕜² _ ketM ketP = 0 := by
 lemma inner_ketP_ketM : @inner 𝕜 𝕜² _ ketP ketM = 0 :=
   inner_eq_zero_symm.mp inner_ketM_ketP
 
+lemma ket0_eq_ketP_add_ketM : (ket0 : 𝕜²) = (1/√2 : 𝕜) • (ketP + ketM) := by
+  unfold ketM ketP
+  rw [← smul_add, add_add_sub_cancel, smul_smul,
+    show (1/√2 : 𝕜) * (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat],
+    smul_add, ← add_smul, add_halves, one_smul]
+
+lemma ket1_eq_ketP_sub_ketM : (ket1 : 𝕜²) = (1/√2 : 𝕜) • (ketP - ketM) := by
+  unfold ketM ketP
+  rw [← smul_sub, add_sub_sub_cancel, smul_smul,
+    show (1/√2 : 𝕜) * (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat],
+    smul_add, ← add_smul, add_halves, one_smul]
+
 /-- |0⟩⟨0| + |1⟩⟨1| = I -/
 lemma ketbra0_add_ketbra1_eq_one :
   ketbra0 + ketbra1 = (1 : 𝕜² →ₗ[𝕜] 𝕜²) := by
@@ -335,12 +353,60 @@ lemma ketbra0_add_ketbra1_eq_one :
   · simp only [Fin.isValue, Fin.zero_eta, Matrix.cons_val_zero, mul_one, mul_zero, add_zero]
   · simp only [Fin.isValue, Fin.mk_one, Matrix.cons_val_one, Matrix.cons_val_fin_one, mul_zero, mul_one, zero_add]
 
+lemma ketbra0_eq : ketbra0 = (1/2 : 𝕜) • ketbraP + (1/2 : 𝕜) • (ketPbraM : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ketMbraP + (1/2 : 𝕜) • ketbraM :=
+  calc
+    ketbra0
+      = outerProduct 𝕜 ket0 ket0 := rfl
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ketP + ketM)) ket0 := by nth_rw 1 [ket0_eq_ketP_add_ketM]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ketP + ketM) ket0 := by apply outerProduct_smul_assoc_left
+    _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ketP ket0 + outerProduct 𝕜 ketM ket0) := by
+      rw [RCLike.ofReal_alg, outerProduct_add_dist_left]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ketP ket0 + (1/√2 : 𝕜) • outerProduct 𝕜 ketM ket0 := by
+      rw [smul_add]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ketP ((1/√2 : 𝕜) • (ketP + ketM)) + (1/√2 : 𝕜) • outerProduct 𝕜 ketM ((1/√2 : 𝕜) • (ketP + ketM)) := by
+      repeat rw [ket0_eq_ketP_add_ketM]
+    _ = (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ketP (ketP + ketM) + (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ketM (ketP + ketM) := by
+      rw [← smul_add]
+      repeat rw [outerProduct_smul_assoc_right]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, smul_add]
+    _ = (1/2 : 𝕜) • outerProduct 𝕜 ketP (ketP + ketM) + (1/2 : 𝕜) • outerProduct 𝕜 ketM (ketP + ketM) := by
+      repeat rw [← smul_assoc, show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
+    _ = (1/2 : 𝕜) • ketbraP + (1/2 : 𝕜) • (ketPbraM : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ketMbraP + (1/2 : 𝕜) • ketbraM := by
+      repeat rw [outerProduct_add_dist_right]
+      simp only [smul_add]
+      rw [← ketbraM, ← ketMbraP, ← ketPbraM, ← ketbraP]
+      abel
+
+lemma ketbra1_eq : ketbra1 = (1/2 : 𝕜) • ketbraP - (1/2 : 𝕜) • (ketPbraM : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) •  ketMbraP + (1/2 : 𝕜) • ketbraM :=
+  calc
+    ketbra1
+      = outerProduct 𝕜 ket1 ket1 := rfl
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ketP - ketM)) ket1 := by nth_rw 1 [ket1_eq_ketP_sub_ketM]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ketP - ketM) ket1 := by apply outerProduct_smul_assoc_left
+    _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ketP ket1 - outerProduct 𝕜 ketM ket1) := by
+      rw [RCLike.ofReal_alg, outerProduct_sub_dist_left]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ketP ket1 - (1/√2 : 𝕜) • outerProduct 𝕜 ketM ket1 := by
+      rw [smul_sub]
+    _ = (1/√2 : 𝕜) • outerProduct 𝕜 ketP ((1/√2 : 𝕜) • (ketP - ketM)) - (1/√2 : 𝕜) • outerProduct 𝕜 ketM ((1/√2 : 𝕜) • (ketP - ketM)) := by
+      repeat rw [ket1_eq_ketP_sub_ketM]
+    _ = (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ketP (ketP - ketM) - (1/√2 : 𝕜) • (1/√2 : 𝕜) • outerProduct 𝕜 ketM (ketP - ketM) := by
+      rw [← smul_sub]
+      repeat rw [outerProduct_smul_assoc_right]
+      simp only [one_div, map_inv₀, RCLike.conj_ofReal, smul_sub]
+    _ = (1/2 : 𝕜) • outerProduct 𝕜 ketP (ketP - ketM) - (1/2 : 𝕜) • outerProduct 𝕜 ketM (ketP - ketM) := by
+      repeat rw [← smul_assoc, show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
+    _ = (1/2 : 𝕜) • ketbraP - (1/2 : 𝕜) • (ketPbraM : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) •  ketMbraP + (1/2 : 𝕜) • ketbraM := by
+      repeat rw [outerProduct_sub_dist_right]
+      simp only [smul_sub]
+      rw [← ketbraM, ← ketMbraP, ← ketPbraM, ← ketbraP]
+      abel
+
 /-- |+⟩⟨+| = 1/2 • (|0⟩⟨0| + |0⟩⟨1| + |1⟩⟨0| + |1⟩⟨1|) -/
-lemma ketbraP_eq : ketbraP = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+lemma ketbraP_eq : ketbraP = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 :=
   calc
     ketbraP
       = outerProduct 𝕜 ketP ketP := rfl
-    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 + ket1)) ketP  := by nth_rw  1 [ketP]
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 + ket1)) ketP  := by nth_rw 1 [ketP]
     _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ket0 + ket1) ketP    := by apply outerProduct_smul_assoc_left
     _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketP) := by
       rw [RCLike.ofReal_alg, outerProduct_add_dist_left]
@@ -353,9 +419,7 @@ lemma ketbraP_eq : ketbraP = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0br
       repeat rw [outerProduct_smul_assoc_right]
       simp only [one_div, map_inv₀, RCLike.conj_ofReal, smul_add]
     _ = (1/2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 + ket1) + (1/2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 + ket1) := by
-      have h : (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 := by
-        rw [show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
-      repeat rw [← smul_assoc, h]
+      repeat rw [← smul_assoc, show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
     _ = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) + (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
       repeat rw [outerProduct_add_dist_right]
       simp only [smul_add]
@@ -363,11 +427,11 @@ lemma ketbraP_eq : ketbraP = (1/2 : 𝕜) • ketbra0 + (1/2 : 𝕜) • (ket0br
       abel
 
 /-- |-⟩⟨-| = 1/2 • (|0⟩⟨0| - |0⟩⟨1| - |1⟩⟨0| + |1⟩⟨1|) -/
-lemma ketbraM_eq : ketbraM = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) • ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
+lemma ketbraM_eq : ketbraM = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) • ket1bra0 + (1/2 : 𝕜) • ketbra1 :=
   calc
     ketbraM
       = outerProduct 𝕜 ketM ketM                          := rfl
-    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 - ket1)) ketM  := by nth_rw  1 [ketM]
+    _ = outerProduct 𝕜 ((1/√2 : 𝕜) • (ket0 - ket1)) ketM  := by nth_rw 1 [ketM]
     _ = (1/√2 : 𝕜) • outerProduct 𝕜 (ket0 - ket1) ketM    := by
       apply outerProduct_smul_assoc_left
     _ = (1/√2 : 𝕜) • (outerProduct 𝕜 ket0 ketM - outerProduct 𝕜 ket1 ketM) := by
@@ -382,9 +446,7 @@ lemma ketbraM_eq : ketbraM = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0br
       simp only [one_div, map_inv₀, RCLike.conj_ofReal]
       rw [smul_sub]
     _ = (1/2 : 𝕜) • outerProduct 𝕜 ket0 (ket0 - ket1) - (1/2 : 𝕜) • outerProduct 𝕜 ket1 (ket0 - ket1) := by
-      have h : (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 := by
-        rw [show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
-      repeat rw [← smul_assoc, h]
+      repeat rw [← smul_assoc, show (1/√2 : 𝕜) • (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
     _ = (1/2 : 𝕜) • ketbra0 - (1/2 : 𝕜) • (ket0bra1 : 𝕜² →ₗ[𝕜] 𝕜²) - (1/2 : 𝕜) •  ket1bra0 + (1/2 : 𝕜) • ketbra1 := by
       repeat rw [outerProduct_sub_dist_right]
       simp only [smul_sub]
@@ -438,6 +500,25 @@ lemma hadamard_ketP_eq_ket0 : Hadamard ketP = (ket0 : 𝕜²) := by
   unfold Hadamard
   rw [LinearMap.add_apply, outerProduct_def, outerProduct_def, inner_ketP_ketP, inner_ketM_ketP]
   simp
+
+lemma adjoint_Hadamard_eq : Hadamard.adjoint = outerProduct 𝕜 ketP ket0 + outerProduct 𝕜 ketM ket1 := by
+  unfold Hadamard
+  simp [adjoint_outerProduct]
+
+lemma adjoint_Hadamard_mul_ketbraP_mul_Hadamard_eq_ketbra0 :
+    Hadamard.adjoint * (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) * Hadamard = ketbra0 := by
+  rw [adjoint_Hadamard_eq, Hadamard]
+  unfold ketbraP
+  rw [left_distrib]
+  repeat rw [right_distrib]
+  repeat rw [outerProduct_mul_outerProduct_eq_inner_smul_outerProduct]
+  repeat rw [smul_mul_assoc]
+  repeat rw [outerProduct_mul_outerProduct_eq_inner_smul_outerProduct]
+  repeat rw [inner_ketP_ket0, inner_ket0_ketP, inner_ketP_ket1, inner_ket1_ketP]
+  repeat rw [smul_smul]
+  repeat rw [show (1/√2 : 𝕜) * (1/√2 : 𝕜) = 1 / 2 by field_simp [← RCLike.ofReal_mul, RCLike.ofReal_ofNat]]
+  rw [← ketbraP, ← ketMbraP, ← ketPbraM, ← ketbraM, ketbra0_eq]
+  abel
 
 lemma span_ketP_eq_span_ketM_comp : (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketM)ᗮ :=
   Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin

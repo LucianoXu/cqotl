@@ -94,13 +94,19 @@ lemma outerProduct_smul_assoc_right (c : 𝕜) (x : E) (y : E) :
     simp only [RCLike.star_def]
     rw [smul_algebra_smul_comm]
 
+lemma adjoint_outerProduct (x y : E) :
+    (outerProduct 𝕜 x y).adjoint = outerProduct 𝕜 y x := by
+  symm
+  rw [LinearMap.eq_adjoint_iff]
+  intro v w
+  repeat rw [outerProduct_def]
+  rw [inner_smul_left, inner_conj_symm, inner_smul_right]
+  exact mul_comm _ _
+
 lemma IsSelfAdjoint_outerProduct_self (x : E) :
     IsSelfAdjoint (outerProduct 𝕜 x x) := by
-  rw [← LinearMap.isSymmetric_iff_isSelfAdjoint]
-  intro y z
-  simp only [outerProduct_def]
-  rw [inner_smul_left, inner_smul_right, InnerProductSpace.conj_inner_symm]
-  ring
+  unfold IsSelfAdjoint
+  rw [LinearMap.star_eq_adjoint, adjoint_outerProduct]
 
 lemma IsSymmetric_outerProduct_self (x : E) : (outerProduct 𝕜 x x).IsSymmetric :=
   (outerProduct 𝕜 x x).isSymmetric_iff_isSelfAdjoint.mpr (IsSelfAdjoint_outerProduct_self 𝕜 x)
@@ -128,3 +134,16 @@ lemma inner_outerProduct_eq_inner_mul_inner (x y z w : E) :
   repeat rw [outerProduct_def]
   rw [@inner_smul_left]
   rw [@inner_conj_symm]
+
+omit [FiniteDimensional 𝕜 E] in
+lemma outerProduct_comp_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
+    outerProduct 𝕜 x y ∘ₗ outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
+  ext v
+  simp only [LinearMap.comp_apply, outerProduct_def, map_smul, LinearMap.smul_apply]
+  rw [smul_algebra_smul_comm]
+
+omit [FiniteDimensional 𝕜 E] in
+lemma outerProduct_mul_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
+    outerProduct 𝕜 x y * outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
+  rw [Module.End.mul_eq_comp]
+  exact outerProduct_comp_outerProduct_eq_inner_smul_outerProduct 𝕜 x y z w

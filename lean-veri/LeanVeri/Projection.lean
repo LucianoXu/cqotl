@@ -22,10 +22,6 @@ lemma Submodule.le_orthogonal_iff_le_orthogonal {K₀ K₁ : Submodule 𝕜 E} [
     [K₁.HasOrthogonalProjection] : K₀ ≤ K₁ᗮ ↔ K₁ ≤ K₀ᗮ := by
   rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
 
-lemma aux {K : Submodule 𝕜 E} [K.HasOrthogonalProjection] :
-    Kᗮ = ⊥ ↔ K = ⊤ := by
-  exact Submodule.orthogonal_eq_bot_iff
-
 open Module
 lemma Submodule.eq_orthogonal_of_finrank_add_of_orthogonal [FiniteDimensional 𝕜 E]
     (K₀ K₁ : Submodule 𝕜 E) [K₁.HasOrthogonalProjection] (H01 : K₀ ⟂ K₁)
