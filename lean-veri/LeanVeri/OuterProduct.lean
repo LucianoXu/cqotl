@@ -31,8 +31,7 @@ omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `(∣x⟩ + |y⟩)⟨z| = ∣x⟩⟨z| + |y⟩⟨z|` -/
 lemma outerProduct_add_dist_left (x : E) (y : E) (z : E) :
     outerProduct 𝕜 (x + y) z = outerProduct 𝕜 x z + outerProduct 𝕜 y z := by
-  refine LinearMap.ext_iff.mpr ?_
-  intro _
+  ext
   simp only [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   simp [smul_add]
@@ -41,8 +40,7 @@ omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `∣x⟩(⟨y| + ⟨z|) = ∣x⟩⟨y| + |x⟩⟨z|` -/
 lemma outerProduct_add_dist_right (x : E) (y : E) (z : E) :
     outerProduct 𝕜 x (y + z) = outerProduct 𝕜 x y + outerProduct 𝕜 x z := by
-  refine LinearMap.ext_iff.mpr ?_
-  intro _
+  ext
   simp only [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   rw [inner_add_left, add_smul]
@@ -51,8 +49,7 @@ omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `(∣x⟩ - |y⟩)⟨z| = ∣x⟩⟨z| - |y⟩⟨z|` -/
 lemma outerProduct_sub_dist_left (x : E) (y : E) (z : E) :
     outerProduct 𝕜 (x - y) z = outerProduct 𝕜 x z - outerProduct 𝕜 y z := by
-  refine LinearMap.ext_iff.mpr ?_
-  intro _
+  ext
   simp [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   simp [smul_sub]
@@ -61,38 +58,35 @@ omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `∣x⟩(⟨y| - ⟨z|) = ∣x⟩⟨y| - |x⟩⟨z|` -/
 lemma outerProduct_sub_dist_right (x : E) (y : E) (z : E) :
     outerProduct 𝕜 x (y - z) = outerProduct 𝕜 x y - outerProduct 𝕜 x z := by
-    refine LinearMap.ext_iff.mpr ?_
-    intro _
-    simp [LinearMap.add_apply]
-    repeat rw [outerProduct_def]
-    rw [inner_sub_left, sub_smul]
+  ext
+  simp [LinearMap.add_apply]
+  repeat rw [outerProduct_def]
+  rw [inner_sub_left, sub_smul]
 
 omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is associative `(∣x⟩⟨y|)|z⟩ = ∣x⟩⟨y|z⟩` -/
 lemma outerProduct_assoc_right (x : E) (y : E) (z : E) :
-    (outerProduct 𝕜 x y) z = (@inner 𝕜 _ _ y z) • x:= rfl
+    (outerProduct 𝕜 x y) z = (@inner 𝕜 _ _ y z) • x := rfl
 
 omit [FiniteDimensional 𝕜 E] in
 /-- The outer product scalar multiplication `(c|x⟩)⟨y| = c(|x⟩⟨y|) `-/
 lemma outerProduct_smul_assoc_left (c : 𝕜) (x : E) (y : E) :
     (outerProduct 𝕜 (c • x) y) = (c : 𝕜) • (outerProduct 𝕜 x y) := by
-    refine LinearMap.ext_iff.mpr ?_
-    intro _
-    simp only [LinearMap.smul_apply]
-    repeat rw [outerProduct_def]
-    rw [smul_algebra_smul_comm]
+  ext
+  simp only [LinearMap.smul_apply]
+  repeat rw [outerProduct_def]
+  rw [smul_algebra_smul_comm]
 
 omit [FiniteDimensional 𝕜 E] in
 /-- The outer product scalar multiplication `(c|x⟩)⟨y| = c(|x⟩⟨y|) `-/
 lemma outerProduct_smul_assoc_right (c : 𝕜) (x : E) (y : E) :
     (outerProduct 𝕜 x (c • y)) = (starRingEnd 𝕜 c) • (outerProduct 𝕜 x y) := by
-    refine LinearMap.ext_iff.mpr ?_
-    intro _
-    simp only [LinearMap.smul_apply]
-    repeat rw [outerProduct_def]
-    rw [starRingEnd_apply, smul_algebra_smul_comm, inner_smul_left, starRingEnd_apply, mul_smul]
-    simp only [RCLike.star_def]
-    rw [smul_algebra_smul_comm]
+  ext
+  simp only [LinearMap.smul_apply]
+  repeat rw [outerProduct_def]
+  rw [starRingEnd_apply, smul_algebra_smul_comm, inner_smul_left, starRingEnd_apply, mul_smul]
+  simp only [RCLike.star_def]
+  rw [smul_algebra_smul_comm]
 
 lemma adjoint_outerProduct (x y : E) :
     (outerProduct 𝕜 x y).adjoint = outerProduct 𝕜 y x := by
@@ -122,8 +116,7 @@ lemma isPositiveSemiDefinite_outerProduct_self (x : E) :
 lemma isProjection_outerProduct_self_of_norm_eq_one {x : E} (h : ‖x‖ = 1) :
     (outerProduct 𝕜 x x).isProjection := by
   apply And.intro (isPositiveSemiDefinite_outerProduct_self 𝕜 x)
-  rw [LinearMap.ext_iff]
-  intro y
+  ext y
   simp only [LinearMap.coe_comp, Function.comp_apply, outerProduct_def]
   rw [inner_smul_right, inner_self_eq_norm_sq_to_K, h]
   simp
@@ -132,8 +125,7 @@ omit [FiniteDimensional 𝕜 E] in
 lemma inner_outerProduct_eq_inner_mul_inner (x y z w : E) :
     inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 z y * inner 𝕜 x w := by
   repeat rw [outerProduct_def]
-  rw [@inner_smul_left]
-  rw [@inner_conj_symm]
+  rw [inner_smul_left, inner_conj_symm]
 
 omit [FiniteDimensional 𝕜 E] in
 lemma outerProduct_comp_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
