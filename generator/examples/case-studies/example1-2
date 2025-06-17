@@ -170,7 +170,6 @@ Prove WrappedPf1 :
         
         (* Pause. *)
         by_lean.
-        Pause.
             
     
     r_assign.
@@ -178,5 +177,6 @@ Prove WrappedPf1 :
         simpl_entail. split. simpl. simpl_entail. refl.
 
         refl.
+
     Pause.
 QED.

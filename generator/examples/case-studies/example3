@@ -1,4 +1,6 @@
-(* To be cleaned up *)
+
+Def P0 : OTYPE[BIT, BIT] := |false> @ < false|.
+Def P1 : OTYPE[BIT, BIT] := |true> @ <true|.
 
 Var CX : OTYPE[BIT * BIT, BIT * BIT].
 Var sADD : forall (x : CTERM[BIT]), forall (y : CTERM[BIT]), CTERM[BIT].
