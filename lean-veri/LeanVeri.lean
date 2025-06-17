@@ -10,3 +10,4 @@ import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties
 import LeanVeri.Sum
 import LeanVeri.TensorProduct
+import LeanVeri.Trace
