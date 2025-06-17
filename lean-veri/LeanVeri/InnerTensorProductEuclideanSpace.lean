@@ -1,8 +1,16 @@
+/-
+Copyright (c) 2025 Iván Renison. All rights reserved.
+Authors: Iván Renison
+-/
 import LeanVeri.TensorProduct
 import Mathlib.Analysis.InnerProductSpace.Completion
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.InnerProductSpace.Orthonormal
 import Mathlib.Analysis.InnerProductSpace.Projection
+
+/-!
+Instance of `Inner` for tensor products for the specific case of `EuclideanSpace`.
+-/
 
 variable {𝕜 : Type*} [RCLike 𝕜] {n m : ℕ}
 

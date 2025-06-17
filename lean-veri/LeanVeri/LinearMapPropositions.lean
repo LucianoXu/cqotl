@@ -116,10 +116,7 @@ lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite {T : E →ₗ[�
   · rw [← isSymmetric_iff_isSelfAdjoint]
     apply IsSymmetric.smul (RCLike.conj_ofReal c) hT.IsSymmetric
   · intro x
-    rw [smul_apply]
-    rw [inner_smul_left]
-    rw [RCLike.conj_ofReal]
-    rw [RCLike.re_ofReal_mul]
+    rw [smul_apply, inner_smul_left, RCLike.conj_ofReal, RCLike.re_ofReal_mul]
     exact Left.mul_nonneg hc (hT.right x)
 
 lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite' {c : 𝕜} (hc : 0 ≤ c) {T : E →ₗ[𝕜] E}

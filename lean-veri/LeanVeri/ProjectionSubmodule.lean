@@ -122,8 +122,7 @@ noncomputable def LinearMap.SubmoduleSup (T N : E →ₗ[𝕜] E) : E →ₗ[�
   (T.toSubmodule ⊔ N.toSubmodule).toProjection
 
 lemma LinearMap.isProjection.SubmoduleComplement_eq {T : E →ₗ[𝕜] E} (hT : T.isProjection) : T.SubmoduleComplement = 1 - T := by
-  rw [LinearMap.ext_iff]
-  intro x
+  ext x
   unfold SubmoduleComplement
   rw [Submodule.toProjection_eq, Submodule.orthogonalProjection_orthogonal_val, ← Submodule.toProjection_eq,
     hT.toProjection_toSubmodule_eq]
