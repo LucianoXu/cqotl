@@ -1,8 +1,27 @@
-(* To be cleaned up *)
+
+(* example 2 *)
+
+Def P0 : OTYPE[BIT, BIT] := |false> @ < false|.
+Def P1 : OTYPE[BIT, BIT] := |true> @ <true|.
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
 
 
+
+Prove Lemma1 : forall (x : CTERM[BIT]), ~ ~ x = x.
+
+    intro x. simpl. refl.
+
+QED.
+
+Prove Lemma2 : forall (x : CTERM[BIT]), 
+    forall (H : ~ x = true), x = false.
+
+    intro x. intro H.
+    rewrite <- Lemma1 @ x.
+    rewrite H. simpl. refl.
+QED.
+    
 Prove Pf2 : 
     forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
     forall (y : CVAR[BIT]), forall (y' : CVAR[BIT]), 
@@ -44,14 +63,14 @@ Prove Pf2 :
 
     split. split. 
         intro H. 
-        rewrite Lemma2 @ x @ x' @ H0.
+        rewrite Lemma2 @ (x == x') @ H.
         dirac. simpl. dirac.
         (* this obligation involves quantum coupling and it's not sure how to deal with it for now *)
         by_lean.
 
     
         intro H. 
-        rewrite Lemma2 @ x @ x' @ H0.
+        rewrite Lemma2 @ (x == x') @ H.
         dirac. simpl. dirac.
         (* same as before *)
         by_lean.
@@ -59,7 +78,7 @@ Prove Pf2 :
 
         split.
         intro H.
-        rewrite H0. simpl. dirac.
+        rewrite H. simpl. dirac.
         (* same as before *)
         by_lean.
 
@@ -81,7 +100,7 @@ Prove Pf2 :
           simpl_entail. 
           split. cq_entail. split.
             (* *)
-            intro H. rewrite H0. simpl.
+            intro H. rewrite H. simpl.
 
             rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
             rwrule 0O[BIT, BIT]_(q1, q1) /\ A --> 0O[BIT, BIT]_(q1, q1).
@@ -89,7 +108,7 @@ Prove Pf2 :
             simpl_entail. refl.
 
             (* *)
-            intro H. rewrite H0. simpl.
+            intro H. rewrite H. simpl.
             rwrule 1O[BIT]_(q1, q1) /\ A --> A.
             
             (* problem: need to use a lemma of <= *)
@@ -127,5 +146,5 @@ Prove Pf2 :
         (* crazy obligation *)
         by_lean.
 
-    (* Pause. *)
+    Pause.
 QED.
