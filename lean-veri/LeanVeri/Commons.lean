@@ -5,6 +5,7 @@ Authors: Iván Renison, Jam Khan
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
 import LeanVeri.Projection
+import LeanVeri.ProjectionSubmodule
 import Mathlib.Analysis.InnerProductSpace.Completion
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.InnerProductSpace.Orthonormal
@@ -429,6 +430,40 @@ lemma span_ketP_eq_span_ketM_comp : (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) = (�
 lemma span_ketM_eq_span_ketP_comp : (𝕜 ∙ ketM : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketP)ᗮ :=
   Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
   (neZero_iff.mp neZero_ketM) (neZero_iff.mp neZero_ketP) inner_ketM_ketP
+
+lemma ker_ketbraP_eq_span_ketM : LinearMap.ker (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) = 𝕜 ∙ ketM := by
+  ext x
+  simp only [LinearMap.mem_ker]
+  unfold ketbraP
+  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketP.ne]
+  exact Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero
+    finrank_euclideanSpace_fin neZero_ketP.ne neZero_ketM.ne inner_ketP_ketM
+
+lemma ker_ketbraM_eq_span_ketP : LinearMap.ker (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²) = 𝕜 ∙ ketP := by
+  ext x
+  simp only [LinearMap.mem_ker]
+  unfold ketbraM
+  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketM.ne]
+  exact Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero
+    finrank_euclideanSpace_fin neZero_ketM.ne neZero_ketP.ne inner_ketM_ketP
+
+lemma toSubmodule_ketbraP_eq_span_ketP : (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 𝕜 ∙ ketP := by
+  unfold LinearMap.toSubmodule
+  rw [ker_ketbraP_eq_span_ketM]
+  exact span_ketP_eq_span_ketM_comp.symm
+
+lemma toSubmodule_ketbraM_eq_span_ketM : (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 𝕜 ∙ ketM := by
+  unfold LinearMap.toSubmodule
+  rw [ker_ketbraM_eq_span_ketP]
+  exact span_ketM_eq_span_ketP_comp.symm
+
+lemma finrank_toSubmodule_ketbraP : Module.finrank 𝕜 (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 1 := by
+  rw [toSubmodule_ketbraP_eq_span_ketP]
+  exact finrank_span_singleton neZero_ketP.ne
+
+lemma finrank_toSubmodule_ketbraM : Module.finrank 𝕜 (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 1 := by
+  rw [toSubmodule_ketbraM_eq_span_ketM]
+  exact finrank_span_singleton neZero_ketM.ne
 
 def stBasis_val : Fin 2 → 𝕜²
   | 0 => ket0

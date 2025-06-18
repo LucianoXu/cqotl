@@ -39,3 +39,9 @@ lemma Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero [FiniteDimensional
     rw [hu, hv]
     exact hxy
   · rw [hdim, finrank_span_singleton hx, finrank_span_singleton hy]
+
+lemma Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero [FiniteDimensional 𝕜 E]
+    (hdim : Module.finrank 𝕜 E = 2) {x y z : E} (hx : x ≠ 0) (hy : y ≠ 0) (hxy : inner 𝕜 x y = 0) :
+    inner 𝕜 x z = 0 ↔ z ∈ 𝕜 ∙ y := by
+  rw [span_singleton_eq_orthogonal_of_inner_eq_zero hdim hy hx (inner_eq_zero_symm.mp hxy)]
+  exact mem_orthogonal_singleton_iff_inner_right.symm
