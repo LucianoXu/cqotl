@@ -161,18 +161,22 @@ lemma SubmoduleSup_assoc (T N M : E →ₗ[𝕜] E) :
   unfold SubmoduleSup
   rw [Submodule.toSubmodule_toProjection_eq, Submodule.toSubmodule_toProjection_eq, sup_assoc]
 
+variable {n : ℕ} (hn : Module.finrank 𝕜 E = n)
+
 lemma isProjection.eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E} (hT : T.isProjection) (i) :
-    hT.IsSymmetric.eigenvalues rfl i ∈ ({0, 1} : Finset ℝ) := by
+    hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) := by
   let hTsymm : T.IsSymmetric := hT.IsSymmetric
-  let x : E := hTsymm.eigenvectorBasis rfl i
-  let c : ℝ := hTsymm.eigenvalues rfl i
+  let x : E := hTsymm.eigenvectorBasis hn i
+  let c : ℝ := hTsymm.eigenvalues hn i
   have hT' : T (T x) = T x := LinearMap.ext_iff.mp hT.right x
   have hc : (c * c : 𝕜) • x = (c : 𝕜) • x := by
-    rw [hTsymm.apply_eigenvectorBasis, map_smul, hTsymm.apply_eigenvectorBasis, show hTsymm.eigenvalues rfl i = c by rfl, show hTsymm.eigenvectorBasis rfl i = x by rfl, smul_smul] at hT'
+    rw [hTsymm.apply_eigenvectorBasis, map_smul, hTsymm.apply_eigenvectorBasis,
+      show hTsymm.eigenvalues hn i = c by rfl,
+      show hTsymm.eigenvectorBasis hn i = x by rfl, smul_smul] at hT'
     exact hT'
   have hx : x ≠ 0 := by
     intro hx
-    have hx' : ‖x‖ = 1 := (hTsymm.eigenvectorBasis rfl).norm_eq_one i
+    have hx' : ‖x‖ = 1 := (hTsymm.eigenvectorBasis hn).norm_eq_one i
     rw [hx, norm_zero] at hx'
     exact zero_ne_one hx'
   have hc' : (c * c : 𝕜) = c := smul_left_injective 𝕜 hx hc
@@ -183,14 +187,12 @@ lemma isProjection.eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E} (hT : T.isP
 
 lemma isPositiveSemiDefinite.isProjection_of_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
     (hT : T.isPositiveSemiDefinite)
-    (h : ∀i, hT.IsSymmetric.eigenvalues rfl i ∈ ({0, 1} : Finset ℝ)) :
+    (h : ∀i, hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ)) :
     T.isProjection := by
   apply And.intro hT
   ext x
   rw [coe_comp, Function.comp_apply]
   have hTsymm : T.IsSymmetric := hT.IsSymmetric
-  let n : ℕ := Module.finrank 𝕜 E
-  have hn : Module.finrank 𝕜 E = n := rfl
   let base : OrthonormalBasis (Fin n) 𝕜 E := hTsymm.eigenvectorBasis hn
   let x_repr : EuclideanSpace 𝕜 (Fin n) := base.repr x
   rw [← OrthonormalBasis.sum_repr base x]
@@ -205,7 +207,8 @@ lemma isPositiveSemiDefinite.isProjection_of_eigenvalues_eq_zero_or_one {T : E �
 
 lemma isPositiveSemiDefinite.isProjection_iff_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
     (hT : T.isPositiveSemiDefinite) :
-    T.isProjection ↔ ∀i, hT.IsSymmetric.eigenvalues rfl i ∈ ({0, 1} : Finset ℝ) :=
-  Iff.intro isProjection.eigenvalues_eq_zero_or_one hT.isProjection_of_eigenvalues_eq_zero_or_one
+    T.isProjection ↔ ∀i, hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) :=
+  Iff.intro (fun hTproj ↦ hTproj.eigenvalues_eq_zero_or_one hn)
+    (hT.isProjection_of_eigenvalues_eq_zero_or_one hn)
 
 end LinearMap
