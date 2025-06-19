@@ -105,6 +105,8 @@ and term2str (e: terms) : string =
     | Fun {head; args=[t]} when head = _adj ->
         Printf.sprintf "(%s^D)" (term2str t)
 
+    | Fun {head; args=[t1; t2]} when head = _zeroo && t1 = t2 ->
+        Printf.sprintf "0[%s]" (term2str t1)
     | Fun {head; args=[t1; t2]} when head = _zeroo ->
         Printf.sprintf "0O[%s, %s]" (term2str t1) (term2str t2)
     | Fun {head; args=[t]} when head = _oneo ->

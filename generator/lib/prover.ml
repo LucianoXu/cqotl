@@ -442,11 +442,11 @@ and eval_tac_case (f: proof_frame) (e: terms) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: tl ->
-    (* check wehterh e is typed as CTERM[BIT] *)
+    (* check wehterh e is typed as CTerm[BIT] *)
     let wfctx = get_pf_wfctx f in
     match type_check wfctx e (Fun {head=_cterm; args=[Symbol _bit]}) with
     | TypeError msg ->
-      TacticError (Printf.sprintf "The term %s is not well typed as CTERM[BIT]: %s" (term2str e) msg)
+      TacticError (Printf.sprintf "The term %s is not well typed as CTerm[BIT]: %s" (term2str e) msg)
     | Type _ ->
       let name0 = fresh_name_for_ctx wfctx "CASE0" in
       let name1 = fresh_name_for_ctx wfctx "CASE1" in
@@ -1003,7 +1003,7 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
           | Type (Fun {head=head_type_q; args=[type_q]}) when head_type_q = _qreg ->
             let name = fresh_name_for_ctx (get_pf_wfctx f) "i" in
             let goal_template = parse_terms (Printf.sprintf "
-            psi | SUM[USET[T], fun (%s : CTERM[T]) => (|%s>@<false|)_(q,q) @ A @ (|false>@<%s|)_(q,q)] 
+            psi | SUM[USET[T], fun (%s : CTerm[T]) => (|%s>@<false|)_(q,q) @ A @ (|false>@<%s|)_(q,q)] 
             <= (phi /\\ (true -> (|false> @ <false|)_(q,q))) | B" name name name)
             in
             let s = [

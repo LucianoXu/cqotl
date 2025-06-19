@@ -72,20 +72,20 @@ let q_mappings  = [
     ]
 
 (* Common Types *)
-(* OTYPE[BIT, BIT] *)
-let operatorType    = Fun {head = "OTYPE"; args = [(Symbol "BIT"); (Symbol "BIT")]}
-(* CVAR[BIT] *)
-let cvarbitType     = Fun {head = "CVAR"; args = [(Symbol "BIT")]}
-(* CVAR[INT] *)
-let cvarintType     = Fun {head = "CVAR"; args = [(Symbol "INT")]}
-(* CTERM[BIT] *)
-let ctermbitType    = Fun {head = "CTERM"; args = [(Symbol "BIT")]}
-(* CTERM[INT] *)
-let ctermintType    = Fun {head = "CTERM"; args = [(Symbol "INT")]}
-(* PDIST[BIT] *)
-let pdistType       = Fun {head = "PDIST"; args = [(Symbol "BIT")]}
-(* KTYPE[INT] *)
-let ktypeIntType    = Fun {head = "KTYPE"; args = [(Symbol "BIT")]}
+(* OType[bit, bit] *)
+let operatorType    = Fun {head = "OType"; args = [(Symbol "bit"); (Symbol "bit")]}
+(* CVar[bit] *)
+let cvarbitType     = Fun {head = "CVar"; args = [(Symbol "bit")]}
+(* CVar[int] *)
+let cvarintType     = Fun {head = "CVar"; args = [(Symbol "int")]}
+(* CTerm[bit] *)
+let ctermbitType    = Fun {head = "CTerm"; args = [(Symbol "bit")]}
+(* CTerm[int] *)
+let ctermintType    = Fun {head = "CTerm"; args = [(Symbol "int")]}
+(* PDist[bit] *)
+let pdistType       = Fun {head = "PDist"; args = [(Symbol "bit")]}
+(* KType[int] *)
+let ktypeIntType    = Fun {head = "KType"; args = [(Symbol "bit")]}
 
 (* Common type mappings *)
 let type_mappings = [
