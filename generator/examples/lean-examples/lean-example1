@@ -1,6 +1,6 @@
-Var T : CTYPE.
-Var A : OTYPE[T, T].
-Var B : OTYPE[T, T].
+Var T : CType.
+Var A : OType[T, T].
+Var B : OType[T, T].
 
 Prove eqpf : (A + B) + 0O[T] = B + A.
     (* Pause. *)

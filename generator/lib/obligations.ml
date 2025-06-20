@@ -5,25 +5,25 @@ let obligation1 =
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "i");
-          Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+          Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
           Ast.Fun {head = "FORALL";
             args =
             [(Ast.Symbol "j");
-              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
+              Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
+              Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "bit")]}]}
           ]}}
     ];
   context =
   [Ast.Assumption {name = "x'";
-     t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+     t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "x";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "m";
-      t = Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]}}
+      t = Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]}}
     ];
   goal =
   Ast.Fun {head = "EQ";
@@ -70,25 +70,25 @@ let obligation2 = { Ast.env =
      Ast.Fun {head = "FORALL";
        args =
        [(Ast.Symbol "i");
-         Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+         Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
          Ast.Fun {head = "FORALL";
            args =
            [(Ast.Symbol "j");
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "bit")]}]}
          ]}}
     ];
   context =
   [Ast.Assumption {name = "x'";
-     t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+     t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "x";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "m";
-      t = Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]}}
+      t = Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]}}
     ];
   goal =
   Ast.Fun {head = "EQ";
@@ -131,11 +131,11 @@ let obligation2 = { Ast.env =
 
 let obligation3 = { Ast.env =
   [Ast.Assumption {name = "vplus";
-     t = Ast.Fun {head = "KTYPE"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "KType"; args = [(Ast.Symbol "bit")]}};
     Ast.Assumption {name = "H";
       t =
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]}}
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]}}
     ];
   context = [];
   goal =
@@ -162,11 +162,11 @@ let obligation3 = { Ast.env =
 let obligation4 = 
   { Ast.env =
   [Ast.Assumption {name = "miu";
-     t = Ast.Fun {head = "PDIST"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P0";
       t =
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       e =
       Ast.Fun {head = "APPLY";
         args =
@@ -178,8 +178,8 @@ let obligation4 =
   Ast.Fun {head = "FORALL";
     args =
     [(Ast.Symbol "rho");
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "pfspace");
@@ -187,7 +187,7 @@ let obligation4 =
             args =
             [(Ast.Symbol "rho");
               Ast.Fun {head = "ZEROO";
-                args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]}
+                args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]}
               ]};
           Ast.Fun {head = "EQ";
             args =
@@ -205,11 +205,11 @@ let obligation4 =
 
 let obligation5 = { Ast.env =
   [Ast.Assumption {name = "miu";
-     t = Ast.Fun {head = "PDIST"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P1";
       t =
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       e =
       Ast.Fun {head = "APPLY";
         args =
@@ -221,8 +221,8 @@ let obligation5 = { Ast.env =
   Ast.Fun {head = "FORALL";
     args =
     [(Ast.Symbol "rho");
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "pfspace");
@@ -230,7 +230,7 @@ let obligation5 = { Ast.env =
             args =
             [(Ast.Symbol "rho");
               Ast.Fun {head = "ZEROO";
-                args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]}
+                args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]}
               ]};
           Ast.Fun {head = "EQ";
             args =
@@ -248,26 +248,26 @@ let obligation5 = { Ast.env =
 
 let obligation6 = { Ast.env =
   [Ast.Assumption {name = "miu";
-     t = Ast.Fun {head = "PDIST"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P0";
       t =
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       e =
       Ast.Fun {head = "APPLY";
         args =
         [Ast.Fun {head = "KET"; args = [(Ast.Symbol "false")]};
           Ast.Fun {head = "BRA"; args = [(Ast.Symbol "false")]}]}};
     Ast.Assumption {name = "vplus";
-      t = Ast.Fun {head = "KTYPE"; args = [(Ast.Symbol "BIT")]}}
+      t = Ast.Fun {head = "KType"; args = [(Ast.Symbol "bit")]}}
     ];
   context = [];
   goal =
   Ast.Fun {head = "FORALL";
     args =
     [(Ast.Symbol "rho");
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "pfspace");
@@ -295,26 +295,26 @@ let obligation6 = { Ast.env =
 
 let obligation7 = { Ast.env =
   [Ast.Assumption {name = "miu";
-     t = Ast.Fun {head = "PDIST"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P1";
       t =
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       e =
       Ast.Fun {head = "APPLY";
         args =
         [Ast.Fun {head = "KET"; args = [(Ast.Symbol "true")]};
           Ast.Fun {head = "BRA"; args = [(Ast.Symbol "true")]}]}};
     Ast.Assumption {name = "vplus";
-      t = Ast.Fun {head = "KTYPE"; args = [(Ast.Symbol "BIT")]}}
+      t = Ast.Fun {head = "KType"; args = [(Ast.Symbol "bit")]}}
     ];
   context = [];
   goal =
   Ast.Fun {head = "FORALL";
     args =
     [(Ast.Symbol "rho");
-      Ast.Fun {head = "OTYPE";
-        args = [(Ast.Symbol "BIT"); (Ast.Symbol "BIT")]};
+      Ast.Fun {head = "OType";
+        args = [(Ast.Symbol "bit"); (Ast.Symbol "bit")]};
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "pfspace");
@@ -346,29 +346,29 @@ let obligation8 = { Ast.env =
      Ast.Fun {head = "FORALL";
        args =
        [(Ast.Symbol "i");
-         Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+         Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
          Ast.Fun {head = "FORALL";
            args =
            [(Ast.Symbol "j");
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "bit")]}]}
          ]}}
     ];
   context =
   [Ast.Assumption {name = "b'";
-     t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "bit")]}};
     Ast.Assumption {name = "b";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "BIT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "bit")]}};
     Ast.Assumption {name = "x'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "x";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "m";
-      t = Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]}}
+      t = Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]}}
     ];
   goal =
   Ast.Fun {head = "EQ";
@@ -413,41 +413,41 @@ let obligation9 = { Ast.env =
      Ast.Fun {head = "FORALL";
        args =
        [(Ast.Symbol "i");
-         Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+         Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
          Ast.Fun {head = "FORALL";
            args =
            [(Ast.Symbol "j");
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]};
-             Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]}]}
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "bit")]};
+             Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]}]}
          ]}};
     Ast.Assumption {name = "lt";
       t =
       Ast.Fun {head = "FORALL";
         args =
         [(Ast.Symbol "i");
-          Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
+          Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
           Ast.Fun {head = "FORALL";
             args =
             [(Ast.Symbol "j");
-              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]};
-              Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "BIT")]}]}
+              Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]};
+              Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "bit")]}]}
           ]}}
     ];
   context =
   [Ast.Assumption {name = "b'";
-     t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "BIT")]}};
+     t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "bit")]}};
     Ast.Assumption {name = "b";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "BIT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "bit")]}};
     Ast.Assumption {name = "x'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "x";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i'";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "i";
-      t = Ast.Fun {head = "CVAR"; args = [(Ast.Symbol "INT")]}};
+      t = Ast.Fun {head = "CVar"; args = [(Ast.Symbol "int")]}};
     Ast.Assumption {name = "m";
-      t = Ast.Fun {head = "CTERM"; args = [(Ast.Symbol "INT")]}}
+      t = Ast.Fun {head = "CTerm"; args = [(Ast.Symbol "int")]}}
     ];
   goal =
   Ast.Fun {head = "EQ";

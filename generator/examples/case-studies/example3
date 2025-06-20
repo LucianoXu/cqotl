@@ -1,10 +1,10 @@
 
-Def P0 : OTYPE[BIT, BIT] := |false> @ < false|.
-Def P1 : OTYPE[BIT, BIT] := |true> @ <true|.
+Def P0 : OType[bit, bit] := |false> @ < false|.
+Def P1 : OType[bit, bit] := |true> @ <true|.
 
-Var CX : OTYPE[BIT * BIT, BIT * BIT].
-Var sADD : forall (x : CTERM[BIT]), forall (y : CTERM[BIT]), CTERM[BIT].
-Var sSUB : forall (x : CTERM[BIT]), forall (y : CTERM[BIT]), CTERM[BIT].
+Var CX : OType[bit * bit, bit * bit].
+Var sADD : forall (x : CTerm[bit]), forall (y : CTerm[bit]), CTerm[bit].
+Var sSUB : forall (x : CTerm[bit]), forall (y : CTerm[bit]), CTerm[bit].
 
 Def Psym4 := |((true, true), (true, true))> @ <((true, true), (true, true))| + 
             |((true, true), (true, false))> @ <((true, false), (true, true))| +
@@ -28,17 +28,17 @@ Def Psym4 := |((true, true), (true, true))> @ <((true, true), (true, true))| +
 
 
 Prove Pf3 :
-    forall (x : CVAR[BIT]), forall (x' : CVAR[BIT]), 
-    forall (y : CVAR[BIT]), forall (y' : CVAR[BIT]), 
-    forall (a : CVAR[BIT]), forall (a' : CVAR[BIT]), 
-    forall (b : CVAR[BIT]), forall (b' : CVAR[BIT]), 
-    forall (r : CVAR[BIT]), forall (r' : CVAR[BIT]), 
-    forall (q1 : QREG[BIT]), forall (q1' : QREG[BIT]),
-    forall (q2 : QREG[BIT]), forall (q2' : QREG[BIT]),
-    forall (U : OTYPE[BIT * BIT, BIT * BIT]),
-    forall (U' : OTYPE[BIT, BIT]),
+    forall (x : CVar[bit]), forall (x' : CVar[bit]), 
+    forall (y : CVar[bit]), forall (y' : CVar[bit]), 
+    forall (a : CVar[bit]), forall (a' : CVar[bit]), 
+    forall (b : CVar[bit]), forall (b' : CVar[bit]), 
+    forall (r : CVar[bit]), forall (r' : CVar[bit]), 
+    forall (q1 : QReg[bit]), forall (q1' : QReg[bit]),
+    forall (q2 : QReg[bit]), forall (q2' : QReg[bit]),
+    forall (U : OType[bit * bit, bit * bit]),
+    forall (U' : OType[bit, bit]),
 
-    { true -> Psym4_(((q1, q2), (q1', q2')), ((q1, q2), (q1', q2'))) | 0O[BIT]_(q1, q1)}
+    { true -> Psym4_(((q1, q2), (q1', q2')), ((q1, q2), (q1', q2'))) | 0O[bit]_(q1, q1)}
 
         unitary U (q1, q2);
         unitary CX (q2, q1);
@@ -62,7 +62,7 @@ Prove Pf3 :
         b' := sSUB @ y' @ x';
         r' := sADD @ a' @ b';
 
-    {~(r == r') -> 0O[BIT]_(q1, q1) | 0O[BIT]_(q1, q1)}.
+    {~(r == r') -> 0O[bit]_(q1, q1) | 0O[bit]_(q1, q1)}.
 
 
 

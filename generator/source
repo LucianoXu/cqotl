@@ -12,7 +12,7 @@
  - duality ->
 
 
-    Var one_of : CTERM[BIT] -> STYPE.
+    Var one_of : CTerm[bit] -> SType.
 
 
      ...... {<bottom> | (vplus @ vplus^D)_(q, q) * 1_{a = x} }

@@ -1,5 +1,7 @@
 
-(* Example 1 - with While *)
+(* Example 1 - with While, initialize only once *)
+
+(* the proof is not finished *)
 
 Var H : OType[bit, bit].
 Var vplus : KType[bit].
@@ -12,7 +14,7 @@ Var miu : PDist[bit].
 
 Var lt : forall (i : CTerm[int]), forall (j : CTerm[int]), CTerm[bit].
 
-Var iadd : forall (i : CTerm[int]), forall (j : CTerm[bit]), CTerm[int].
+Var iADD : forall (i : CTerm[int]), forall (j : CTerm[bit]), CTerm[int].
 
 Prove Lemma1 : forall (x : CTerm[bit]), ~ ~ x = x.
     intro x. simpl. refl.
@@ -55,17 +57,18 @@ Prove RandomWalkProof :
         i := n;
         while lt @ i @ m do
             b <-$ miu;
-            x := iadd @ x @ b;
-            i := iadd @ i @ true;
+            x := iADD @ x @ b;
+            i := iADD @ i @ true;
         end;
             ~ 
         i' := n;
+        b' := false;
+        init q;
         while lt @ i' @ m do
-            init q; 
             unitary H q; 
             b' := meas (P0, P1) q; 
-            x' := iadd @ x' @ b';
-            i' := iadd @ i' @ true;
+            x' := iADD @ x' @ b';
+            i' := iADD @ i' @ true;
         end;
     {~(x == x') -> 0O[bit]_(q,q) | 0O[bit]_(q,q)}.
 
@@ -80,6 +83,23 @@ Prove RandomWalkProof :
     r_seq 0 1 ~(x == x' /\ i == i') -> 0O[bit]_(q,q) | 0O[bit]_(q,q).
 
         r_assign. simpl_entail. refl.
+
+    r_seq 0 1 ~(x == x' /\ i == i' /\ b' == false) -> 0O[bit]_(q,q) | 0O[bit]_(q,q).
+
+    r_assign. simpl_entail. simpl. simpl_entail. refl.
+
+    r_seq 0 1 ~(x == x' /\ i == i' /\ b' == false) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
+
+    r_initq.
+        simpl_entail. simpl. dirac. simpl_entail. refl.
+
+
+    r_while_while q (((~ (x == x' /\ i == i' /\ b' == false)) -> |false> @ <false|_(q, q) /\ (~ (x == x' /\ i == i' /\ b' == true)) -> |true> @ <true|_(q, q)) | 0O[bit, bit]_(q, q)).
+
+    simpl_entail. simpl.
+
+
+    Pause.
 
     (** while-while rule *)
     r_while_while q (((~ (x == x' /\ i == i')) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
@@ -101,7 +121,7 @@ Prove RandomWalkProof :
 
     r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
 
-    (* Pause. *)
+    Pause.
 
     r_initq.
         simpl. simpl_entail. simpl. dirac. simpl_entail. refl.
@@ -118,9 +138,8 @@ Prove RandomWalkProof :
             simpl_entail. 
             
             (* Pause. *)
-                sorry.
-            (* by_lean. *)
-            (* Pause. *)
+            by_lean.
+            Pause.
 
     r_seq 1 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[bit, bit]_(q, q) | 0O[bit, bit]_(q, q).
 
@@ -131,29 +150,25 @@ Prove RandomWalkProof :
             intro H. dirac. 
             
             (* Pause. *)
-                sorry.
-            (* by_lean. *)
+            by_lean.
             (* Pause. *)
             intro H. dirac.
 
             (* Pause. *)
-                sorry.
-            (* by_lean. *)
+            by_lean.
             (* Pause. *)
             
             split.
             intro H. dirac.
 
             (* Pause. *)
-                sorry.
-            (* by_lean. *)
+            by_lean.
             (* Pause. *)
             
             intro H. dirac.
 
             (* Pause. *)
-                sorry.
-            (* by_lean. *)
+            by_lean.
             (* Pause. *)
             
             cq_entail. split.
@@ -161,7 +176,7 @@ Prove RandomWalkProof :
                 simpl. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
 
 
-    r_pre (((~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iadd @ x @ b == iadd @ x' @ b')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
+    r_pre (((~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iADD @ x @ b == iADD @ x' @ b')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
 
         simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl. 
         
@@ -171,8 +186,7 @@ Prove RandomWalkProof :
         by_lean.
         (* Pause. *)
     
-    r_seq 1 0 (((~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == iadd @ x' @ b') /\ (i == i')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
-        
+    r_seq 1 0 (((~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == iADD @ x' @ b') /\ (i == i')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
 
     r_assign.
 
@@ -181,8 +195,7 @@ Prove RandomWalkProof :
         
         (* Pause. *)
         by_lean.
-
-    r_seq 0 1 ((((~ (((lt @ i) @ m) == ((lt @ i') @ m))) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ (i == i'))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
+            
     
     r_assign.
 
@@ -190,21 +203,5 @@ Prove RandomWalkProof :
 
         refl.
 
-
-    r_pre ((((~ (((lt @ (iadd @ i @ true)) @ m) == ((lt @ (iadd @ i' @ true)) @ m))) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ ((iadd @ i @ true) == (iadd @ i' @ true)))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
-
-    simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl. 
-    apply Lemma4 @ (~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == x') /\ (i == i')))) @ q. simpl.
-
-    by_lean.
-
-    
-    r_seq 1 0 ((((~ (((lt @ i) @ m) == ((lt @ (iadd @ i' @ true)) @ m))) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ (i == (iadd @ i' @ true)))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
-    
-    r_assign. simpl_entail. refl.
-
-    r_assign. simpl_entail. refl.
-
     Pause.
-
 QED.

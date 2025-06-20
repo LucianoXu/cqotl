@@ -394,7 +394,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           Type (Symbol _progstt)
 
         | Fun {head=head1; args}, _, _ when head1 = _cvar && args <> [Symbol _bit] ->
-          TypeError (Printf.sprintf "%s typing failed. %s is typed as %s, instead of CVAR[BIT]." (term2str s) x (term2str (Fun {head=_cvar; args})))
+          TypeError (Printf.sprintf "%s typing failed. %s is typed as %s, instead of CVar[bit]." (term2str s) x (term2str (Fun {head=_cvar; args})))
         | _ -> 
           TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end 
@@ -868,7 +868,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           | Fun {head=head1; _}, Symbol head2 when head1 = _dtype && head2 = _cqproj ->
             Type (Symbol _cqproj)
 
-          (* unitary transformation on DTYPE *)
+          (* unitary transformation on DType *)
           | Fun {head=head1; args=[Fun{args=ls1; _}; Fun{args=ls2; _}]; _}, 
             Fun {head=head2; args=[Fun{args=ls1'; _}; Fun{args=ls2'; _}]; _}
             when head1 = _dtype && head2 = _dtype ->
