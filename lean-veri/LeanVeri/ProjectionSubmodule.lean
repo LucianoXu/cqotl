@@ -56,11 +56,21 @@ lemma toSubmodule_toProjection_eq (K : Submodule 𝕜 E) :
   rw [LinearMap.mem_ker, ← orthogonalProjection_eq_zero_iff]
   simp
 
+lemma eq_iff_toProjection_eq (K₀ K₁ : Submodule 𝕜 E) :
+    K₀ = K₁ ↔ K₀.toProjection = K₁.toProjection := by
+  apply Iff.intro
+  · intro h
+    rw [h]
+  · intro h
+    rw [← K₀.toSubmodule_toProjection_eq, ← K₁.toSubmodule_toProjection_eq, h]
+
 end Submodule
 
 namespace LinearMap
 
-lemma isProjection.toSubmodule_eq_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
+namespace isProjection
+
+lemma toSubmodule_eq_range {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
     T.toSubmodule = range T := by
   rw [eq_comm]
   apply Submodule.eq_of_le_of_finrank_eq
@@ -74,7 +84,7 @@ lemma isProjection.toSubmodule_eq_range {T : E →ₗ[𝕜] E} (hT : T.isProject
     rw [Nat.eq_sub_of_add_eq' (ker T).finrank_add_finrank_orthogonal, eq_tsub_iff_add_eq_of_le (ker T).finrank_le]
     exact finrank_range_add_finrank_ker T
 
-lemma isProjection.toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
+lemma toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
     T.toSubmodule.toProjection = T := by
   rw [LinearMap.ext_iff]
   intro x
@@ -95,6 +105,20 @@ lemma isProjection.toProjection_toSubmodule_eq {T : E →ₗ[𝕜] E} (hT : T.is
       exact hz
     exact (hT.apply_range hz').symm
 
+lemma eq_iff_toSubmodule_eq {T N : E →ₗ[𝕜] E} (hT : T.isProjection) (hN : N.isProjection) :
+    T = N ↔ T.toSubmodule = N.toSubmodule := by
+  apply Iff.intro
+  · intro h
+    rw [h]
+  · intro h
+    rw [← hT.toProjection_toSubmodule_eq, ← hN.toProjection_toSubmodule_eq, h]
+
+end isProjection
+
+omit [FiniteDimensional 𝕜 E] in
+lemma toSubmodule_zero : (0 : E →ₗ[𝕜] E).toSubmodule = ⊥ := by
+  rw [toSubmodule, ker_zero, Submodule.orthogonal_eq_bot_iff]
+
 lemma eq_zero_of_toSubmodule_eq_bot (T : E →ₗ[𝕜] E) (h : T.toSubmodule = ⊥) :
     T = 0 := by
   unfold toSubmodule at h
@@ -106,14 +130,36 @@ lemma eq_zero_of_toSubmodule_le_bot (T : E →ₗ[𝕜] E) (h : T.toSubmodule �
   rw [le_bot_iff] at h
   exact eq_zero_of_toSubmodule_eq_bot T h
 
-omit [FiniteDimensional 𝕜 E] in
-lemma toSubmodule_zero : (0 : E →ₗ[𝕜] E).toSubmodule = ⊥ := by
-  rw [toSubmodule, ker_zero, Submodule.orthogonal_eq_bot_iff]
+lemma eq_zero_iff_toSubmodule_eq_bot (T : E →ₗ[𝕜] E) :
+    T = 0 ↔ T.toSubmodule = ⊥ := by
+  apply Iff.intro
+  · intro h
+    rw [h]
+    exact toSubmodule_zero
+  · exact eq_zero_of_toSubmodule_eq_bot T
 
 omit [FiniteDimensional 𝕜 E] in
 lemma toSubmodule_one : (1 : E →ₗ[𝕜] E).toSubmodule = ⊤ := by
   rw [toSubmodule, Submodule.orthogonal_eq_top_iff]
   rfl
+
+lemma isProjection.eq_one_of_toSubmodule_eq_top {T : E →ₗ[𝕜] E} (hT : T.isProjection) (h : T.toSubmodule = ⊤) :
+    T = 1 := by
+  rw [hT.eq_iff_toSubmodule_eq isProjection.one, toSubmodule_one]
+  exact h
+
+lemma isProjection.eq_one_of_top_le_toSubmodule {T : E →ₗ[𝕜] E} (hT : T.isProjection) (h : ⊤ ≤ T.toSubmodule) :
+    T = 1 := by
+  rw [top_le_iff] at h
+  exact hT.eq_one_of_toSubmodule_eq_top h
+
+lemma isProjection.eq_one_iff_toSubmodule_eq_top {T : E →ₗ[𝕜] E} (hT : T.isProjection) :
+    T = 1 ↔ T.toSubmodule = ⊤ := by
+  apply Iff.intro
+  · intro h
+    rw [h]
+    exact toSubmodule_one
+  · exact hT.eq_one_of_toSubmodule_eq_top
 
 /-- The projection corresponding to the orthogonal complement of the submodule of the given linear map. -/
 noncomputable def SubmoduleComplement (T : E →ₗ[𝕜] E) : E →ₗ[𝕜] E :=
