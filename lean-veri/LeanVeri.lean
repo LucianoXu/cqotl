@@ -5,6 +5,7 @@ import LeanVeri.LinearMapPropositions
 import LeanVeri.ManualExamples.Example4
 import LeanVeri.OuterProduct
 import LeanVeri.PartialTrace
+import LeanVeri.PiL2
 import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties
