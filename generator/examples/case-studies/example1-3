@@ -1,5 +1,7 @@
 
-(* Example 1 - with While *)
+(* Example 1 - with While, initialize only once *)
+
+(* the proof is not finished *)
 
 Var H : OType[bit, bit].
 Var vplus : KType[bit].
@@ -56,14 +58,17 @@ Prove RandomWalkProof :
         while lt @ i @ m do
             b <-$ miu;
             x := iADD @ x @ b;
+            i := iADD @ i @ true;
         end;
             ~ 
         i' := n;
+        b' := false;
+        init q;
         while lt @ i' @ m do
-            init q; 
             unitary H q; 
             b' := meas (P0, P1) q; 
             x' := iADD @ x' @ b';
+            i' := iADD @ i' @ true;
         end;
     {~(x == x') -> 0O[bit]_(q,q) | 0O[bit]_(q,q)}.
 
@@ -78,6 +83,23 @@ Prove RandomWalkProof :
     r_seq 0 1 ~(x == x' /\ i == i') -> 0O[bit]_(q,q) | 0O[bit]_(q,q).
 
         r_assign. simpl_entail. refl.
+
+    r_seq 0 1 ~(x == x' /\ i == i' /\ b' == false) -> 0O[bit]_(q,q) | 0O[bit]_(q,q).
+
+    r_assign. simpl_entail. simpl. simpl_entail. refl.
+
+    r_seq 0 1 ~(x == x' /\ i == i' /\ b' == false) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
+
+    r_initq.
+        simpl_entail. simpl. dirac. simpl_entail. refl.
+
+
+    r_while_while q (((~ (x == x' /\ i == i' /\ b' == false)) -> |false> @ <false|_(q, q) /\ (~ (x == x' /\ i == i' /\ b' == true)) -> |true> @ <true|_(q, q)) | 0O[bit, bit]_(q, q)).
+
+    simpl_entail. simpl.
+
+
+    Pause.
 
     (** while-while rule *)
     r_while_while q (((~ (x == x' /\ i == i')) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
