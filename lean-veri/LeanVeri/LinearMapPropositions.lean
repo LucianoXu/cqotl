@@ -326,6 +326,12 @@ theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[�
     rw [hx]
     simp
 
+lemma isDensityOperator.neZero {T : E →ₗ[𝕜] E} (hT : T.isDensityOperator) : T ≠ 0 := by
+  intro h
+  have htr := hT.right
+  rw [h] at htr
+  simp_all
+
 lemma LoewnerOrder_iff_of_isPositiveSemiDefinite {T N : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
     (hN : N.isPositiveSemiDefinite) :
     T.LoewnerOrder N ↔ ∀x : E, 0 ≤ RCLike.re (inner 𝕜 ((N - T) x) x) := by
