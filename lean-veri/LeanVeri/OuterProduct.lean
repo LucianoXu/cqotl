@@ -3,6 +3,7 @@ Copyright (c) 2025 Iván Renison, Jam Khan. All rights reserved.
 Authors: Iván Renison, Jam Khan
 -/
 import LeanVeri.LinearMapPropositions
+import LeanVeri.Trace
 
 /-!
 This file defines the outer product of two vectors as a linear map,
@@ -139,3 +140,28 @@ lemma outerProduct_mul_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
     outerProduct 𝕜 x y * outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
   rw [Module.End.mul_eq_comp]
   exact outerProduct_comp_outerProduct_eq_inner_smul_outerProduct 𝕜 x y z w
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+omit [FiniteDimensional 𝕜 E]
+
+omit [DecidableEq ι] in
+lemma sum_outerProduct (f g : ι → E) (x : E) :
+    (∑ i, outerProduct 𝕜 (f i) (g i)) x = ∑ i, outerProduct 𝕜 (f i) (g i) x := by
+  simp only [LinearMap.coeFn_sum, Finset.sum_apply, LinearMap.sum_apply]
+
+omit [DecidableEq ι] in
+lemma sum_outerProduct_OrthonormalBasis (b : OrthonormalBasis ι 𝕜 E) :
+    ∑i, outerProduct 𝕜 (b i) (b i) = 1 := by
+  ext x
+  rw [← LinearIsometryEquiv.map_eq_iff b.repr]
+  simp only [LinearMap.coeFn_sum, Finset.sum_apply, Module.End.one_apply, outerProduct_def]
+  congr
+  exact b.sum_repr' x
+
+lemma trace_outerProduct (x y : E) (b : OrthonormalBasis ι 𝕜 E) :
+    LinearMap.trace 𝕜 E (outerProduct 𝕜 x y) = inner 𝕜 y x := by
+  rw [(outerProduct 𝕜 x y).trace_eq_sum_inner b]
+  simp +contextual [outerProduct_def, inner_smul_right]
+  simp +contextual [show ∀i, inner 𝕜 y (b i) * inner 𝕜 (b i) x = inner 𝕜 (b i) x * inner 𝕜 y (b i) by intro i; apply mul_comm]
+  simp +contextual [← inner_smul_right, ← outerProduct_def]
+  rw [← inner_sum, ← sum_outerProduct, sum_outerProduct_OrthonormalBasis 𝕜 b, Module.End.one_apply]

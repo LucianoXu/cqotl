@@ -64,6 +64,22 @@ noncomputable def ketPbraM : 𝕜² →ₗ[𝕜] 𝕜² :=
 noncomputable def ketMbraP : 𝕜² →ₗ[𝕜] 𝕜² :=
   outerProduct 𝕜 ketM ketP
 
+/-- Ket zero times bra plus, usually denoted as |0⟩⟨+|. -/
+noncomputable def ket0braP : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket0 ketP
+
+/-- Ket one times bra plus, usually denoted as |1⟩⟨+|. -/
+noncomputable def ket1braP : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket1 ketP
+
+/-- Ket zero times bra minus, usually denoted as |0⟩⟨-|. -/
+noncomputable def ket0braM : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket0 ketM
+
+/-- Ket one times bra minus, usually denoted as |1⟩⟨-|. -/
+noncomputable def ket1braM : 𝕜² →ₗ[𝕜] 𝕜² :=
+  outerProduct 𝕜 ket1 ketM
+
 /-- Hadamard gate, usually denoted as H. -/
 noncomputable def Hadamard : 𝕜² →ₗ[𝕜] 𝕜² := outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketM
 
@@ -501,3 +517,63 @@ lemma stOrthonormalBasis_eq_stBasis_val :
     (stOrthonormalBasis (𝕜 := 𝕜) : Fin 2 → 𝕜²) = stBasis_val := by
   simp only [stOrthonormalBasis, Basis.coe_toOrthonormalBasis]
   exact stBasis_eq_stBasis_val
+
+lemma trace_ketbra0 : ketbra0.trace 𝕜 𝕜² = 1 := by
+  unfold ketbra0
+  rw [trace_outerProduct 𝕜 ket0 ket0 stOrthonormalBasis]
+  exact inner_ket0_ket0
+
+lemma trace_ketbra1 : ketbra1.trace 𝕜 𝕜² = 1 := by
+  unfold ketbra1
+  rw [trace_outerProduct 𝕜 ket1 ket1 stOrthonormalBasis]
+  exact inner_ket1_ket1
+
+lemma trace_ketbraP : ketbraP.trace 𝕜 𝕜² = 1 := by
+  unfold ketbraP
+  rw [trace_outerProduct 𝕜 ketP ketP stOrthonormalBasis]
+  exact inner_ketP_ketP
+
+lemma trace_ketbraM : ketbraM.trace 𝕜 𝕜² = 1 := by
+  unfold ketbraM
+  rw [trace_outerProduct 𝕜 ketM ketM stOrthonormalBasis]
+  exact inner_ketM_ketM
+
+lemma trace_ket0bra1 : ket0bra1.trace 𝕜 𝕜² = 0 := by
+  unfold ket0bra1
+  rw [trace_outerProduct 𝕜 ket0 ket1 stOrthonormalBasis]
+  exact inner_ket1_ket0
+
+lemma trace_ket1bra0 : ket1bra0.trace 𝕜 𝕜² = 0 := by
+  unfold ket1bra0
+  rw [trace_outerProduct 𝕜 ket1 ket0 stOrthonormalBasis]
+  exact inner_ket0_ket1
+
+lemma trace_ketPbraM : ketPbraM.trace 𝕜 𝕜² = 0 := by
+  unfold ketPbraM
+  rw [trace_outerProduct 𝕜 ketP ketM stOrthonormalBasis]
+  exact inner_ketM_ketP
+
+lemma trace_ketMbraP : ketMbraP.trace 𝕜 𝕜² = 0 := by
+  unfold ketMbraP
+  rw [trace_outerProduct 𝕜 ketM ketP stOrthonormalBasis]
+  exact inner_ketP_ketM
+
+lemma trace_ket0braP : ket0braP.trace 𝕜 𝕜² = 1/√2 := by
+  unfold ket0braP
+  rw [trace_outerProduct 𝕜 ket0 ketP stOrthonormalBasis]
+  exact inner_ketP_ket0
+
+lemma trace_ket1braP : ket1braP.trace 𝕜 𝕜² = 1/√2 := by
+  unfold ket1braP
+  rw [trace_outerProduct 𝕜 ket1 ketP stOrthonormalBasis]
+  exact inner_ketP_ket1
+
+lemma trace_ket0braM : ket0braM.trace 𝕜 𝕜² = 1/√2 := by
+  unfold ket0braM
+  rw [trace_outerProduct 𝕜 ket0 ketM stOrthonormalBasis]
+  exact inner_ketM_ket0
+
+lemma trace_ket1braM : ket1braM.trace 𝕜 𝕜² = - (1/√2) := by
+  unfold ket1braM
+  rw [trace_outerProduct 𝕜 ket1 ketM stOrthonormalBasis]
+  exact inner_ketM_ket1
