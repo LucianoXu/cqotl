@@ -161,7 +161,7 @@ let obligation3 = { Ast.env =
 
 let obligation4 = 
   { Ast.env =
-  [Ast.Assumption {name = "miu";
+  [Ast.Assumption {name = "mu";
      t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P0";
       t =
@@ -197,14 +197,14 @@ let obligation4 =
                   args = [(Ast.Symbol "P0"); (Ast.Symbol "rho")]}
                  ]};
               Ast.Fun {head = "APPLY";
-                args = [(Ast.Symbol "miu"); (Ast.Symbol "false")]}
+                args = [(Ast.Symbol "mu"); (Ast.Symbol "false")]}
               ]}
           ]}
       ]}
   }
 
 let obligation5 = { Ast.env =
-  [Ast.Assumption {name = "miu";
+  [Ast.Assumption {name = "mu";
      t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P1";
       t =
@@ -240,14 +240,14 @@ let obligation5 = { Ast.env =
                   args = [(Ast.Symbol "P1"); (Ast.Symbol "rho")]}
                  ]};
               Ast.Fun {head = "APPLY";
-                args = [(Ast.Symbol "miu"); (Ast.Symbol "true")]}
+                args = [(Ast.Symbol "mu"); (Ast.Symbol "true")]}
               ]}
           ]}
       ]}
   }
 
 let obligation6 = { Ast.env =
-  [Ast.Assumption {name = "miu";
+  [Ast.Assumption {name = "mu";
      t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P0";
       t =
@@ -287,14 +287,14 @@ let obligation6 = { Ast.env =
                   args = [(Ast.Symbol "P0"); (Ast.Symbol "rho")]}
                  ]};
               Ast.Fun {head = "APPLY";
-                args = [(Ast.Symbol "miu"); (Ast.Symbol "false")]}
+                args = [(Ast.Symbol "mu"); (Ast.Symbol "false")]}
               ]}
           ]}
       ]}
   }
 
 let obligation7 = { Ast.env =
-  [Ast.Assumption {name = "miu";
+  [Ast.Assumption {name = "mu";
      t = Ast.Fun {head = "PDist"; args = [(Ast.Symbol "bit")]}};
     Ast.Definition {name = "P1";
       t =
@@ -334,7 +334,7 @@ let obligation7 = { Ast.env =
                   args = [(Ast.Symbol "P1"); (Ast.Symbol "rho")]}
                  ]};
               Ast.Fun {head = "APPLY";
-                args = [(Ast.Symbol "miu"); (Ast.Symbol "true")]}
+                args = [(Ast.Symbol "mu"); (Ast.Symbol "true")]}
               ]}
           ]}
       ]}

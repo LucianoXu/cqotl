@@ -353,7 +353,7 @@ let rec transform_term_to_quantum (wfctx : wf_ctx) (s : terms) : transform_quant
             LeanTranslationError "Not implemented to LEAN4"
         | Fun {head; args=[Symbol x; t]} when head = _assign        ->
             LeanTranslationError "Not implemented to LEAN4"
-        | Fun {head; args=[Symbol x; miu]} when head = _passign     ->
+        | Fun {head; args=[Symbol x; mu]} when head = _passign     ->
             LeanTranslationError "Not implemented to LEAN4"
         | Fun {head; args=[qs]} when head = _init_qubit             ->
             LeanTranslationError "Not implemented to LEAN4"

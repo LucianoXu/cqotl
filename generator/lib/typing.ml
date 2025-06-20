@@ -342,16 +342,16 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* PAssign *)
-  | Fun {head; args=[Symbol x; miu]} when head = _passign ->
+  | Fun {head; args=[Symbol x; mu]} when head = _passign ->
     begin
-      match calc_type wfctx miu with
+      match calc_type wfctx mu with
       | Type (Fun {head; args=[t]}) when head = _pdist ->
         begin
         match type_check wfctx (Symbol x) (Fun {head=_cvar; args=[t]}) with
         | Type _ -> Type (Symbol _progstt)
         | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s cannot be typed as CVar[%s]. %s" (term2str s) x (term2str t) msg)
         end
-      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as PDist." (term2str s) (term2str miu))
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as PDist." (term2str s) (term2str mu))
     end
 
   (* Init Qubit *)

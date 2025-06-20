@@ -10,7 +10,7 @@ Def P0 : OType[bit, bit] := |false> @ <false|.
 Def P1 : OType[bit, bit] := |true> @ <true|.
 
 (* The uniform distribution on bit. *)
-Var miu : PDist[bit].
+Var mu : PDist[bit].
 
 Var lt : forall (i : CTerm[int]), forall (j : CTerm[int]), CTerm[bit].
 
@@ -56,7 +56,7 @@ Prove RandomWalkProof :
     {~(x == x') -> 0O[bit]_(q,q) | 0O[bit]_(q,q)} 
         i := n;
         while lt @ i @ m do
-            b <-$ miu;
+            b <-$ mu;
             x := iADD @ x @ b;
             i := iADD @ i @ true;
         end;

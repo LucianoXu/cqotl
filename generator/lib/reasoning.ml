@@ -355,10 +355,10 @@ let _bijection_mapping (switch: bool) (t: terms) : terms =
   | _ -> failwith ("_bijection_mapping: unexpected term.")
       
 
-let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (miu: terms) (switch: bool) : terms option =
+let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (mu: terms) (switch: bool) : terms option =
 
   (* The function that outputs 
-    bj' -> forall (rho in Pj'), tr(Mi_q rho_q) = miu(f(i))
+    bj' -> forall (rho in Pj'), tr(Mi_q rho_q) = mu(f(i))
   *)
   let aux (bj': terms) (pj': terms) (mi: terms) (q: terms) (fi: terms) : terms option = 
     match calc_type wfctx pj' with
@@ -366,7 +366,7 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
       let name_pfbj' = fresh_name_for_ctx wfctx "pfbj'" in
       let name_rho = fresh_name_for_ctx wfctx "rho" in
       let name_pfspace = fresh_name_for_ctx wfctx "pfspace" in
-      let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DType[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), tr[Mi_(q, q) @ "^ name_rho ^"] = miu @ fi") in
+      let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DType[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), tr[Mi_(q, q) @ "^ name_rho ^"] = mu @ fi") in
       let s = [
         ("bj'", bj');
         ("ls1", ls1);
@@ -374,7 +374,7 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
         ("Pj'", pj');
         ("Mi", mi);
         ("q", q);
-        ("miu", miu);
+        ("mu", mu);
         ("fi", fi);
       ]
       in

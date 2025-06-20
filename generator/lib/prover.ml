@@ -1393,7 +1393,7 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
       | Fun {head=head; args=[
           Fun {head=head_pre; args=[phi; zero_pre]}; 
           Fun {head=head_s1; args=[Fun {head=head_meas; args=[Symbol x1; m_opt; qs]}]}; 
-          Fun {head=head_s2; args=[Fun {head=head_sample; args=[Symbol x2; miu]}]}; 
+          Fun {head=head_s2; args=[Fun {head=head_sample; args=[Symbol x2; mu]}]}; 
           Fun {head=head_post; args=[psi; zero_post]};]} when 
         (
           head = _judgement && 
@@ -1403,7 +1403,7 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
           head_post = _vbar && (is_zeroo zero_post)
         ) ->
         let goal_vee_bj = _measure_sample_or_bj phi in
-        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs miu switch in
+        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs mu switch in
         let goal_proj = _measure_sample_proj_goal x1 x2 phi psi m_opt qs switch in
         begin
           match goal_vee_bj, goal_trace, goal_proj with

@@ -8,14 +8,14 @@ Var P0 : OType[bit, bit].
 Var P1 : OType[bit, bit].
 
 (* The uniform distribution on bit. *)
-Var miu : PDist[bit].
+Var mu : PDist[bit].
 
 Prove Pf1 :
     forall (b1 : CVar[bit]), 
     forall (b2 : CVar[bit]), 
     forall (q : QReg[bit]),
     {false -> 0O[bit]_(q,q) | 0O[bit]_(q,q)} 
-        b1 <-$ miu;
+        b1 <-$ mu;
             ~ 
         init q; 
         unitary H q; 
