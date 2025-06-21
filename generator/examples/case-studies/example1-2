@@ -104,6 +104,7 @@ Prove RandomWalkProof :
     (* Pause. *)
 
     r_initq.
+    (** possible example for term rewriting system demonstration *)
         simpl. simpl_entail. simpl. dirac. simpl_entail. refl.
         
 

@@ -48,25 +48,48 @@ let find_item (wfctx: wf_ctx) (name: string) : envItem option =
     | Some _ -> env_res
     | None -> None
 
+(** check whether the term is of [Type[Type[...]]] form 
+  If yes, return the level of the type. (Type is at level 1)*)
+let rec is_type_term (t: terms) : int option =
+  match t with
+  | Symbol sym when sym = _type -> Some 1
+  | Fun {head; args=[t]} when head = _type ->
+    begin match is_type_term t with
+    | Some n -> Some (n + 1)
+    | None -> None
+    end
+  | _ -> None
+
+let rec construct_type_term (level : int) : terms =
+  if level = 1 then
+    Symbol _type
+  else if level > 1 then
+    Fun {head=_type; args=[construct_type_term (level-1)]}
+  else
+    failwith "construct_type_term: level should be strictly positive"
+
+
 (** Calculate the type of the term. Raise the corresponding error when typing fails. *)
 let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result = 
   match s with
   (* Type *)
-  | Symbol sym when sym = _type -> 
-      Type (Symbol _type)
+  | _ when is_type_term s <> None ->
+    Type (Fun {head=_type; args=[s]})
   
   (* forall *)
+  (* type hierarchy rule needs investigating *)
   | Fun {head; args=[Symbol x; t; t']} when head = _forall ->
       begin
-        match type_check wfctx t (Symbol _type) with
-        | Type _ -> 
+        match is_type wfctx t with
+        | Some n -> 
           begin
             let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
-            match type_check new_wfctx t' (Symbol _type) with
-            | Type _ -> Type (Symbol _type)
-            | TypeError _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
+            match is_type new_wfctx t' with
+            | Some m -> 
+              Type (construct_type_term ((max n m) + 1))
+            | None -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
           end
-        | TypeError _ ->
+        | None ->
           TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
       end
   
@@ -723,7 +746,11 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       match calc_type wfctx t1, calc_type wfctx t2 with
       | Type type_t1, Type type_t2 ->
         begin
-          match type_t1, type_t2 with
+          match is_type wfctx t1, is_type wfctx t2 with
+          | Some n, Some m ->
+            Type (construct_type_term (max n m))
+          | _ ->
+          begin match type_t1, type_t2 with
           (* type conjunction *)
           | _ when type_t1 = Symbol _type && type_t2 = Symbol _type ->
             Type (Symbol _type)
@@ -752,6 +779,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
+          end
         end
       | TypeError msg, _ -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t1) msg)
       | _, TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t2) msg)
@@ -1015,6 +1043,14 @@ and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result =
           Type t
     | _, _ -> 
         TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
+
+
+(** check whether the term can be typed as Type or Type[...]. 
+    If yes, return the level of the type. *)
+and is_type (wfctx: wf_ctx) (s : terms) : int option = 
+  match calc_type wfctx s with
+  | Type t -> is_type_term t
+  | TypeError _ -> None
 
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in

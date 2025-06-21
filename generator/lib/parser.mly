@@ -143,7 +143,6 @@ terms:
   | v = ID { Symbol v }
   | head = ID LBRACK args = termargs RBRACK { Fun {head; args} }
 
-  | TYPE { Symbol _type }
   | FORALL LPAREN x = ID COLON t1 = terms RPAREN COMMA t2 = terms { Fun {head=_forall; args=[Symbol x; t1; t2]} }
   | FUN LPAREN x = ID COLON t = terms RPAREN DARROW e = terms { Fun {head=_fun; args=[Symbol x; t; e]} }
   | f = terms AT t = terms { Fun {head=_apply; args=[f; t]} }
