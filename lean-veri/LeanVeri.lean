@@ -9,6 +9,7 @@ import LeanVeri.PiL2
 import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties
+import LeanVeri.Spectrum
 import LeanVeri.Sum
 import LeanVeri.TensorProduct
 import LeanVeri.Trace
