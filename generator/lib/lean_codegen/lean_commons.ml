@@ -23,12 +23,15 @@ let boolType              = GenericRepr "Bool"
 let arrowType t1 t2       = GenericRepr (sprintf "(%s → %s)" (expr_to_string t1) (expr_to_string t2))
 let tensorType t1 t2      = GenericRepr (sprintf "(%s ⊗ₗ %s)" (expr_to_string t1) (expr_to_string t2))
 let lessThan_v            = v "lt" 
+let ket0_v                = v "ket0"
+let ket1_v                = v "ket1"
+let ketbra0_v             = v "ketbra0"
+let ketbra1_v             = v "ketbra1"
 let ket0bra0_v            = v "ket0bra0"
 let ketPlus_v             = v "ketPlus"
 let ketPbraP_v            = v "ketPbraP"
 let hadamard_v            = v "H"
 let ket1bra1_v            = v "ket1bra1"
-
 let loewnerOrder e1 e2    = (app (app (v "LinearMap.LoewnerOrder") e1) e2)
 let outerProduct e1 e2    = (app (app (app (v "outerProduct") (v "𝕜")) e1) e2)
 let applyH e              = (app hadamard_v e) 
@@ -37,6 +40,7 @@ let trace e1              = (app (app (app (v "LinearMap.trace") rcLikeType) vec
 let supp operator         = app (v "LinearMap.toSubmodule") operator
 let image operator        = app (v "LinearMap.toSubmodule") operator
 let isDensityOperator op  = app (v "LinearMap.isDensityOperator") op
+(* let subspace p1 p2        = BinOp ("≤", supp p1, image p2) *)
 
 let mult e1 e2            = BinOp ("*", e1, e2)
 let add e1 e2             = BinOp ("+", e1, e2)

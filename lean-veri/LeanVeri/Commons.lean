@@ -82,6 +82,7 @@ noncomputable def ket1braM : 𝕜² →ₗ[𝕜] 𝕜² :=
 
 /-- Hadamard gate, usually denoted as H. -/
 noncomputable def Hadamard : 𝕜² →ₗ[𝕜] 𝕜² := outerProduct 𝕜 ket0 ketP + outerProduct 𝕜 ket1 ketM
+noncomputable def HadamardAdj : 𝕜² →ₗ[𝕜] 𝕜² := outerProduct 𝕜 ketP ket0 + outerProduct 𝕜 ketM ket1
 
 lemma ketP_eq : ketP = (!₂[1/√2, 1/√2] : 𝕜²) := by
   unfold ketP ket0 ket1

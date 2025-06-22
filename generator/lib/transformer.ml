@@ -148,18 +148,48 @@ let rec ast_cqotl_to_expr (term : terms) : (expr, string) lean4Result =
                 ast_cqotl_to_expr t1 >>= fun e1 ->
                 ast_cqotl_to_expr t2 >>= fun e2 ->
                 Result (EOr (e1, e2))
-            | "APPLY", [f; t] ->
+            | "APPLY", [f; t]                ->
                 ast_cqotl_to_expr f >>= fun e1 ->
                 ast_cqotl_to_expr t >>= fun e2 ->
                 Result (EApply (e1, e2))
-            | "FORALL", [Symbol x; t; body] ->
-                transform_term_to_qtype t >>= fun qt          ->
+            | "FORALL", [Symbol x; t; body]  ->
+                ast_cqotl_to_expr t >>= fun qt  ->
                 ast_cqotl_to_expr body >>= fun body_e ->
                 Result (EForall (x, qt, body_e))
-            | "NOT", [t] ->
-                ast_cqotl_to_expr t >>= fun e ->
-                Result (ENot e)
-            | _ -> LeanTranslationError ("Unsupported function head: " ^ head)
+            | "ENTAILMENT", [t1; t2]         ->
+                ast_cqotl_to_expr t1 >>= fun qt1 ->
+                ast_cqotl_to_expr t2 >>= fun qt2 ->
+                Result (ESubspace (qt1, qt2))
+            | "NOT", [t]                    ->
+                ast_cqotl_to_expr t >>= fun qt ->
+                Result (ENot qt)
+            | "KET", [t]                    ->
+                ast_cqotl_to_expr t >>= fun qt ->
+                Result (EKet qt)
+            | "BRA", [t]                    ->
+                ast_cqotl_to_expr t >>= fun qt ->
+                Result (EBra qt)
+            | "ADJ", [t]                    ->
+                ast_cqotl_to_expr t >>= fun qt ->
+                Result (EAdjoint qt)
+            | "INSPACE", [t1; t2]           ->
+                ast_cqotl_to_expr t1 >>= fun qt1 ->
+                ast_cqotl_to_expr t2 >>= fun qt2 ->
+                Result (ESubspace (qt1, qt2))
+            | "ZEROO", [t1; t2]             ->
+                Result (EZeroOp)
+            | "ONEO", _                     ->
+                Result (EIdentOp)
+            | "tr", [t]                     ->
+                ast_cqotl_to_expr t >>= fun qt ->
+                Result (ETrace qt)
+            | _ -> 
+                begin 
+                    match transform_term_to_qtype term with
+                    |   Result ty                   -> Result (EType ty)
+                    |   LeanTranslationError err    ->
+                            LeanTranslationError ("Unsupported function head: " ^ head)
+                end
         end
     | Ast.Opaque ->
         LeanTranslationError "Opaque terms are not supported in LEAN4 translation."
