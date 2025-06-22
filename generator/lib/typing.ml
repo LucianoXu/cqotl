@@ -342,16 +342,16 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* PAssign *)
-  | Fun {head; args=[Symbol x; miu]} when head = _passign ->
+  | Fun {head; args=[Symbol x; mu]} when head = _passign ->
     begin
-      match calc_type wfctx miu with
+      match calc_type wfctx mu with
       | Type (Fun {head; args=[t]}) when head = _pdist ->
         begin
         match type_check wfctx (Symbol x) (Fun {head=_cvar; args=[t]}) with
         | Type _ -> Type (Symbol _progstt)
         | TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s cannot be typed as CVar[%s]. %s" (term2str s) x (term2str t) msg)
         end
-      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as PDist." (term2str s) (term2str miu))
+      | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as PDist." (term2str s) (term2str mu))
     end
 
   (* Init Qubit *)
@@ -394,7 +394,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           Type (Symbol _progstt)
 
         | Fun {head=head1; args}, _, _ when head1 = _cvar && args <> [Symbol _bit] ->
-          TypeError (Printf.sprintf "%s typing failed. %s is typed as %s, instead of CVAR[BIT]." (term2str s) x (term2str (Fun {head=_cvar; args})))
+          TypeError (Printf.sprintf "%s typing failed. %s is typed as %s, instead of CVar[bit]." (term2str s) x (term2str (Fun {head=_cvar; args})))
         | _ -> 
           TypeError (Printf.sprintf "%s typing failed." (term2str s))
         end 
@@ -868,7 +868,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           | Fun {head=head1; _}, Symbol head2 when head1 = _dtype && head2 = _cqproj ->
             Type (Symbol _cqproj)
 
-          (* unitary transformation on DTYPE *)
+          (* unitary transformation on DType *)
           | Fun {head=head1; args=[Fun{args=ls1; _}; Fun{args=ls2; _}]; _}, 
             Fun {head=head2; args=[Fun{args=ls1'; _}; Fun{args=ls2'; _}]; _}
             when head1 = _dtype && head2 = _dtype ->

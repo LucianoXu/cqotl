@@ -22,10 +22,6 @@ lemma Submodule.le_orthogonal_iff_le_orthogonal {K₀ K₁ : Submodule 𝕜 E} [
     [K₁.HasOrthogonalProjection] : K₀ ≤ K₁ᗮ ↔ K₁ ≤ K₀ᗮ := by
   rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
 
-lemma aux {K : Submodule 𝕜 E} [K.HasOrthogonalProjection] :
-    Kᗮ = ⊥ ↔ K = ⊤ := by
-  exact Submodule.orthogonal_eq_bot_iff
-
 open Module
 lemma Submodule.eq_orthogonal_of_finrank_add_of_orthogonal [FiniteDimensional 𝕜 E]
     (K₀ K₁ : Submodule 𝕜 E) [K₁.HasOrthogonalProjection] (H01 : K₀ ⟂ K₁)
@@ -43,3 +39,9 @@ lemma Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero [FiniteDimensional
     rw [hu, hv]
     exact hxy
   · rw [hdim, finrank_span_singleton hx, finrank_span_singleton hy]
+
+lemma Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero [FiniteDimensional 𝕜 E]
+    (hdim : Module.finrank 𝕜 E = 2) {x y z : E} (hx : x ≠ 0) (hy : y ≠ 0) (hxy : inner 𝕜 x y = 0) :
+    inner 𝕜 x z = 0 ↔ z ∈ 𝕜 ∙ y := by
+  rw [span_singleton_eq_orthogonal_of_inner_eq_zero hdim hy hx (inner_eq_zero_symm.mp hxy)]
+  exact mem_orthogonal_singleton_iff_inner_right.symm

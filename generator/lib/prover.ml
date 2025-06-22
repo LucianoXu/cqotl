@@ -442,11 +442,11 @@ and eval_tac_case (f: proof_frame) (e: terms) : tactic_result =
   match f.goals with
   | [] -> TacticError "Nothing to prove."
   | (ctx, hd) :: tl ->
-    (* check wehterh e is typed as CTERM[BIT] *)
+    (* check wehterh e is typed as CTerm[BIT] *)
     let wfctx = get_pf_wfctx f in
     match type_check wfctx e (Fun {head=_cterm; args=[Symbol _bit]}) with
     | TypeError msg ->
-      TacticError (Printf.sprintf "The term %s is not well typed as CTERM[BIT]: %s" (term2str e) msg)
+      TacticError (Printf.sprintf "The term %s is not well typed as CTerm[BIT]: %s" (term2str e) msg)
     | Type _ ->
       let name0 = fresh_name_for_ctx wfctx "CASE0" in
       let name1 = fresh_name_for_ctx wfctx "CASE1" in
@@ -1003,7 +1003,7 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
           | Type (Fun {head=head_type_q; args=[type_q]}) when head_type_q = _qreg ->
             let name = fresh_name_for_ctx (get_pf_wfctx f) "i" in
             let goal_template = parse_terms (Printf.sprintf "
-            psi | SUM[USET[T], fun (%s : CTERM[T]) => (|%s>@<false|)_(q,q) @ A @ (|false>@<%s|)_(q,q)] 
+            psi | SUM[USET[T], fun (%s : CTerm[T]) => (|%s>@<false|)_(q,q) @ A @ (|false>@<%s|)_(q,q)] 
             <= (phi /\\ (true -> (|false> @ <false|)_(q,q))) | B" name name name)
             in
             let s = [
@@ -1393,7 +1393,7 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
       | Fun {head=head; args=[
           Fun {head=head_pre; args=[phi; zero_pre]}; 
           Fun {head=head_s1; args=[Fun {head=head_meas; args=[Symbol x1; m_opt; qs]}]}; 
-          Fun {head=head_s2; args=[Fun {head=head_sample; args=[Symbol x2; miu]}]}; 
+          Fun {head=head_s2; args=[Fun {head=head_sample; args=[Symbol x2; mu]}]}; 
           Fun {head=head_post; args=[psi; zero_post]};]} when 
         (
           head = _judgement && 
@@ -1403,7 +1403,7 @@ and eval_tac_R_MEAS_SAMPLE (f: proof_frame) (switch: bool): tactic_result =
           head_post = _vbar && (is_zeroo zero_post)
         ) ->
         let goal_vee_bj = _measure_sample_or_bj phi in
-        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs miu switch in
+        let goal_trace = _measure_sample_trace_goal wfctx phi m_opt qs mu switch in
         let goal_proj = _measure_sample_proj_goal x1 x2 phi psi m_opt qs switch in
         begin
           match goal_vee_bj, goal_trace, goal_proj with

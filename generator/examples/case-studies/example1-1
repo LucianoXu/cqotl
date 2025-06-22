@@ -1,30 +1,30 @@
 
 (* Example 1 - without While *)
 
-Var H : OTYPE[BIT, BIT].
-Var vplus : KTYPE[BIT].
+Var H : OType[bit, bit].
+Var vplus : KType[bit].
 
-Var P0 : OTYPE[BIT, BIT].
-Var P1 : OTYPE[BIT, BIT].
+Var P0 : OType[bit, bit].
+Var P1 : OType[bit, bit].
 
 (* The uniform distribution on bit. *)
-Var miu : PDIST[BIT].
+Var mu : PDist[bit].
 
 Prove Pf1 :
-    forall (b1 : CVAR[BIT]), 
-    forall (b2 : CVAR[BIT]), 
-    forall (q : QREG[BIT]),
-    {false -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)} 
-        b1 <-$ miu;
+    forall (b1 : CVar[bit]), 
+    forall (b2 : CVar[bit]), 
+    forall (q : QReg[bit]),
+    {false -> 0O[bit]_(q,q) | 0O[bit]_(q,q)} 
+        b1 <-$ mu;
             ~ 
         init q; 
         unitary H q; 
         b2 := meas (P0, P1) q; 
-    {~(b1 == b2) -> 0O[BIT]_(q,q) | 0O[BIT]_(q,q)}.
+    {~(b1 == b2) -> 0O[bit]_(q,q) | 0O[bit]_(q,q)}.
     
     intro b1. intro b2. intro q.
 
-    r_seq -2 -2 true -> (|false> @ <false|)_(q,q) | 0O[BIT]_(q,q).
+    r_seq -2 -2 true -> (|false> @ <false|)_(q,q) | 0O[bit]_(q,q).
 
     r_initq.
 
@@ -33,7 +33,7 @@ Prove Pf1 :
         cq_entail. intro H. simpl. dirac. simpl_entail. refl.
         dirac. simpl_entail. refl.
 
-    r_seq -1 1 true -> (vplus @ vplus^D)_(q,q) | 0O[BIT]_(q,q).
+    r_seq -1 1 true -> (vplus @ vplus^D)_(q,q) | 0O[bit]_(q,q).
 
     r_unitary. dirac. simpl_entail. split.
 

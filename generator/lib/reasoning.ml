@@ -14,8 +14,8 @@ let simpl_rules = [
 
   parse_rw_rule "false /\\ false --> false";
   parse_rw_rule "true -> false --> false";
-  parse_rw_rule "A : CTERM[BIT] |- true -> A --> A";
-  parse_rw_rule "A : CTERM[BIT] |- false -> A --> true";
+  parse_rw_rule "A : CTerm[BIT] |- true -> A --> A";
+  parse_rw_rule "A : CTerm[BIT] |- false -> A --> true";
   parse_rw_rule "A -> true --> true";
   parse_rw_rule "A -> false --> ~ A";
 
@@ -30,12 +30,12 @@ let simpl_rules = [
   parse_rw_rule "A \\/ false --> A";
 
   parse_rw_rule "true |-> A --> A";
-  parse_rw_rule "A : OTYPE[T, T] |- false |-> A_q --> 1O[T]_q";
+  parse_rw_rule "A : OType[T, T] |- false |-> A_q --> 1O[T]_q";
   parse_rw_rule "true -> true --> true";
   parse_rw_rule "A == A --> true";
   parse_rw_rule "true == false --> false";
   parse_rw_rule "false == true --> false";
-  parse_rw_rule "A : CTERM[BIT] |- ~ A \\/ A --> true";
+  parse_rw_rule "A : CTerm[BIT] |- ~ A \\/ A --> true";
   parse_rw_rule "~ true --> false";
   parse_rw_rule "~ false --> true";
 
@@ -177,7 +177,7 @@ let forall_label_remove (wfctx: wf_ctx) (t : terms) : terms option =
 (** the term rewriting rules in *)
 let dirac_rules = [
 
-  parse_rw_rule "A : OTYPE[T2, T2] |- 0O[T1, T1] * A --> 0O[T1 * T2, T1 * T2]";
+  parse_rw_rule "A : OType[T2, T2] |- 0O[T1, T1] * A --> 0O[T1 * T2, T1 * T2]";
   parse_rw_rule "x^D^D --> x";
 
   parse_rw_rule "A_q /\\ B_q --> (A /\\ B)_q";
@@ -203,13 +203,13 @@ let dirac_rules = [
   parse_rw_rule "A_q -> B_q --> (A -> B)_q";
   parse_rw_rule "(A_(q1, q2))^D --> (A^D)_(q2, q1)";
 
-  parse_rw_rule "A : OTYPE[T, T] |- A -> A --> 1O[T]";
+  parse_rw_rule "A : OType[T, T] |- A -> A --> 1O[T]";
 
   parse_rw_rule "SUM[S, fun (i : T) => A_q] --> SUM[S, fun (i : T) => A]_q";
 
 
-  parse_rw_rule "A : OTYPE[T1, T2] |- A @ 0O[T2, T3] --> 0O[T1, T3]";
-  parse_rw_rule "B : OTYPE[T2, T3] |- 0O[T1, T2] @ B --> 0O[T1, T3]";
+  parse_rw_rule "A : OType[T1, T2] |- A @ 0O[T2, T3] --> 0O[T1, T3]";
+  parse_rw_rule "B : OType[T2, T3] |- 0O[T1, T2] @ B --> 0O[T1, T3]";
   parse_rw_rule "SUM[S, fun (i : T) => 0O[T1, T2]] --> 0O[T1, T2]";
 
   parse_rw_rule "U @@ (psi | A) --> (U @@ psi) | (U @@ A)";
@@ -239,8 +239,8 @@ let simpl_entail_rules = [
   parse_rw_rule "A_q <= B_q --> (A <= B)";
   parse_rw_rule "0O[T, T] <= A --> true = true";
   parse_rw_rule "0O[T, T]_(q, q) <= A --> true = true";
-  parse_rw_rule "X : DTYPE[ls1, ls2] |- A /\\ X <= X --> true = true";
-  parse_rw_rule "X : DTYPE[ls1, ls2] |- X /\\ A <= X --> true = true";
+  parse_rw_rule "X : DType[ls1, ls2] |- A /\\ X <= X --> true = true";
+  parse_rw_rule "X : DType[ls1, ls2] |- X /\\ A <= X --> true = true";
 ]
 
 let simpl_entail (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
@@ -355,10 +355,10 @@ let _bijection_mapping (switch: bool) (t: terms) : terms =
   | _ -> failwith ("_bijection_mapping: unexpected term.")
       
 
-let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (miu: terms) (switch: bool) : terms option =
+let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (q: terms) (mu: terms) (switch: bool) : terms option =
 
   (* The function that outputs 
-    bj' -> forall (rho in Pj'), tr(Mi_q rho_q) = miu(f(i))
+    bj' -> forall (rho in Pj'), tr(Mi_q rho_q) = mu(f(i))
   *)
   let aux (bj': terms) (pj': terms) (mi: terms) (q: terms) (fi: terms) : terms option = 
     match calc_type wfctx pj' with
@@ -366,7 +366,7 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
       let name_pfbj' = fresh_name_for_ctx wfctx "pfbj'" in
       let name_rho = fresh_name_for_ctx wfctx "rho" in
       let name_pfspace = fresh_name_for_ctx wfctx "pfspace" in
-      let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DTYPE[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), tr[Mi_(q, q) @ "^ name_rho ^"] = miu @ fi") in
+      let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DType[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), tr[Mi_(q, q) @ "^ name_rho ^"] = mu @ fi") in
       let s = [
         ("bj'", bj');
         ("ls1", ls1);
@@ -374,7 +374,7 @@ let _measure_sample_trace_goal (wfctx: wf_ctx) (preproj: terms) (m_opt: terms) (
         ("Pj'", pj');
         ("Mi", mi);
         ("q", q);
-        ("miu", miu);
+        ("mu", mu);
         ("fi", fi);
       ]
       in
@@ -524,7 +524,7 @@ let _meas_meas_coupling_goal (wfctx: wf_ctx) (x: string) (y: string) (preproj: t
           let name_pfbj' = fresh_name_for_ctx wfctx "pfbj'" in
           let name_rho = fresh_name_for_ctx wfctx "rho" in
           let name_pfspace = fresh_name_for_ctx wfctx "pfspace" in
-          let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DTYPE[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), (Mi_(q1, q1) @ tr_q2("^ name_rho ^") @ Mi^D_(q1, q1), couplingmid #, Nfi_(q2, q2) @ tr_q1("^ name_rho ^") @ Nfi^D_(q2, q2))") in
+          let template = parse_terms ("forall ( "^ name_pfbj' ^": bj'= true), forall ("^ name_rho ^": DType[ls1, ls2]), forall ("^ name_pfspace ^": INSPACE["^ name_rho ^", Pj']), (Mi_(q1, q1) @ tr_q2("^ name_rho ^") @ Mi^D_(q1, q1), couplingmid #, Nfi_(q2, q2) @ tr_q1("^ name_rho ^") @ Nfi^D_(q2, q2))") in
 
           let s = [
             ("bj'", bj');

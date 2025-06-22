@@ -150,29 +150,29 @@ let _forall   = "FORALL"
 let _fun      = "FUN"
 let _apply    = "APPLY"
 
-let _ctype    = "CTYPE"
-let _cvar     = "CVAR"
-let _cterm    = "CTERM"
-let _pdist    = "PDIST"   (* Probability distribution. *)
-let _set      = "SET"
-let _bit      = "BIT"
-let _int      = "INT"     (* Integer type. *)
-let _qvlist   = "QVLIST"
-let _optpair  = "OPTPAIR"
-let _qreg     = "QREG"
-let _stype    = "STYPE"
-let _ktype    = "KTYPE"
-let _btype    = "BTYPE"
-let _otype    = "OTYPE"
-let _dtype    = "DTYPE"
+let _ctype    = "CType"
+let _cvar     = "CVar"
+let _cterm    = "CTerm"
+let _pdist    = "PDist"   (* Probability distribution. *)
+let _set      = "Set"
+let _bit      = "bit"
+let _int      = "int"     (* Integer type. *)
+let _qvlist   = "QVList"
+let _optpair  = "OptPair"
+let _qreg     = "QReg"
+let _stype    = "SType"
+let _ktype    = "KType"
+let _btype    = "BType"
+let _otype    = "OType"
+let _dtype    = "DType"
 
 (** The type for a single program statement. *)
-let _progstt  = "PROGSTT"
+let _progstt  = "ProgStt"
 
 (** The type for programs. *)
-let _prog     = "PROG"
-let _cqproj   = "CQPROJ"
-let _assn     = "ASSN"
+let _prog     = "Prog"
+let _cqproj   = "CQProj"
+let _assn     = "Assn"
 
 let _star     = "STAR"
 let _pair     = "PAIR"

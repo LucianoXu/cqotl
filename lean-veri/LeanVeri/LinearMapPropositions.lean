@@ -116,10 +116,7 @@ lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite {T : E →ₗ[�
   · rw [← isSymmetric_iff_isSelfAdjoint]
     apply IsSymmetric.smul (RCLike.conj_ofReal c) hT.IsSymmetric
   · intro x
-    rw [smul_apply]
-    rw [inner_smul_left]
-    rw [RCLike.conj_ofReal]
-    rw [RCLike.re_ofReal_mul]
+    rw [smul_apply, inner_smul_left, RCLike.conj_ofReal, RCLike.re_ofReal_mul]
     exact Left.mul_nonneg hc (hT.right x)
 
 lemma isPositiveSemiDefinite_real_smul_of_isPositiveSemiDefinite' {c : 𝕜} (hc : 0 ≤ c) {T : E →ₗ[𝕜] E}
@@ -328,6 +325,12 @@ theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[�
   · intro hx
     rw [hx]
     simp
+
+lemma isDensityOperator.neZero {T : E →ₗ[𝕜] E} (hT : T.isDensityOperator) : T ≠ 0 := by
+  intro h
+  have htr := hT.right
+  rw [h] at htr
+  simp_all
 
 lemma LoewnerOrder_iff_of_isPositiveSemiDefinite {T N : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite)
     (hN : N.isPositiveSemiDefinite) :
