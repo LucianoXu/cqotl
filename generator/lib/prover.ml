@@ -660,58 +660,25 @@ and eval_tac_by_lean (f: proof_frame) : tactic_result =
                 Printf.printf "---- Transforming to Lean_ast.lean_file and generating Lean code ----\n";
                 let obligation_name = Printf.sprintf "obligation_%d" (List.length f.lean_goals + 1)
                 in  let lean_file_ast_result = transform_obligation_to_lean_file obligation_name  lean_obl in
-                match lean_file_ast_result with
-                | LeanTranslationError msg ->
-                    Printf.printf "CRITICAL: Failed to transform to Lean_ast.lean_file: %s\n" msg;
-                    Printf.printf "-------------------------------------\n";
-                    TacticError ("Failed to transform to Lean_ast.lean_file: " ^ msg)
-                | Result lean_file_ast ->
-                    let lean_code_string = Lean_printer.lean_ast_to_lean_file lean_file_ast in
-                    Printf.printf "\n--- Generated Lean 4 Code ---\n%s\n-----------------------------\n\n" lean_code_string;
-                    let new_frame_state = {
-                      env         = f.env;
-                      proof_name  = f.proof_name;
-                      proof_prop  = f.proof_prop;
-                      goals       = rest_goals;
-                      lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-                    } in
-                    Printf.printf "------- Goal processed for Lean and moved from active goals --------\n\n";
-                    Success (ProofFrame new_frame_state)
+                  match lean_file_ast_result with
+                  | LeanTranslationError msg ->
+                      Printf.printf "CRITICAL: Failed to transform to Lean_ast.lean_file: %s\n" msg;
+                      Printf.printf "-------------------------------------\n";
+                      TacticError ("Failed to transform to Lean_ast.lean_file: " ^ msg)
+                  | Result lean_file_ast ->
+                      Printf.printf "\n--- Generated Lean 4 AST ---\n%s\n-----------------------------\n\n" (Lean_ast.show_lean_file lean_file_ast);
+                      let lean_code_string = Lean_printer.lean_ast_to_lean_file lean_file_ast in
+                      Printf.printf "\n--- Generated Lean 4 Code ---\n%s\n-----------------------------\n\n" lean_code_string;
+                      let new_frame_state = {
+                        env         = f.env;
+                        proof_name  = f.proof_name;
+                        proof_prop  = f.proof_prop;
+                        goals       = rest_goals;
+                        lean_goals  = f.lean_goals @ [(ctx, goal_term)]
+                      } in
+                      Printf.printf "------- Goal processed for Lean and moved from active goals --------\n\n";
+                      Success (ProofFrame new_frame_state)
           end;
-          (* Printf.printf "--- End of lean_obligation transformation ---\n\n";
-          
-          let new_frame_state = {
-            env         = f.env;
-            proof_name  = f.proof_name;
-            proof_prop  = f.proof_prop;
-            goals       = rest_goals;
-            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-          }
-          in  Printf.printf "------- Goal moved to Lean obligations --------\n\n";
-              Success (ProofFrame new_frame_state); *)
-(* 
-      Printf.printf "Goal: %s\n" (term2str goal_term);
-
-      let obligation_frame = proof_frame_to_lean_frame f 
-      in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
-      in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
-      in  let () = 
-            match obligation_frame with
-              | LeanTranslationError err  -> Printf.printf "%s\n" err
-              | Result lean_frame         -> 
-                  let symbolsInGoal           = extract_symbols_from_goal lean_frame.goal
-                  in  let refined_lean_frame  = refine_lean_frame lean_frame
-                  in  let () = Printf.printf "Symbols: %s\n" ("[" ^ (String.concat ", " symbolsInGoal) ^ "]")  
-                  in  Printf.printf "%s\n" (show_obligation_proof_frame refined_lean_frame)
-      in  let () = Printf.printf "--------------------------------------------\n"
-      in  let new_frame = {
-            env         = f.env;
-            proof_name  = f.proof_name;
-            proof_prop  = f.proof_prop;
-            goals       = rest_goals;
-            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-          }
-      in  Success (ProofFrame new_frame) *)
 
 
 and eval_tac_simpl (f: proof_frame) : tactic_result =

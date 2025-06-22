@@ -35,6 +35,7 @@ type expr =
   | EType             of qType
   | ENot              of expr
   | ESubspace         of expr * expr
+  | ELownerOrder      of expr * expr
   | ETrace            of expr
   [@@deriving show]
 
