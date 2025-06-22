@@ -17,5 +17,4 @@ lemma obligation (b b' : Bool) (x x' i i' m : ℤ) :
     simp only [decide_eq_true_eq]
     intro H1 H2 H3 H4
     cases H3 <;> cases H4
-    
-  sorry
+    sorry
