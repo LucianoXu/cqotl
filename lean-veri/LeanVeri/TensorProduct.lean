@@ -39,4 +39,7 @@ noncomputable def tprod_map_map_equiv_map_tprod_map :
     (E ⊗[𝕜] G →ₗ[𝕜] F ⊗[𝕜] H) →ₗ[𝕜] (E →ₗ[𝕜] F) ⊗[𝕜] (G →ₗ[𝕜] H) :=
   (map_tprod_map_equiv_tprod_map_tprod 𝕜 E F G H).symm
 
+noncomputable def tmul_cast : (E →ₗ[𝕜] F) →ₗ[𝕜] (G →ₗ[𝕜] H) →ₗ[𝕜] (E ⊗[𝕜] G →ₗ[𝕜] F ⊗[𝕜] H) :=
+  TensorProduct.curry (map_tprod_map_map_tprod_map_tprod 𝕜 E F G H)
+
 end TensorProduct

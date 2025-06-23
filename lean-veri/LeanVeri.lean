@@ -4,7 +4,6 @@ import LeanVeri.InnerTensorProductEuclideanSpace
 import LeanVeri.LinearMapPropositions
 import LeanVeri.OuterProduct
 import LeanVeri.PartialTrace
-import LeanVeri.PiL2
 import LeanVeri.Projection
 import LeanVeri.ProjectionSubmodule
 import LeanVeri.Properties

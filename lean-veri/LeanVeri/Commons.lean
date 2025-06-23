@@ -146,20 +146,20 @@ lemma inner_ketP_ketP : inner 𝕜 (ketP : 𝕜²) ketP = 1 :=
 lemma inner_ketM_ketM : inner 𝕜 (ketM : 𝕜²) ketM = 1 :=
   (inner_eq_one_iff_of_norm_one norm_ketM norm_ketM).mpr rfl
 
-lemma neZero_ket0 : NeZero (ket0 : 𝕜²) := by
-  rw [neZero_iff, ← norm_pos_iff, norm_ket0]
+lemma neZero_ket0 : (ket0 : 𝕜²) ≠ 0 := by
+  rw [← norm_pos_iff, norm_ket0]
   exact Real.zero_lt_one
 
-lemma neZero_ket1 : NeZero (ket1 : 𝕜²) := by
-  rw [neZero_iff, ← norm_pos_iff, norm_ket1]
+lemma neZero_ket1 : (ket1 : 𝕜²) ≠ 0 := by
+  rw [← norm_pos_iff, norm_ket1]
   exact Real.zero_lt_one
 
-lemma neZero_ketP : NeZero (ketP : 𝕜²) := by
-  rw [neZero_iff, ← norm_pos_iff, norm_ketP]
+lemma neZero_ketP : (ketP : 𝕜²) ≠ 0 := by
+  rw [← norm_pos_iff, norm_ketP]
   exact Real.zero_lt_one
 
-lemma neZero_ketM : NeZero (ketM : 𝕜²) := by
-  rw [neZero_iff, ← norm_pos_iff, norm_ketM]
+lemma neZero_ketM : (ketM : 𝕜²) ≠ 0 := by
+  rw [← norm_pos_iff, norm_ketM]
   exact Real.zero_lt_one
 
 lemma isPositiveSemiDefinite_ketbra0 : LinearMap.isPositiveSemiDefinite (ketbra0 : 𝕜² →ₗ[𝕜] 𝕜²) :=
@@ -442,27 +442,27 @@ lemma adjoint_Hadamard_mul_ketbraP_mul_Hadamard_eq_ketbra0 :
 
 lemma span_ketP_eq_span_ketM_comp : (𝕜 ∙ ketP : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketM)ᗮ :=
   Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
-  (neZero_iff.mp neZero_ketP) (neZero_iff.mp neZero_ketM) inner_ketP_ketM
+  neZero_ketP neZero_ketM inner_ketP_ketM
 
 lemma span_ketM_eq_span_ketP_comp : (𝕜 ∙ ketM : Submodule 𝕜 𝕜²) = (𝕜 ∙ ketP)ᗮ :=
   Submodule.span_singleton_eq_orthogonal_of_inner_eq_zero finrank_euclideanSpace_fin
-  (neZero_iff.mp neZero_ketM) (neZero_iff.mp neZero_ketP) inner_ketM_ketP
+  neZero_ketM neZero_ketP inner_ketM_ketP
 
 lemma ker_ketbraP_eq_span_ketM : LinearMap.ker (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) = 𝕜 ∙ ketM := by
   ext x
   simp only [LinearMap.mem_ker]
   unfold ketbraP
-  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketP.ne]
+  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketP]
   exact Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero
-    finrank_euclideanSpace_fin neZero_ketP.ne neZero_ketM.ne inner_ketP_ketM
+    finrank_euclideanSpace_fin neZero_ketP neZero_ketM inner_ketP_ketM
 
 lemma ker_ketbraM_eq_span_ketP : LinearMap.ker (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²) = 𝕜 ∙ ketP := by
   ext x
   simp only [LinearMap.mem_ker]
   unfold ketbraM
-  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketM.ne]
+  rw [outerProduct_def, smul_eq_zero_iff_left neZero_ketM]
   exact Submodule.inner_eq_zero_iff_mem_span_singleton_of_inner_eq_zero
-    finrank_euclideanSpace_fin neZero_ketM.ne neZero_ketP.ne inner_ketM_ketP
+    finrank_euclideanSpace_fin neZero_ketM neZero_ketP inner_ketM_ketP
 
 lemma toSubmodule_ketbraP_eq_span_ketP : (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 𝕜 ∙ ketP := by
   unfold LinearMap.toSubmodule
@@ -476,11 +476,11 @@ lemma toSubmodule_ketbraM_eq_span_ketM : (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²).
 
 lemma finrank_toSubmodule_ketbraP : Module.finrank 𝕜 (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 1 := by
   rw [toSubmodule_ketbraP_eq_span_ketP]
-  exact finrank_span_singleton neZero_ketP.ne
+  exact finrank_span_singleton neZero_ketP
 
 lemma finrank_toSubmodule_ketbraM : Module.finrank 𝕜 (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²).toSubmodule = 1 := by
   rw [toSubmodule_ketbraM_eq_span_ketM]
-  exact finrank_span_singleton neZero_ketM.ne
+  exact finrank_span_singleton neZero_ketM
 
 def stBasis_val : Fin 2 → 𝕜²
   | 0 => ket0

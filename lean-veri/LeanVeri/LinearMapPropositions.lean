@@ -162,8 +162,8 @@ lemma isPositiveSemiDefinite.nonneg_eigenvalues {T : E →ₗ[𝕜] E} (hT : T.i
   exact h
 
 omit [FiniteDimensional 𝕜 E] in
-lemma eq_zero_iff_forall_re_inner_eq_zero (T : E →ₗ[𝕜]E) :
-    T = 0 ↔ ∀x : E, ∀y : E, RCLike.re (inner 𝕜 (T x) y) = 0 := by
+lemma eq_zero_iff_forall_re_inner_eq_zero (T : E →ₗ[𝕜] E) :
+    T = 0 ↔ ∀x y : E, RCLike.re (inner 𝕜 (T x) y) = 0 := by
   apply Iff.intro
   · intro h
     simp [h]
@@ -174,24 +174,24 @@ lemma eq_zero_iff_forall_re_inner_eq_zero (T : E →ₗ[𝕜]E) :
     rw [inner_self_eq_norm_mul_norm, mul_self_eq_zero] at hTx
     exact norm_eq_zero.mp hTx
 
-lemma IsSelfAdjoint.re_inner_app_self_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : IsSelfAdjoint T) :
+lemma IsSelfAdjoint.eq_zero_iff_re_inner_app_self_eq_zero {T : E →ₗ[𝕜] E} (hT : IsSelfAdjoint T) :
     T = 0 ↔ ∀x : E, RCLike.re (inner 𝕜 (T x) x) = 0 := by
   apply Iff.intro
   · intro h
     simp [h]
   · intro h
-    have aux : ∀x : E, ∀y : E, RCLike.re (inner 𝕜 (T x) y) = RCLike.re ((inner 𝕜 (T (x + y)) (x + y) - inner 𝕜 (T (x - y)) (x - y))) / 4 := by
+    have aux : ∀x y : E, RCLike.re (inner 𝕜 (T x) y) = RCLike.re ((inner 𝕜 (T (x + y)) (x + y) - inner 𝕜 (T (x - y)) (x - y))) / 4 := by
       intro x y
       simp only [inner_add_left, inner_add_right, inner_sub_left, inner_sub_right, map_sub, map_add, inner_re_symm (T y) x]
       rw [(isSymmetric_iff_isSelfAdjoint T).mpr hT]
       ring_nf
-    have h' : ∀x : E, ∀y : E, RCLike.re (inner 𝕜 (T x) y) = 0 := by
+    have h' : ∀x y : E, RCLike.re (inner 𝕜 (T x) y) = 0 := by
       intro x y
       rw [aux, map_sub, h (x + y), h (x - y)]
       ring
     apply (eq_zero_iff_forall_re_inner_eq_zero T).mpr h'
 
-lemma isPositiveSemiDefinite.eq_iff_forall_re_inner_app_self_eq {T N : E →ₗ[𝕜]E} (hT : IsSelfAdjoint T)
+lemma IsSelfAdjoint.eq_iff_forall_re_inner_app_self_eq {T N : E →ₗ[𝕜] E} (hT : IsSelfAdjoint T)
     (hN : IsSelfAdjoint N) :
     T = N ↔ ∀x : E, RCLike.re (inner 𝕜 (T x) x) = RCLike.re (inner 𝕜 (N x) x) := by
   have hT' : T.IsSymmetric := (isSymmetric_iff_isSelfAdjoint T).mpr hT
@@ -206,13 +206,13 @@ lemma isPositiveSemiDefinite.eq_iff_forall_re_inner_app_self_eq {T N : E →ₗ[
       rw [sub_apply, inner_sub_left, map_sub, sub_eq_zero]
       exact h x
     rw [← sub_eq_zero]
-    exact (IsSelfAdjoint.re_inner_app_self_eq_zero_iff_app_eq_zero hTN).mpr hTN'
+    exact (eq_zero_iff_re_inner_app_self_eq_zero hTN).mpr hTN'
 
 /--
 Characterization of when `RCLike.re (inner 𝕜 (T x) x)` is zero.
 The proof works be decomposing `x` in the eigenbasis of `T`.
 -/
-lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite) (x : E) :
     RCLike.re (inner 𝕜 (T x) x) = 0 ↔ T x = 0 := by
   have hTsymm : T.IsSymmetric := hT.IsSymmetric
   let n : ℕ := Module.finrank 𝕜 E
@@ -314,7 +314,7 @@ lemma isPositiveSemiDefinite.re_inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[
     rw [hx]
     simp
 
-theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜]E} (hT : T.isPositiveSemiDefinite) (x : E) :
+theorem isPositiveSemiDefinite.inner_app_eq_zero_iff_app_eq_zero {T : E →ₗ[𝕜] E} (hT : T.isPositiveSemiDefinite) (x : E) :
     inner 𝕜 (T x) x = 0 ↔ T x = 0 := by
   apply Iff.intro
   · intro hx
