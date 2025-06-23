@@ -8,6 +8,40 @@ open Parser_utils
 open Transformer
 open Quantum_ast
 open Mapper
+open Printf
+
+let config_file = "cqotl_path.config"
+
+(* Define the relative path from the base CQOTL directory to the Lean Examples directory *)
+let relative_lean_examples_dir = "lean-veri/LeanVeri/Examples"
+
+(* Function to read the base path from the config file *)
+let read_cqotl_base_path config_path =
+  try
+    let ic = open_in config_path in
+    let base_path = input_line ic in
+    close_in ic;
+    Some base_path
+  with
+  | Sys_error msg ->
+      eprintf "Error: Could not open or read config file '%s' - %s\n" config_path msg;
+      None
+  | End_of_file ->
+      eprintf "Error: Config file '%s' is empty. Please provide the base CQOTL path.\n" config_path;
+      None
+
+(* Function to write content to a file *)
+let write_content_to_file filepath content =
+  try
+    let oc = open_out filepath in
+    fprintf oc "%s" content; (* Use %s not %s\n because lean_ast_to_lean_file already adds a newline *)
+    close_out oc;
+    printf "  -> Successfully wrote Lean code to '%s'\n" filepath;
+    true
+  with
+  | Sys_error msg ->
+      eprintf "Error: Could not write to file '%s' - %s\n" filepath msg;
+      false
 
 (** Create a well-formed context from an environment with empty context. *)
 let env2wfctx env = {env=env; ctx=[]}
@@ -630,88 +664,67 @@ and eval_tac_split (f: proof_frame) : tactic_result =
       end
     | _ -> TacticError "split tactic cannot apply here. The current goal is not a conjunction."
 
-and eval_tac_by_lean (f: proof_frame) : tactic_result =
-  match f.goals with
-  | []  -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
-  | (ctx, goal_term) :: rest_goals -> (* Getting the first goal *)
-      Printf.printf "-------- ByLean Tactic Invokved --------\n\n";
-      let initial_obligation_frame  = proof_frame_to_lean_frame f   in
-      match initial_obligation_frame with
-      | LeanTranslationError err ->
-          Printf.printf "Error creating initial obligation frame: %s\n" err;
-          Printf.printf "-------------------------------------\n";
-          TacticError ("Failed to prepare goal for Lean: " ^ err)
-      | Result lean_frame ->
-          let refined_lean_frame      = refine_lean_frame lean_frame                      in
-          let symbolsInGoal           = extract_symbols_from_goal refined_lean_frame.goal in
-          Printf.printf "Refined Obligation Frame (using symbols: [%s])\n" (String.concat ", " symbolsInGoal);
-          Printf.printf "---- Attempting to transform the goal to Lean_obligaiton ----\n";
-          let lean_obligation_result  = obligation_frame_to_lean_obligation refined_lean_frame in
-          begin
-            match lean_obligation_result with
-            | LeanTranslationError msg  ->
-                Printf.printf "CRITICAL: Failed to create Quantum_ast.lean_obligation: %s\n" msg; (* Semicolon added *)
-                Printf.printf "-------------------------------------\n";
-                TacticError ("Failed to create intermediate Lean obligation: " ^ msg)
-            | Result lean_obl           ->
-                Printf.printf "Successfully transformed to lean_obligation:\n%s\n"
-                  (show_lean_obligation lean_obl);
-                Printf.printf "--- End of Quantum_ast.lean_obligation transformation ---\n\n";
-                Printf.printf "---- Transforming to Lean_ast.lean_file and generating Lean code ----\n";
-                let obligation_name = Printf.sprintf "obligation_%d" (List.length f.lean_goals + 1)
-                in  let lean_file_ast_result = transform_obligation_to_lean_file obligation_name  lean_obl in
-                match lean_file_ast_result with
-                | LeanTranslationError msg ->
-                    Printf.printf "CRITICAL: Failed to transform to Lean_ast.lean_file: %s\n" msg;
-                    Printf.printf "-------------------------------------\n";
-                    TacticError ("Failed to transform to Lean_ast.lean_file: " ^ msg)
-                | Result lean_file_ast ->
-                    let lean_code_string = Lean_printer.lean_ast_to_lean_file lean_file_ast in
-                    Printf.printf "\n--- Generated Lean 4 Code ---\n%s\n-----------------------------\n\n" lean_code_string;
-                    let new_frame_state = {
-                      env         = f.env;
-                      proof_name  = f.proof_name;
-                      proof_prop  = f.proof_prop;
-                      goals       = rest_goals;
-                      lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-                    } in
-                    Printf.printf "------- Goal processed for Lean and moved from active goals --------\n\n";
-                    Success (ProofFrame new_frame_state)
-          end;
-          (* Printf.printf "--- End of lean_obligation transformation ---\n\n";
-          
-          let new_frame_state = {
-            env         = f.env;
-            proof_name  = f.proof_name;
-            proof_prop  = f.proof_prop;
-            goals       = rest_goals;
-            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-          }
-          in  Printf.printf "------- Goal moved to Lean obligations --------\n\n";
-              Success (ProofFrame new_frame_state); *)
-(* 
-      Printf.printf "Goal: %s\n" (term2str goal_term);
-
-      let obligation_frame = proof_frame_to_lean_frame f 
-      in  let () = Printf.printf "------- Goal moved to Lean obligations --------\n"
-      in  let () = Printf.printf "--- New Proof Frame State (Generated Show) ---\n"
-      in  let () = 
-            match obligation_frame with
-              | LeanTranslationError err  -> Printf.printf "%s\n" err
-              | Result lean_frame         -> 
-                  let symbolsInGoal           = extract_symbols_from_goal lean_frame.goal
-                  in  let refined_lean_frame  = refine_lean_frame lean_frame
-                  in  let () = Printf.printf "Symbols: %s\n" ("[" ^ (String.concat ", " symbolsInGoal) ^ "]")  
-                  in  Printf.printf "%s\n" (show_obligation_proof_frame refined_lean_frame)
-      in  let () = Printf.printf "--------------------------------------------\n"
-      in  let new_frame = {
-            env         = f.env;
-            proof_name  = f.proof_name;
-            proof_prop  = f.proof_prop;
-            goals       = rest_goals;
-            lean_goals  = f.lean_goals @ [(ctx, goal_term)]
-          }
-      in  Success (ProofFrame new_frame) *)
+    and eval_tac_by_lean (f: proof_frame) : tactic_result =
+      match f.goals with
+      | []                              -> TacticError "Nothing to prove. No proof obligation to translate to Lean."
+      | (ctx, goal_term) :: rest_goals  ->
+          Printf.printf "-------- ByLean Tactic Invokved --------\n\n";
+          let initial_obligation_frame  = proof_frame_to_lean_frame f   in
+          match initial_obligation_frame with
+          | LeanTranslationError err ->
+              Printf.printf "Error creating initial obligation frame: %s\n" err;
+              TacticError ("Failed to prepare goal for Lean: " ^ err)
+          | Result lean_frame ->
+              let refined_lean_frame      = refine_lean_frame lean_frame in
+              let lean_obligation_result  = obligation_frame_to_lean_obligation refined_lean_frame in
+              begin
+                match lean_obligation_result with
+                | LeanTranslationError msg  ->
+                    Printf.printf "CRITICAL: Failed to create Quantum_ast.lean_obligation: %s\n" msg;
+                    TacticError ("Failed to create intermediate Lean obligation: " ^ msg)
+                | Result lean_obl ->
+                    Printf.printf "Successfully transformed to lean_obligation:\n%s\n" (show_lean_obligation lean_obl);
+                    let obligation_name = Printf.sprintf "obligation_%d" (List.length f.lean_goals + 1) in
+                    let lean_file_ast_result = transform_obligation_to_lean_file obligation_name lean_obl in
+                    match lean_file_ast_result with
+                    | LeanTranslationError msg ->
+                        Printf.printf "CRITICAL: Failed to transform to Lean_ast.lean_file: %s\n" msg;
+                        TacticError ("Failed to transform to Lean_ast.lean_file: " ^ msg)
+                    | Result lean_file_ast ->
+                        Printf.printf "\n--- Generated Lean 4 AST ---\n%s\n-----------------------------\n\n" (Lean_ast.show_lean_file lean_file_ast);
+                        let lean_code_string = Lean_printer.lean_ast_to_lean_file lean_file_ast in
+                        let filename = Printf.sprintf "%s.lean" obligation_name in
+                        
+                        Printf.printf "\n--- Generated Lean 4 Code ---\n%s\n-----------------------------\n\n" lean_code_string;
+    
+                        (* --- CORRECTED FILE WRITING LOGIC --- *)
+                        (* The 'match' statement is now the final expression within the 'let' scope *)
+                        match read_cqotl_base_path config_file with
+                        | None ->
+                            TacticError ("Could not read base path from '" ^ config_file ^ "'. Cannot write Lean file.")
+                        | Some base_path ->
+                            let dir_components = String.split_on_char '/' relative_lean_examples_dir in
+                            let full_examples_dir = List.fold_left Filename.concat base_path dir_components in
+                            let full_lean_path = Filename.concat full_examples_dir filename in
+    
+                            if Sys.file_exists full_lean_path then
+                              let error_msg = Printf.sprintf "File %s already exists. Cannot overwrite." full_lean_path in
+                              TacticError error_msg
+                            else
+                              if write_content_to_file full_lean_path lean_code_string then
+                                let new_frame_state = {
+                                  env = f.env;
+                                  proof_name = f.proof_name;
+                                  proof_prop = f.proof_prop;
+                                  goals = rest_goals;
+                                  lean_goals = f.lean_goals @ [(ctx, goal_term)]
+                                } in
+                                Printf.printf "------- Goal processed for Lean and moved from active goals --------\n\n";
+                                Success (ProofFrame new_frame_state)
+                              else
+                                let error_msg = Printf.sprintf "Failed to write Lean file to '%s'." full_lean_path in
+                                TacticError error_msg
+              end
 
 
 and eval_tac_simpl (f: proof_frame) : tactic_result =

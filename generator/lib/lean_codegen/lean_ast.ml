@@ -7,6 +7,7 @@
 
 (* Define the representation of LEAN4 as an AST *)
 type ident = string
+  [@@deriving show]
 
 type expr =
   | Var           of ident
@@ -27,17 +28,19 @@ type expr =
   | Hole
   | Sorry
   | Type
+  [@@deriving show]
 
 type binder_style =
   | Explicit  (* Represents () *)
   | Implicit  (* Represents {} *)
   | Instance  (* Represents [] *)
+  [@@deriving show]
 
 type binder = {
   name    : ident;
   type_b  : expr;
   style   : binder_style;
-}
+}[@@deriving show]
 
 type decl =
   | Import      of ident
@@ -61,9 +64,10 @@ type decl =
       body    : expr;
     }
   | DocComment of string * decl
+[@@deriving show]
 
 type lean_file = {
   header        : string option;
   imports       : decl list;
   declarations  : decl list;
-}
+}[@@deriving show]

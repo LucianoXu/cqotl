@@ -159,7 +159,7 @@ let rec ast_cqotl_to_expr (term : terms) : (expr, string) lean4Result =
             | "ENTAILMENT", [t1; t2]         ->
                 ast_cqotl_to_expr t1 >>= fun qt1 ->
                 ast_cqotl_to_expr t2 >>= fun qt2 ->
-                Result (ESubspace (qt1, qt2))
+                Result (ELownerOrder (qt1, qt2))
             | "NOT", [t]                    ->
                 ast_cqotl_to_expr t >>= fun qt ->
                 Result (ENot qt)
