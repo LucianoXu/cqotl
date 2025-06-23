@@ -99,10 +99,11 @@ Prove RandomWalkProof :
     simpl_entail. simpl.
 
 
-    Pause.
+    (* Pause. *)
 
     (** while-while rule *)
     r_while_while q (((~ (x == x' /\ i == i')) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
+    Pause.
     simpl.
 
     (* pre order *)
