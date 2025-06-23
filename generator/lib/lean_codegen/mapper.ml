@@ -113,6 +113,11 @@ let rec quantum_expr_to_lean_expr (ty_ctx : (string * qType) list) (qe : Quantum
         Result (mult f_lean x_lean)
       else
         Result (app f_lean x_lean)
+  | EForall (x, EType qt, e)           ->
+      quantum_expr_to_lean_expr ty_ctx (EType qt)  >>= fun qt_lean      ->
+      let new_ty_ctx = (x, qt) :: ty_ctx                  in
+        quantum_expr_to_lean_expr new_ty_ctx e   >>= fun e_lean ->
+        Result (Forall (x, qt_lean, e_lean))
   | EForall (x, qt, e)    ->
       quantum_expr_to_lean_expr ty_ctx qt  >>= fun qt_lean ->
       quantum_expr_to_lean_expr ty_ctx e   >>= fun e_lean  ->

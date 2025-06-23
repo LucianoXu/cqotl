@@ -71,7 +71,6 @@ Prove RandomWalkProof :
 
     intro n. intro m. intro i. intro i'. intro x. intro x'.
     intro b. intro b'. intro q.
-
     
     r_seq 1 0 ~(x == x' /\ i == n) -> 0O[bit]_(q,q) | 0O[bit]_(q,q).
 
@@ -88,7 +87,6 @@ Prove RandomWalkProof :
     (* pre order *)
     simpl_entail. simpl. apply Lemma3. simpl.
     
-    (* Pause. *)
     (* sorry. *)
     by_lean.
     (* Pause. *)
@@ -98,7 +96,6 @@ Prove RandomWalkProof :
     
     (* Pause. *)
     (* sorry. *)
-    (* Pause. *)
     by_lean.
     (* Pause. *)
 
@@ -135,30 +132,29 @@ Prove RandomWalkProof :
             dirac. 
             
             (* Pause. *)
-            sorry.
-            (* by_lean. *)
+            (* sorry. *)
+            by_lean.
             (* Pause. *)
             intro H. dirac.
 
             (* Pause. *)
-            sorry.
-            (* by_lean. *)
+            (* sorry. *)
+            by_lean.
             (* Pause. *)
             
             split.
             intro H. dirac.
 
             (* Pause. *)
-            sorry.
-            (* by_lean. *)
+            (* sorry. *)
+            by_lean.
             (* Pause. *)
             
             intro H. dirac.
 
             (* Pause. *)
-            sorry.
-            (* Pause. *)
-            (* by_lean. *)
+            (* sorry. *)
+            by_lean.
             (* Pause. *)
 
             cq_entail. split.
