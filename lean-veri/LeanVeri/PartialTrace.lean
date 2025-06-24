@@ -2,8 +2,8 @@
 Copyright (c) 2025 Iván Renison. All rights reserved.
 Authors: Iván Renison
 -/
-import LeanVeri.TensorProduct
 import Mathlib.LinearAlgebra.Trace
+import Mathlib.Analysis.RCLike.Basic
 
 /-!
 This file defines the partial trace.
@@ -24,7 +24,7 @@ noncomputable def tr1_aux2 : (E →ₗ[𝕜] E) ⊗[𝕜] (F →ₗ[𝕜] F) →
   lift (tr1_aux1 𝕜 E F)
 
 noncomputable def tr1 : ((E ⊗[𝕜] F) →ₗ[𝕜] (E ⊗[𝕜] F)) →ₗ[𝕜] F →ₗ[𝕜] F :=
-  tr1_aux2 𝕜 E F ∘ₗ tprod_map_map_equiv_map_tprod_map 𝕜 E E F F
+  tr1_aux2 𝕜 E F ∘ₗ (homTensorHomEquiv 𝕜 E F E F).symm
 
 noncomputable def tr2 : ((E ⊗[𝕜] F) →ₗ[𝕜] (E ⊗[𝕜] F)) →ₗ[𝕜] E →ₗ[𝕜] E :=
   tr1 𝕜 F E ∘ₗ LinearEquiv.arrowCongr (TensorProduct.comm 𝕜 E F) (TensorProduct.comm 𝕜 E F)
