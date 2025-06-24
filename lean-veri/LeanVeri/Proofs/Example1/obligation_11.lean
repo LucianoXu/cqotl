@@ -8,7 +8,10 @@ variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
 
 local notation "𝕜²" => ((EuclideanSpace 𝕜) (Fin 2))
 
-def lt  : (ℤ → (ℤ → Bool)) := sorry
+def lt : (ℤ → (ℤ → Bool)) := fun x y ↦ x < y
 
+/- This seems to be false -/
 lemma obligation_11 (x' : ℤ) (x : ℤ) (i' : ℤ) (i : ℤ) (m : ℤ) :
- ((¬ ((((lt i) m) = ((lt i') m)) ∧ ((x = x') ∧ (i = i')))) = true) := sorry
+    ((¬ ((((lt i) m) = ((lt i') m)) ∧ ((x = x') ∧ (i = i')))) = true) := by
+  sorry
+  
