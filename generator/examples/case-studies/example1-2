@@ -99,15 +99,21 @@ Prove RandomWalkProof :
     by_lean.
     (* Pause. *)
 
-    r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
+    (* simplify pre/post condition *)
+    r_pre ((((~ ((lt @ i) @ m)) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ (i == i'))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
 
-    (* Pause. *)
+        simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl.
+        apply Lemma4. simpl. revert H0. by_lean.
+
+    r_seq 0 1 ~ (((lt @ i) @ m)  /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
 
     r_initq.
         simpl. simpl_entail. simpl.
         dirac. simpl_entail. refl.
+
         
-    r_seq 0 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[bit]_(q,q).
+    r_seq 0 1 ~ (((lt @ i) @ m) /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[bit]_(q,q).
+
         r_unitary. dirac. simpl_entail. simpl. cq_entail. simpl. split.
             intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
             intro H. 
@@ -117,52 +123,32 @@ Prove RandomWalkProof :
             simpl_entail.
             
             (* Pause.  *)
-            (* sorry. *)
             by_lean.
             (* Pause. *)
 
-    r_seq 1 1 ~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[bit, bit]_(q, q) | 0O[bit, bit]_(q, q).
+    r_seq 1 1 ~ (((lt @ i) @ m) /\ ((x == x') /\ (i == i') /\ (b == b'))) -> 0O[bit, bit]_(q, q) | 0O[bit, bit]_(q, q).
 
     judge_swap.
     r_meas_sample id.
+
+        (* \/ premises *)
         simpl. refl.
-        split. split.
-            intro H. 
-            (* Pause. *)
-            dirac. 
-            
-            (* Pause. *)
-            (* sorry. *)
-            by_lean.
-            (* Pause. *)
-            intro H. dirac.
 
-            (* Pause. *)
-            (* sorry. *)
-            by_lean.
-            (* Pause. *)
-            
+        (* premises *)
+        split.
             split.
-            intro H. dirac.
+            intro Hyp. dirac. by_lean.
+            intro Hyp. dirac. by_lean.
 
-            (* Pause. *)
-            (* sorry. *)
-            by_lean.
-            (* Pause. *)
-            
-            intro H. dirac.
+            split.
+            intro Hyp. dirac. by_lean.
+            intro Hyp. dirac. by_lean.
 
-            (* Pause. *)
-            (* sorry. *)
-            by_lean.
-            (* Pause. *)
+        cq_entail. split.
+            simpl. intro Hyp. rewrite Hyp. simpl. dirac. simpl_entail. refl.
+            simpl. intro Hyp. rewrite Hyp. simpl. dirac. simpl_entail. refl.
 
-            cq_entail. split.
-                simpl. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
-                simpl. intro H. rewrite H0. simpl. dirac. simpl_entail. refl.
-
-
-    r_pre (((~ ((((lt @ i) @ m) /\ ((lt @ i') @ m)) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iadd @ x @ b == iadd @ x' @ b')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
+    r_pre (((~ (((lt @ i) @ m) /\ (((x == x') /\ (i == i')) /\ (b == b') /\ (iadd @ x @ b == iadd @ x' @ b')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
 
         simpl_entail. simpl. cq_entail. simpl. intro H. rewrite H0. simpl. 
         

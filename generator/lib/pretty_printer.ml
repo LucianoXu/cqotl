@@ -160,6 +160,11 @@ and term2str (e: terms) : string =
         Printf.sprintf "(%s, %s #, %s)" 
           (term2str t1) (term2str t2) (term2str t3)
 
+    | Fun {head; args=[t1; t2]} when head = _inspace ->
+        Printf.sprintf "(%s \\in %s)" (term2str t1) (term2str t2)
+
+    
+
     (* program statements *)
     | Symbol x when x = _skip ->
         "skip"
