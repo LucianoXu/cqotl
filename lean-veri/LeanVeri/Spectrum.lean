@@ -5,7 +5,6 @@ Authors: Iván Renison
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.InnerProductSpace.Spectrum
 import Mathlib.LinearAlgebra.Eigenspace.Basic
-import LeanVeri.PiL2
 /-!
 This file extends the file `Mathlib.Analysis.InnerProductSpace.Spectrum` but with some lemmas
 probed only for when the dimension is two.
@@ -64,7 +63,7 @@ lemma IsSymmetric.zero_eigenvalues_eq_rank_ker_of_finrank_eq_two (hT : T.IsSymme
         simp [hker]
       have hb1norm : ‖base 1‖ = 1 := base.norm_eq_one 1
       have hb1' : T (base 1) ≠ 0 := by
-        rw [apply_eigenvectorBasis, propext (smul_ne_zero_iff_left (base.neZero 1).ne)]
+        rw [apply_eigenvectorBasis, propext (smul_ne_zero_iff_left (base.orthonormal.ne_zero 1))]
         exact RCLike.ofReal_ne_zero.mpr h1
       exact hb1' hb1
   · rw [Module.End.eigenspace_zero]
@@ -86,7 +85,7 @@ lemma IsSymmetric.zero_eigenvalues_eq_rank_ker_of_finrank_eq_two (hT : T.IsSymme
         simp [hker]
       have hb0norm : ‖base 0‖ = 1 := base.norm_eq_one 0
       have hb0' : T (base 0) ≠ 0 := by
-        rw [apply_eigenvectorBasis, propext (smul_ne_zero_iff_left (base.neZero 0).ne)]
+        rw [apply_eigenvectorBasis, propext (smul_ne_zero_iff_left (base.orthonormal.ne_zero 0))]
         exact RCLike.ofReal_ne_zero.mpr h0
       exact hb0' hb0
   · symm
@@ -102,8 +101,8 @@ lemma IsSymmetric.zero_eigenvalues_eq_rank_ker_of_finrank_eq_two (hT : T.IsSymme
     have h := (eq_iff_eq_zero_of_inner_eq_zero hinner).mp hx
     have h0' := h.left
     have h1' := h.right
-    rw [neg_eq_zero, smul_eq_zero_iff_left (base.neZero 0).ne, mul_eq_zero_iff_right (RCLike.ofReal_ne_zero.mpr h0)] at h0'
-    rw [smul_eq_zero_iff_left (base.neZero 1).ne, mul_eq_zero_iff_right (RCLike.ofReal_ne_zero.mpr h1)] at h1'
+    rw [neg_eq_zero, smul_eq_zero_iff_left (base.orthonormal.ne_zero 0), mul_eq_zero_iff_right (RCLike.ofReal_ne_zero.mpr h0)] at h0'
+    rw [smul_eq_zero_iff_left (base.orthonormal.ne_zero 1), mul_eq_zero_iff_right (RCLike.ofReal_ne_zero.mpr h1)] at h1'
     rw [← base.repr.map_eq_zero_iff]
     ext i
     fin_cases i <;> simp [h0', h1']

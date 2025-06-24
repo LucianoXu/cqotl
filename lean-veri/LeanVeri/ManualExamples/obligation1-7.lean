@@ -25,9 +25,9 @@ lemma aux (T : 𝕜² →ₗ[𝕜] 𝕜²) (hT : T.isDensityOperator)
   have h2 : Module.finrank 𝕜 𝕜² = 2 := finrank_euclideanSpace_fin (𝕜 := 𝕜) (n := 2)
   have h' : T.toSubmodule = ketbraP.toSubmodule := by
     apply Submodule.eq_of_le_of_finrank_eq h
-    rw [toSubmodule_ketbraP_eq_span_ketP, finrank_span_singleton neZero_ketP.ne]
+    rw [toSubmodule_ketbraP_eq_span_ketP, finrank_span_singleton neZero_ketP]
     have hdim := Submodule.finrank_mono h
-    rw [toSubmodule_ketbraP_eq_span_ketP, finrank_span_singleton neZero_ketP.ne] at hdim
+    rw [toSubmodule_ketbraP_eq_span_ketP, finrank_span_singleton neZero_ketP] at hdim
     refine (Nat.le_antisymm_iff.mpr (And.intro hdim ?_))
     rw [Submodule.one_le_finrank_iff]
     intro hT'
@@ -45,7 +45,7 @@ lemma aux (T : 𝕜² →ₗ[𝕜] 𝕜²) (hT : T.isDensityOperator)
     rw [hsum']
     exact Fin.sum_univ_two (hTsymm.eigenvalues h2)
   have hdim : Module.finrank 𝕜 (LinearMap.ker T) = 1 := by
-    rw [h', ker_ketbraP_eq_span_ketM, finrank_span_singleton neZero_ketM.ne]
+    rw [h', ker_ketbraP_eq_span_ketM, finrank_span_singleton neZero_ketM]
   have heigen := hTsymm.zero_eigenvalue_zero_or_one_of_finrank_ker_eq_one_of_finrank_eq_two h2 hdim
   rw [hT.left.isProjection_iff_eigenvalues_eq_zero_or_one h2]
   intro i
