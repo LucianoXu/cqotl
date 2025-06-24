@@ -38,8 +38,9 @@ Prove Pf1 :
     r_unitary. dirac. simpl_entail. split.
 
         cq_entail. intro H. rewrite H0. simpl. simpl_entail.
-        by_lean.
         
+        by_lean.
+
         refl.
 
     judge_swap.
@@ -51,13 +52,13 @@ Prove Pf1 :
             intro H.
             (* A problem here. We don't have types for density operators yet. *)
             dirac. 
-            (* Pause. *)
             by_lean.
             (* Pause. *)
-            intro H. 
+            
+            intro H.
             (* Pause. *)
             dirac. 
-            (* Pause. *)
+            
             by_lean.
             (* Pause. *)
             cq_entail. split.
