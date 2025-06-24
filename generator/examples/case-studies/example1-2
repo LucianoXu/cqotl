@@ -87,7 +87,7 @@ Prove RandomWalkProof :
     (* pre order *)
     simpl_entail. simpl. apply Lemma3. simpl.
     
-    (* sorry. *)
+    (* by_lean. *)
     by_lean.
     (* Pause. *)
     
@@ -95,7 +95,7 @@ Prove RandomWalkProof :
     simpl_entail. simpl. apply Lemma3. simpl. 
     
     (* Pause. *)
-    (* sorry. *)
+    (* by_lean. *)
     by_lean.
     (* Pause. *)
 
@@ -157,7 +157,7 @@ Prove RandomWalkProof :
         
         (* Pause. *)
         by_lean.
-        (* sorry. *)
+        (* by_lean. *)
         (* Pause. *)
     
     r_seq 1 0 (((~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == iadd @ x' @ b') /\ (i == i')))) -> 0O[bit, bit]_(q, q)) | 0O[bit, bit]_(q, q)).
@@ -170,7 +170,7 @@ Prove RandomWalkProof :
         
         (* Pause. *)
         by_lean.
-        (* sorry. *)
+        (* by_lean. *)
         (* Pause. *)
 
     r_seq 0 1 ((((~ (((lt @ i) @ m) == ((lt @ i') @ m))) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ (i == i'))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
@@ -187,9 +187,9 @@ Prove RandomWalkProof :
     simpl_entail. simpl. cq_entail. intro H. rewrite H0. simpl. 
     apply Lemma4 @ (~ ((((lt @ i) @ m) == ((lt @ i') @ m)) /\ ((x == x') /\ (i == i')))) @ q. simpl.
 
+    revert H0.
     (* Pause. *)
     by_lean.
-    (* sorry. *)
     (* Pause. *)
     
     r_seq 1 0 ((((~ (((lt @ i) @ m) == ((lt @ (iadd @ i' @ true)) @ m))) -> 0O[bit]_(q, q)) /\ ((~ ((x == x') /\ (i == (iadd @ i' @ true)))) -> 0O[bit]_(q, q))) | 0O[bit]_(q, q)).
