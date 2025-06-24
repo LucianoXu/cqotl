@@ -8,7 +8,11 @@ variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
 
 local notation "𝕜²" => ((EuclideanSpace 𝕜) (Fin 2))
 
-def lt  : (ℤ → (ℤ → Bool)) := sorry
+def mu  : (Bool → 𝕜) := sorry
 
-lemma obligation_6 (x' : ℤ) (x : ℤ) (i' : ℤ) (i : ℤ) (m : ℤ) :
- ((¬ ((((lt i) m) = ((lt i') m)) ∧ ((x = x') ∧ (i = i')))) = true) := sorry
+def P0  : 𝕜² →ₗ[𝕜] 𝕜² := ketbra0
+
+def vplus  : 𝕜² := sorry
+
+lemma obligation_6  :
+ ∀ (rho : 𝕜² →ₗ[𝕜] 𝕜²), ∀ (pfspace : ((LinearMap.toSubmodule rho) ≤ (LinearMap.toSubmodule ((((outerProduct 𝕜) vplus) vplus) : 𝕜² →ₗ[𝕜] 𝕜²)))), ((((LinearMap.trace 𝕜) 𝕜²) (P0 * rho)) = (mu false)) := sorry
