@@ -13,7 +13,7 @@ open Printf
 let config_file = "cqotl_path.config"
 
 (* Define the relative path from the base CQOTL directory to the Lean Examples directory *)
-let relative_lean_examples_dir = "lean-veri/LeanVeri/Examples"
+let relative_lean_examples_dir = "lean-veri/LeanVeri/GENERATED_OBLIGATIONS"
 
 (* Function to read the base path from the config file *)
 let read_cqotl_base_path config_path =
