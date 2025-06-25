@@ -14,4 +14,4 @@ def vplus  : 𝕜² := sorry
 def H  : 𝕜² →ₗ[𝕜] 𝕜² := sorry
 
 lemma obligation_1  :
- ((LinearMap.LoewnerOrder ketbra0) ((H.adjoint * ((((outerProduct 𝕜) vplus) vplus) : 𝕜² →ₗ[𝕜] 𝕜²)) * H)) := sorry
+ ((LinearMap.instLoewnerPartialOrder.le ketbra0) ((H.adjoint * ((((outerProduct 𝕜) vplus) vplus) : 𝕜² →ₗ[𝕜] 𝕜²)) * H)) := sorry

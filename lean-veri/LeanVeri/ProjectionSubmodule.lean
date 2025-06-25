@@ -210,8 +210,8 @@ lemma SubmoduleSup_assoc (T N M : E →ₗ[𝕜] E) :
 variable {n : ℕ} (hn : Module.finrank 𝕜 E = n)
 
 lemma isProjection.eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E} (hT : T.isProjection) (i) :
-    hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) := by
-  let hTsymm : T.IsSymmetric := hT.IsSymmetric
+    hT.isSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) := by
+  let hTsymm : T.IsSymmetric := hT.isSymmetric
   let x : E := hTsymm.eigenvectorBasis hn i
   let c : ℝ := hTsymm.eigenvalues hn i
   have hT' : T (T x) = T x := LinearMap.ext_iff.mp hT.right x
@@ -231,14 +231,14 @@ lemma isProjection.eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E} (hT : T.isP
   rw [Finset.mem_insert, Finset.mem_singleton]
   exact hc'.symm
 
-lemma isPositiveSemiDefinite.isProjection_of_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
-    (hT : T.isPositiveSemiDefinite)
-    (h : ∀i, hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ)) :
+lemma IsPositive.isProjection_of_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
+    (hT : T.IsPositive)
+    (h : ∀i, hT.isSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ)) :
     T.isProjection := by
   apply And.intro hT
   ext x
   rw [coe_comp, Function.comp_apply]
-  have hTsymm : T.IsSymmetric := hT.IsSymmetric
+  have hTsymm : T.IsSymmetric := hT.isSymmetric
   let base : OrthonormalBasis (Fin n) 𝕜 E := hTsymm.eigenvectorBasis hn
   let x_repr : EuclideanSpace 𝕜 (Fin n) := base.repr x
   rw [← OrthonormalBasis.sum_repr base x]
@@ -251,9 +251,9 @@ lemma isPositiveSemiDefinite.isProjection_of_eigenvalues_eq_zero_or_one {T : E �
   rw [Finset.mem_insert, Finset.mem_singleton] at hi
   cases hi <;> simp [*]
 
-lemma isPositiveSemiDefinite.isProjection_iff_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
-    (hT : T.isPositiveSemiDefinite) :
-    T.isProjection ↔ ∀i, hT.IsSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) :=
+lemma IsPositive.isProjection_iff_eigenvalues_eq_zero_or_one {T : E →ₗ[𝕜] E}
+    (hT : T.IsPositive) :
+    T.isProjection ↔ ∀i, hT.isSymmetric.eigenvalues hn i ∈ ({0, 1} : Finset ℝ) :=
   Iff.intro (fun hTproj ↦ hTproj.eigenvalues_eq_zero_or_one hn)
     (hT.isProjection_of_eigenvalues_eq_zero_or_one hn)
 

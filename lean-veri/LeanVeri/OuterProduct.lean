@@ -2,8 +2,8 @@
 Copyright (c) 2025 Iván Renison, Jam Khan. All rights reserved.
 Authors: Iván Renison, Jam Khan
 -/
+import Mathlib.Analysis.InnerProductSpace.Trace
 import LeanVeri.LinearMapPropositions
-import LeanVeri.Trace
 
 /-!
 This file defines the outer product of two vectors as a linear map,
@@ -121,8 +121,8 @@ lemma IsSelfAdjoint_outerProduct_self (x : E) :
 lemma IsSymmetric_outerProduct_self (x : E) : (outerProduct 𝕜 x x).IsSymmetric :=
   (outerProduct 𝕜 x x).isSymmetric_iff_isSelfAdjoint.mpr (IsSelfAdjoint_outerProduct_self 𝕜 x)
 
-lemma isPositiveSemiDefinite_outerProduct_self (x : E) :
-    (outerProduct 𝕜 x x).isPositiveSemiDefinite := by
+lemma isPositive_outerProduct_self (x : E) :
+    (outerProduct 𝕜 x x).IsPositive := by
   apply And.intro (IsSelfAdjoint_outerProduct_self 𝕜 x)
   intro y
   simp only [outerProduct_def]
@@ -131,7 +131,7 @@ lemma isPositiveSemiDefinite_outerProduct_self (x : E) :
 
 lemma isProjection_outerProduct_self_of_norm_eq_one {x : E} (h : ‖x‖ = 1) :
     (outerProduct 𝕜 x x).isProjection := by
-  apply And.intro (isPositiveSemiDefinite_outerProduct_self 𝕜 x)
+  apply And.intro (isPositive_outerProduct_self 𝕜 x)
   ext y
   simp only [LinearMap.coe_comp, Function.comp_apply, outerProduct_def]
   rw [inner_smul_right, inner_self_eq_norm_sq_to_K, h]

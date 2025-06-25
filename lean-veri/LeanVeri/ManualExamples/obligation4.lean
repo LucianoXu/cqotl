@@ -9,13 +9,13 @@ local notation "𝕜²" => EuclideanSpace 𝕜 (Fin 2)
 open scoped TensorProduct
 
 lemma obligation1 :
-    LinearMap.LoewnerOrder (𝕜 := 𝕜) ketbra11 (ket10bra01 + ket01bra10 + ketbra11 + ketbra00) := by
+    (LinearMap.instLoewnerPartialOrder (𝕜 := 𝕜)).le ketbra11 (ket10bra01 + ket01bra10 + ketbra11 + ketbra00) := by
   sorry
 
 def X : 𝕜² →ₗ[𝕜] 𝕜² := sorry
 
 lemma obligation2 :
-    LinearMap.LoewnerOrder
+    LinearMap.instLoewnerPartialOrder.le
       ketbra10
       (TensorProduct.mapBilinear 𝕜 𝕜² 𝕜² 𝕜² 𝕜² (LinearMap.adjoint X) 1
         ∘ₗ ketbra11
@@ -23,13 +23,13 @@ lemma obligation2 :
       ) := sorry
 
 lemma obligation3 :
-    LinearMap.LoewnerOrder
+    LinearMap.instLoewnerPartialOrder.le
       (LinearMap.SubmoduleInf
         (TensorProduct.mapBilinear 𝕜 𝕜² 𝕜² 𝕜² 𝕜² ketbra1 1)
         (TensorProduct.mapBilinear 𝕜 𝕜² 𝕜² 𝕜² 𝕜² 1 ketbra0))
       ketbra10 := sorry
 
 lemma obligation4 :
-    LinearMap.LoewnerOrder (𝕜 := 𝕜)
+    (LinearMap.instLoewnerPartialOrder (𝕜 := 𝕜)).le
       ketbra0
       (LinearMap.adjoint Hadamard ∘ₗ ketbraP ∘ₗ Hadamard) := sorry

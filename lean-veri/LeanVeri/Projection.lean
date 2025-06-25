@@ -10,18 +10,6 @@ This file extends the file `Mathlib.Analysis.InnerProductSpace.Projection`.
 variable {𝕜 E : Type*} [RCLike 𝕜]
 variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
 
-lemma Submodule.orthogonal_le_orthogonal_iff {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
-    [K₁.HasOrthogonalProjection] : K₀ᗮ ≤ K₁ᗮ ↔ K₁ ≤ K₀ :=
-  ⟨fun h ↦ by simpa using orthogonal_le h, orthogonal_le⟩
-
-lemma Submodule.orthogonal_le_iff_orthogonal_le {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
-    [K₁.HasOrthogonalProjection] : K₀ᗮ ≤ K₁ ↔ K₁ᗮ ≤ K₀ := by
-  rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
-
-lemma Submodule.le_orthogonal_iff_le_orthogonal {K₀ K₁ : Submodule 𝕜 E} [K₀.HasOrthogonalProjection]
-    [K₁.HasOrthogonalProjection] : K₀ ≤ K₁ᗮ ↔ K₁ ≤ K₀ᗮ := by
-  rw [← orthogonal_le_orthogonal_iff, orthogonal_orthogonal]
-
 open Module
 lemma Submodule.eq_orthogonal_of_finrank_add_of_orthogonal [FiniteDimensional 𝕜 E]
     (K₀ K₁ : Submodule 𝕜 E) [K₁.HasOrthogonalProjection] (H01 : K₀ ⟂ K₁)
