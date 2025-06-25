@@ -10,12 +10,13 @@ This file defines the outer product of two vectors as a linear map,
 and proves basic properties of the outer product.
 -/
 
-variable (𝕜 : Type*) {E : Type*} [RCLike 𝕜]
+variable (𝕜 : Type*) {E F : Type*} [RCLike 𝕜]
 
-variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [FiniteDimensional 𝕜 E]
+variable [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
+variable [NormedAddCommGroup F] [InnerProductSpace 𝕜 F]
 
 /-- The outer product of two vectors -/
-def outerProduct (x : E) (y : E) : E →ₗ[𝕜] E where
+def outerProduct (x : E) (y : F) : F →ₗ[𝕜] E where
   toFun := fun z => (inner 𝕜 y z) • x
   map_add' z w := by
     rw [← Module.add_smul, inner_add_right y z w]
@@ -24,63 +25,55 @@ def outerProduct (x : E) (y : E) : E →ₗ[𝕜] E where
     exact IsScalarTower.smul_assoc m (inner 𝕜 y z) x
 
 
-omit [FiniteDimensional 𝕜 E] in
-lemma outerProduct_def (x : E) (y : E) (z : E) :
+lemma outerProduct_def (x : E) (y : F) (z : F) :
     outerProduct 𝕜 x y z = (inner 𝕜 y z) • x := rfl
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `(∣x⟩ + |y⟩)⟨z| = ∣x⟩⟨z| + |y⟩⟨z|` -/
-lemma outerProduct_add_dist_left (x : E) (y : E) (z : E) :
+lemma outerProduct_add_dist_left (x : E) (y : E) (z : F) :
     outerProduct 𝕜 (x + y) z = outerProduct 𝕜 x z + outerProduct 𝕜 y z := by
   ext
   simp only [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   simp [smul_add]
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `∣x⟩(⟨y| + ⟨z|) = ∣x⟩⟨y| + |x⟩⟨z|` -/
-lemma outerProduct_add_dist_right (x : E) (y : E) (z : E) :
+lemma outerProduct_add_dist_right (x : E) (y : F) (z : F) :
     outerProduct 𝕜 x (y + z) = outerProduct 𝕜 x y + outerProduct 𝕜 x z := by
   ext
   simp only [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   rw [inner_add_left, add_smul]
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `(∣x⟩ - |y⟩)⟨z| = ∣x⟩⟨z| - |y⟩⟨z|` -/
-lemma outerProduct_sub_dist_left (x : E) (y : E) (z : E) :
+lemma outerProduct_sub_dist_left (x : F) (y : F) (z : E) :
     outerProduct 𝕜 (x - y) z = outerProduct 𝕜 x z - outerProduct 𝕜 y z := by
   ext
   simp [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   simp [smul_sub]
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is distributive `∣x⟩(⟨y| - ⟨z|) = ∣x⟩⟨y| - |x⟩⟨z|` -/
-lemma outerProduct_sub_dist_right (x : E) (y : E) (z : E) :
+lemma outerProduct_sub_dist_right (x : E) (y : F) (z : F) :
     outerProduct 𝕜 x (y - z) = outerProduct 𝕜 x y - outerProduct 𝕜 x z := by
   ext
   simp [LinearMap.add_apply]
   repeat rw [outerProduct_def]
   rw [inner_sub_left, sub_smul]
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product is associative `(∣x⟩⟨y|)|z⟩ = ∣x⟩⟨y|z⟩` -/
-lemma outerProduct_assoc_right (x : E) (y : E) (z : E) :
+lemma outerProduct_assoc_right (x : E) (y : F) (z : F) :
     (outerProduct 𝕜 x y) z = (@inner 𝕜 _ _ y z) • x := rfl
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product scalar multiplication `(c|x⟩)⟨y| = c(|x⟩⟨y|) `-/
-lemma outerProduct_smul_assoc_left (c : 𝕜) (x : E) (y : E) :
+lemma outerProduct_smul_assoc_left (c : 𝕜) (x : E) (y : F) :
     (outerProduct 𝕜 (c • x) y) = (c : 𝕜) • (outerProduct 𝕜 x y) := by
   ext
   simp only [LinearMap.smul_apply]
   repeat rw [outerProduct_def]
   rw [smul_algebra_smul_comm]
 
-omit [FiniteDimensional 𝕜 E] in
 /-- The outer product scalar multiplication `(c|x⟩)⟨y| = c(|x⟩⟨y|) `-/
-lemma outerProduct_smul_assoc_right (c : 𝕜) (x : E) (y : E) :
+lemma outerProduct_smul_assoc_right (c : 𝕜) (x : E) (y : F) :
     (outerProduct 𝕜 x (c • y)) = (starRingEnd 𝕜 c) • (outerProduct 𝕜 x y) := by
   ext
   simp only [LinearMap.smul_apply]
@@ -89,7 +82,25 @@ lemma outerProduct_smul_assoc_right (c : 𝕜) (x : E) (y : E) :
   simp only [RCLike.star_def]
   rw [smul_algebra_smul_comm]
 
-lemma adjoint_outerProduct (x y : E) :
+lemma inner_outerProduct_eq_inner_mul_inner (x : E) (y z : F) (w : E) :
+    inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 z y * inner 𝕜 x w := by
+  repeat rw [outerProduct_def]
+  rw [inner_smul_left, inner_conj_symm]
+
+lemma outerProduct_comp_outerProduct_eq_inner_smul_outerProduct (x : E) (y z : F) (w : E) :
+    outerProduct 𝕜 x y ∘ₗ outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
+  ext v
+  simp only [LinearMap.comp_apply, outerProduct_def, map_smul, LinearMap.smul_apply]
+  rw [smul_algebra_smul_comm]
+
+lemma outerProduct_mul_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
+    outerProduct 𝕜 x y * outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
+  rw [Module.End.mul_eq_comp]
+  exact outerProduct_comp_outerProduct_eq_inner_smul_outerProduct 𝕜 x y z w
+
+variable [FiniteDimensional 𝕜 E] [FiniteDimensional 𝕜 F]
+
+lemma adjoint_outerProduct (x : E) (y : F) :
     (outerProduct 𝕜 x y).adjoint = outerProduct 𝕜 y x := by
   symm
   rw [LinearMap.eq_adjoint_iff]
@@ -97,6 +108,10 @@ lemma adjoint_outerProduct (x y : E) :
   repeat rw [outerProduct_def]
   rw [inner_smul_left, inner_conj_symm, inner_smul_right]
   exact mul_comm _ _
+
+lemma star_outerProduct (x y : E) :
+    star (outerProduct 𝕜 x y) = outerProduct 𝕜 y x := by
+  rw [LinearMap.star_eq_adjoint, adjoint_outerProduct]
 
 lemma IsSelfAdjoint_outerProduct_self (x : E) :
     IsSelfAdjoint (outerProduct 𝕜 x x) := by
@@ -122,27 +137,14 @@ lemma isProjection_outerProduct_self_of_norm_eq_one {x : E} (h : ‖x‖ = 1) :
   rw [inner_smul_right, inner_self_eq_norm_sq_to_K, h]
   simp
 
-omit [FiniteDimensional 𝕜 E] in
-lemma inner_outerProduct_eq_inner_mul_inner (x y z w : E) :
-    inner 𝕜 ((outerProduct 𝕜 x y) z) w = inner 𝕜 z y * inner 𝕜 x w := by
-  repeat rw [outerProduct_def]
-  rw [inner_smul_left, inner_conj_symm]
+lemma IsSelfAdjoint_outerProduct_add (x y : E) :
+    IsSelfAdjoint (outerProduct 𝕜 x y + outerProduct 𝕜 y x) := by
+  rw [LinearMap.isSelfAdjoint_iff', map_add]
+  repeat rw [adjoint_outerProduct]
+  abel
 
-omit [FiniteDimensional 𝕜 E] in
-lemma outerProduct_comp_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
-    outerProduct 𝕜 x y ∘ₗ outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
-  ext v
-  simp only [LinearMap.comp_apply, outerProduct_def, map_smul, LinearMap.smul_apply]
-  rw [smul_algebra_smul_comm]
-
-omit [FiniteDimensional 𝕜 E] in
-lemma outerProduct_mul_outerProduct_eq_inner_smul_outerProduct (x y z w : E) :
-    outerProduct 𝕜 x y * outerProduct 𝕜 z w = inner 𝕜 y z • outerProduct 𝕜 x w := by
-  rw [Module.End.mul_eq_comp]
-  exact outerProduct_comp_outerProduct_eq_inner_smul_outerProduct 𝕜 x y z w
-
+omit [FiniteDimensional 𝕜 E] [FiniteDimensional 𝕜 F]
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-omit [FiniteDimensional 𝕜 E]
 
 omit [DecidableEq ι] in
 lemma sum_outerProduct (f g : ι → E) (x : E) :
