@@ -14,7 +14,7 @@ lemma sum_diag_eq (n : ℕ) (f : Fin n → Fin n → ℝ) :
     ∑i ∈ ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2), f i.1 i.2 =
     ∑i, f i i := by
   let diag := (@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2
-  rw [← Lean.Grind.CommRing.add_zero (∑i ∈ ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2), f i.1 i.2),
+  rw [← add_zero (∑i ∈ ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ i.1 = i.2), f i.1 i.2),
     ← show ∑i ∈ diagᶜ, (0 : ℝ) = 0 by exact Finset.sum_const_zero]
   have diagc : diagᶜ = ((@Finset.univ (Fin n × Fin n) _).filter fun i ↦ ¬i.1 = i.2) := by
     unfold diag

@@ -8,7 +8,6 @@ import LeanVeri.ProjectionSubmodule
 -- Extra imports for the proof
 import LeanVeri.OuterProduct
 import LeanVeri.Spectrum
-import LeanVeri.Trace
 
 variable {𝕜 : Type*} [_inst : (RCLike 𝕜)]
 
@@ -24,7 +23,7 @@ noncomputable def vplus : 𝕜² := ketP
 lemma aux (T : 𝕜² →ₗ[𝕜] 𝕜²) (hT : T.isDensityOperator)
     (h : T.toSubmodule ≤ ketbraP.toSubmodule) :
     T.isProjection := by
-  have hTsymm := hT.left.IsSymmetric
+  have hTsymm := hT.left.isSymmetric
   have h2 : Module.finrank 𝕜 𝕜² = 2 := finrank_euclideanSpace_fin (𝕜 := 𝕜) (n := 2)
   have h' : T.toSubmodule = ketbraP.toSubmodule := by
     apply Submodule.eq_of_le_of_finrank_eq h
@@ -41,7 +40,7 @@ lemma aux (T : 𝕜² →ₗ[𝕜] 𝕜²) (hT : T.isDensityOperator)
     simp_all
   rw [toSubmodule_ketbraP_eq_span_ketP] at h
   unfold LinearMap.toSubmodule at h'
-  rw [Submodule.orthogonalComplement_eq_orthogonalComplement] at h'
+  rw [@Submodule.orthogonalComplement_eq_orthogonalComplement 𝕜 𝕜² _ _ _ _ _ (Submodule.HasOrthogonalProjection.ofCompleteSpace _) (Submodule.HasOrthogonalProjection.ofCompleteSpace _)] at h'
   have hsum : 1 = hTsymm.eigenvalues h2 0 + hTsymm.eigenvalues h2 1 := by
     have hsum' := hTsymm.re_trace_eq_sum_eigenvalues h2
     rw [hT.right, RCLike.one_re] at hsum'

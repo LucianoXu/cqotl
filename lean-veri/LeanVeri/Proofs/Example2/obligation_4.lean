@@ -14,8 +14,5 @@ noncomputable def vplus : 𝕜² := ketP
 noncomputable def H : 𝕜² →ₗ[𝕜] 𝕜² := Hadamard
 
 lemma obligation_4 :
-    ((LinearMap.LoewnerOrder ketbra0) ((H.adjoint * ((((outerProduct 𝕜) vplus) vplus) : 𝕜² →ₗ[𝕜] 𝕜²)) * H)) := by
-  unfold H vplus
-  rw [← ketbraP]
-  rw [adjoint_Hadamard_mul_ketbraP_mul_Hadamard_eq_ketbra0, ketbra0]
-  exact LinearMap.reflexive_LoewnerOrder (𝕜 := 𝕜) ketbra0
+    ((LinearMap.instLoewnerPartialOrder.le ketbra0) ((H.adjoint * ((((outerProduct 𝕜) vplus) vplus) : 𝕜² →ₗ[𝕜] 𝕜²)) * H)) := by
+  rw [H, vplus, ← ketbraP, adjoint_Hadamard_mul_ketbraP_mul_Hadamard_eq_ketbra0, ketbra0]

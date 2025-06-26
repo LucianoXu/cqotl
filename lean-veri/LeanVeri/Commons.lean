@@ -162,11 +162,11 @@ lemma neZero_ketM : (ketM : 𝕜²) ≠ 0 := by
   rw [← norm_pos_iff, norm_ketM]
   exact Real.zero_lt_one
 
-lemma isPositiveSemiDefinite_ketbra0 : LinearMap.isPositiveSemiDefinite (ketbra0 : 𝕜² →ₗ[𝕜] 𝕜²) :=
-  isPositiveSemiDefinite_outerProduct_self 𝕜 ket0
+lemma isPositive_ketbra0 : LinearMap.IsPositive (ketbra0 : 𝕜² →ₗ[𝕜] 𝕜²) :=
+  isPositive_outerProduct_self 𝕜 ket0
 
-lemma isPositiveSemiDefinite_ketbra1 : LinearMap.isPositiveSemiDefinite (ketbra1 : 𝕜² →ₗ[𝕜] 𝕜²) :=
-  isPositiveSemiDefinite_outerProduct_self 𝕜 ket1
+lemma isPositive_ketbra1 : LinearMap.IsPositive (ketbra1 : 𝕜² →ₗ[𝕜] 𝕜²) :=
+  isPositive_outerProduct_self 𝕜 ket1
 
 lemma isProjection_ketbra0 : LinearMap.isProjection (ketbra0 : 𝕜² →ₗ[𝕜] 𝕜²) :=
   isProjection_outerProduct_self_of_norm_eq_one 𝕜 norm_ket0
@@ -180,11 +180,11 @@ lemma isSelfAdjoint_ketbraP : @IsSelfAdjoint (𝕜² →ₗ[𝕜] 𝕜²) _ ketb
 lemma isSelfAdjoint_ketbraM : @IsSelfAdjoint (𝕜² →ₗ[𝕜] 𝕜²) _ ketbraM :=
   IsSelfAdjoint_outerProduct_self 𝕜 ketM
 
-lemma isPositiveSemiDefinite_ketbraP : LinearMap.isPositiveSemiDefinite (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) :=
-  isPositiveSemiDefinite_outerProduct_self 𝕜 ketP
+lemma isPositive_ketbraP : LinearMap.IsPositive (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) :=
+  isPositive_outerProduct_self 𝕜 ketP
 
-lemma isPositiveSemiDefinite_ketbraM : LinearMap.isPositiveSemiDefinite (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²) :=
-  isPositiveSemiDefinite_outerProduct_self 𝕜 ketM
+lemma isPositive_ketbraM : LinearMap.IsPositive (ketbraM : 𝕜² →ₗ[𝕜] 𝕜²) :=
+  isPositive_outerProduct_self 𝕜 ketM
 
 lemma inner_ketP_ket0 : inner 𝕜 (ketP : 𝕜²) ket0 = 1/√2 :=
   calc
