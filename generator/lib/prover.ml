@@ -277,9 +277,8 @@ and eval_var (p: prover) (name: string) (t: terms) : eval_result =
       | None ->
           (* Type check needed here *)
           (* Add the new variable to the frame. *)
-          let type_of_t = calc_type wfctx t in
-          match type_of_t with
-          | Type (Symbol sym) when sym = _type -> 
+          match is_type wfctx t with
+          | Some _ -> 
             p.stack <- (add_envItem normal_f (Assumption {name; t})) :: p.stack;
             Success
           | _ -> ProverError (Printf.sprintf "The type %s is not typed as Type, Prop or CType." (term2str t))
@@ -326,12 +325,12 @@ and eval_prove (p: prover) (x : string) (prop: terms) : eval_result =
       ProverError (Printf.sprintf "Name %s is already declared." x)
     | None ->
       (* check whether can be typed as Type. *)
-      match type_check wfctx prop (Symbol _type) with
-      | Type _ -> 
+      match is_type wfctx prop with
+      | Some _ -> 
           p.stack <- (open_proof normal_f x prop) :: p.stack;
           Success
-      | TypeError msg -> 
-          ProverError (Printf.sprintf "%s cannot be typed as Type, therfore witness cannot be proved. %s" (term2str prop) msg)
+      | None -> 
+          ProverError (Printf.sprintf "%s cannot be typed as Type, therfore witness cannot be proved." (term2str prop))
 
 
 and eval_undo (p: prover) : eval_result =
@@ -656,9 +655,9 @@ and eval_tac_split (f: proof_frame) : tactic_result =
     | Fun {head; args=[t1; t2]} when head=_wedge ->
       begin
         match 
-          type_check wfctx t1 (Symbol _type), 
-          type_check wfctx t2 (Symbol _type) with
-        | Type _, Type _ ->
+          is_type wfctx t1, 
+          is_type wfctx t2 with
+        | Some _, Some _ ->
           let new_frame = {
             env         = f.env;
             proof_name  = f.proof_name;
@@ -668,8 +667,8 @@ and eval_tac_split (f: proof_frame) : tactic_result =
           }
           in 
           Success (ProofFrame new_frame)
-        | TypeError msg, _ -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type. %s" (term2str t1) msg)
-        | _, TypeError msg -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type. %s" (term2str t2) msg)
+        | None, _ -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type." (term2str t1))
+        | _, None -> TacticError (Printf.sprintf "splic tactic cannot apply here. The terms %s is not typed as Type." (term2str t2))
       end
     | _ -> TacticError "split tactic cannot apply here. The current goal is not a conjunction."
 

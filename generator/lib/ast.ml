@@ -145,6 +145,7 @@ type typing_result =
 
 (* The reserved term symbols *)
 
+(* a trick: we use Type[Type[...]] to represent the typing hierarchy. *)
 let _type     = "Type"
 let _forall   = "FORALL"
 let _fun      = "FUN"

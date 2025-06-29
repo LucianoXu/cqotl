@@ -116,7 +116,6 @@ rule token = parse
 
 
     (* terms *)
-    | "Type"                        { TYPE }
     | "forall"                      { FORALL }
     | "fun"                         { FUN }
     | "tr"                          { TR }
