@@ -93,10 +93,14 @@ Prove Pf2 :
     choose 2.
 
     r_if q1.
-        (* l_unitary. *)
-        (* Pause. *)
-        (* sorry. *)
-        sorry. 
+
+
+        r_unitary.
+        dirac. 
+        simpl_entail.
+        split.
+            by_rocq.
+            by_rocq.
 
         r_skip.
           simpl_entail. 
@@ -121,7 +125,10 @@ Prove Pf2 :
         ((|(false, false)> @ <(false, false)|)_((q1, q1'), (q1, q1')) /\ Psym2_((q2, q2'), (q2, q2')) 
         \/ (|(true, true)> @ <(true, true)|)_((q1, q1'), (q1, q1')) /\ U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2)) | 0O[bit]_(q1, q1).
 
+    (* Pause. *)
     r_unitary.
+    (* Pause. *)
+
     dirac. simpl_entail. split. simpl.
 
     (* crazy obligation that requires adjusting labels *)

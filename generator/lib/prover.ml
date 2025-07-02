@@ -1108,6 +1108,14 @@ and eval_tac_R_INITQ (f: proof_frame) : tactic_result =
   -----------------------------------------------
   { Phi } q *= U; ~ skip; { Psi }
 *)
+
+(** 
+  l_unitary
+
+  (U^D_q) @ Psi <= Phi
+  -----------------------------------------------
+  { Phi } q *= U; ~ skip; { Psi }
+*)
 and eval_tac_R_UNITARY (f: proof_frame) : tactic_result =
   match f.goals with
     | [] -> TacticError "Nothing to prove."
