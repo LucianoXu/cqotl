@@ -10,7 +10,7 @@
 %token VEE WEDGE LONGARROW ARROW DARROW COLON COMMA PERIOD MAPSTO VDASH RNDARROW LARROW ASSIGN SEMICOLON LBRACK RBRACK LEQ EQEQ EQ TILDE LBRACE RBRACE PLUS LPAREN RPAREN STAR ATAT AT HASH VBAR RANGLE LANGLE ADJ UNDERSCORE
 
 (* token for commands *)
-%token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED
+%token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED SYNTHESIZE
 
 (* token for tactics *)
 %token SORRY EXPAND REFL DESTRUCT CASE INTRO REVERT APPLY CHOOSE SPLIT BYLEAN BYROCQ SIMPL REWRITE RWRULE
@@ -79,17 +79,21 @@ typings:
   | t = terms COLON t2 = terms COMMA ts = typings { (t, t2) :: ts }
 
 command:
-  | DEF x = ID COLON t = terms ASSIGN e = terms PERIOD  { Def {x; t; e} }
-  | DEF x = ID ASSIGN e = terms PERIOD                  { DefWithoutType {x; e} }
-  | VAR x = ID COLON t = terms PERIOD                   { Var {x; t} }
-  | CHECK e = terms PERIOD                              { Check e }
-  | SHOW x = ID PERIOD                                  { Show x }
-  | SHOWALL PERIOD                                      { ShowAll }
-  | UNDO PERIOD                                         { Undo }
-  | PAUSE PERIOD                                        { Pause }
-  | PROVE x = ID COLON p = terms PERIOD                 { Prove {x; p} }
-  | QED PERIOD                                          { QED }
-  | t = tactic                                          { Tactic t }
+  | DEF x = ID COLON t = terms ASSIGN e = terms PERIOD { Def {x; t; e} }
+  | DEF x = ID ASSIGN e = terms PERIOD { DefWithoutType {x; e} }
+  | VAR x = ID COLON t = terms PERIOD  { Var {x; t} }
+  | CHECK e = terms PERIOD { Check e }
+  | SHOW x = ID PERIOD { Show x }
+  | SHOWALL PERIOD { ShowAll }
+  | UNDO PERIOD { Undo }
+  | PAUSE PERIOD { Pause }
+  | PROVE x = ID COLON p = terms PERIOD { Prove {x; p} }
+  | QED PERIOD { QED }
+  | SYNTHESIZE t = terms PERIOD { Synthesize {t} }
+
+
+  | t = tactic { Tactic t }
+
 
 tactic:
   | SORRY PERIOD                { Sorry }

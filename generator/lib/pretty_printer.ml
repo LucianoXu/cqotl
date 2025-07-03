@@ -7,29 +7,30 @@ let rec command_list_2_str (cs: command list) : string =
     in  String.concat "\n" command_strs
 
 and command2str (c: command) : string =
-    match c with
-    | Def {x; t; e}           -> 
-        Printf.sprintf "Def %s : %s := %s." x (term2str t) (term2str e)
-    | DefWithoutType {x; e}   -> 
-        Printf.sprintf "Def %s := %s." x (term2str e)
-    | Var {x; t}              -> 
-        Printf.sprintf "Var %s : %s." x (term2str t) 
-    | Check e                 -> 
-        Printf.sprintf "Check %s." (term2str e)
-    | Show x                  ->
-        Printf.sprintf "Show %s." x
-    | ShowAll                 ->
-        Printf.sprintf "ShowAll."
-    | Undo                    ->
-        Printf.sprintf "Undo."
-    | Pause                   ->
-        Printf.sprintf "Pause."
-    | Prove {x; p}            ->
-        Printf.sprintf "Prove %s : %s." x (term2str p)
-    | Tactic t                ->
-        (tactic2str t)
-    | QED                     -> 
-            "QED."
+  match c with
+  | Def {x; t; e} -> 
+      Printf.sprintf "Def %s : %s := %s." x (term2str t) (term2str e)
+  | DefWithoutType {x; e} -> 
+      Printf.sprintf "Def %s := %s." x (term2str e)
+  | Var {x; t}    -> 
+      Printf.sprintf "Var %s : %s." x (term2str t) 
+  | Check e      -> 
+      Printf.sprintf "Check %s." (term2str e)
+  | Show x       ->
+      Printf.sprintf "Show %s." x
+  | ShowAll      ->
+      Printf.sprintf "ShowAll."
+  | Undo         ->
+      Printf.sprintf "Undo."
+  | Pause       ->
+      Printf.sprintf "Pause."
+  | Prove {x; p}  ->
+      Printf.sprintf "Prove %s : %s." x (term2str p)
+  | Tactic t      ->
+      (tactic2str t)
+  | QED -> "QED."
+  | Synthesize {t} ->
+      Printf.sprintf "Synthesize %s." (term2str t)
 
 and tactic2str (t: tactic) : string =
     match t with
@@ -237,5 +238,11 @@ and rwrule2str (r: rewriting_rule) : string =
   | {lhs; rhs; typings}                                         ->
     let typings_str =
         (List.map (fun (x, t) -> Printf.sprintf "%s : %s" (term2str x) (term2str t)) typings)
-            |> String.concat ", " 
-    in  Printf.sprintf "%s |- %s --> %s" typings_str (term2str lhs) (term2str rhs)
+    |> String.concat ", " in
+    Printf.sprintf "%s |- %s --> %s" typings_str (term2str lhs) (term2str rhs)
+
+let subst2str (s : subst) : string =
+    let format_subst (x, t) : string =
+        Printf.sprintf "%s := %s" x (term2str t) in
+    let subst_strs = List.map format_subst s in
+    "{" ^ (String.concat ", " subst_strs) ^ "}"

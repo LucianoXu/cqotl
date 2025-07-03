@@ -17,13 +17,47 @@ Prove Lemma2 : forall (x : CTerm[bit]),
     rewrite <- Lemma1 @ x.
     rewrite H. simpl. refl.
 QED.
-    
+
+Prove pfU : 
+    forall (U: OType[bit, bit]), 
+    forall (HU: UOpt[U]), 
+        UOpt[((|false> @ <false|) * 1O[bit] + (|true> @ <true|) * U)].
+
+    (* this should also be proved in Lean. *)
+    sorry.
+
+QED.
+
+Prove pfProjMeasOpt: ProjMeasOptPair[(P0, P1)].
+
+    (* this should also be proved in Lean. *)
+    sorry.
+QED.
+
+Prove pfP0Proj : POpt[P0].
+    sorry.
+QED.
+
+Prove pfP1Proj : POpt[P1].
+    sorry.
+QED.
+
+Prove pfProj1 : POpt[|(false, false)>@<(false, false)|].
+    sorry.
+QED.
+
+Prove pfProj2 : POpt[|(true, true)>@<(true, true)|].
+    sorry.
+QED.
+
+
 Prove Pf2 : 
     forall (x : CVar[bit]), forall (x' : CVar[bit]), 
     forall (y : CVar[bit]), forall (y' : CVar[bit]), 
     forall (q1 : QReg[bit]), forall (q1' : QReg[bit]),
     forall (q2 : QReg[bit]), forall (q2' : QReg[bit]),
     forall (U : OType[bit, bit]),
+    forall (HU : UOpt[U]),
 
     {true -> (
         (|(false, false)>@<(false, false)| \/ |(true, true)>@<(true, true)|)_((q1, q1'), (q1, q1')) 
@@ -47,7 +81,7 @@ Prove Pf2 :
 
 
     intro x. intro x'. intro y. intro y'.
-    intro q1. intro q1'. intro q2. intro q2'. intro U.
+    intro q1. intro q1'. intro q2. intro q2'. intro U. intro HU.
     expand Psym2.
     r_seq -1 -1 (~(x == x') -> 0O[bit]_(q1, q1) /\ ((x == x') -> Psym2_((q2, q2'), (q2, q2')))) | 0O[bit]_(q1, q1).
 
