@@ -13,7 +13,7 @@
 %token DEF VAR CHECK SHOW SHOWALL UNDO PAUSE PROVE QED SYNTHESIZE
 
 (* token for tactics *)
-%token SORRY EXPAND REFL DESTRUCT CASE INTRO REVERT APPLY CHOOSE SPLIT BYLEAN SIMPL REWRITE RWRULE
+%token SORRY EXPAND REFL DESTRUCT CASE INTRO REVERT APPLY CHOOSE SPLIT BYLEAN BYROCQ SIMPL REWRITE RWRULE
 %token R_PRE R_POST R_SKIP R_SEQ R_ASSIGN R_INITQ R_UNITARY R_MEAS R_IF R_WHILE R_WHILE_WHILE R_MEAS_MEAS R_MEAS_SAMPLE SWITCH_ID SWITCH_SWAP
 %token JUDGE_SWAP CQ_ENTAIL DIRAC SIMPL_ENTAIL ENTAIL_TRANS CYLINDER_EXT
 
@@ -96,48 +96,45 @@ command:
 
 
 tactic:
-  | SORRY PERIOD { Sorry }
-  | EXPAND v = ID PERIOD { Expand v }
-  | REFL PERIOD { Refl }
-  | DESTRUCT v = ID PERIOD { Destruct v }
-  | CASE t = terms PERIOD { Case t }
-  | INTRO v = ID PERIOD { Intro v}
-  | REVERT v = ID PERIOD { Revert v }
-  | APPLY t = terms PERIOD { Apply t }
-  | CHOOSE n = NUM PERIOD { Choose n }
-  | SPLIT PERIOD { Split }
-  | BYLEAN PERIOD { ByLean }
-  | SIMPL PERIOD { Simpl }
-  | REWRITE t = terms PERIOD { Rewrite_L2R t }
-  | REWRITE LARROW t = terms PERIOD { Rewrite_R2L t }
-  | RWRULE r = rewriting_rule PERIOD { RWRULE r }
+  | SORRY PERIOD                { Sorry }
+  | EXPAND v = ID PERIOD        { Expand v }
+  | REFL PERIOD                 { Refl }
+  | DESTRUCT v = ID PERIOD      { Destruct v }
+  | CASE t = terms PERIOD       { Case t }
+  | INTRO v = ID PERIOD         { Intro v}
+  | REVERT v = ID PERIOD        { Revert v }
+  | APPLY t = terms PERIOD      { Apply t }
+  | CHOOSE n = NUM PERIOD       { Choose n }
+  | SPLIT PERIOD                { Split }
+  | BYLEAN PERIOD               { ByLean }
+  | BYROCQ PERIOD               { ByRocq }
+  | SIMPL PERIOD                { Simpl }
+  | REWRITE t = terms PERIOD          { Rewrite_L2R t }
+  | REWRITE LARROW t = terms PERIOD   { Rewrite_R2L t }
+  | RWRULE r = rewriting_rule PERIOD  { RWRULE r }
 
-  | R_PRE pre = terms PERIOD { R_PRE pre }
-  | R_POST post = terms PERIOD { R_POST post }
-  | R_SKIP PERIOD { R_SKIP }
+  | R_PRE pre = terms PERIOD          { R_PRE pre }
+  | R_POST post = terms PERIOD        { R_POST post }
+  | R_SKIP PERIOD                     { R_SKIP }
   | R_SEQ n1 = NUM n2 = NUM t = terms PERIOD { R_SEQ (n1, n2, t) }
-  | R_ASSIGN PERIOD { R_ASSIGN }
-  | R_INITQ PERIOD { R_INITQ }
-  | R_UNITARY PERIOD { R_UNITARY }
-  | R_MEAS PERIOD { R_MEAS }
-  | R_IF qs = terms PERIOD { R_IF qs }
+  | R_ASSIGN PERIOD                   { R_ASSIGN }
+  | R_INITQ PERIOD                    { R_INITQ }
+  | R_UNITARY PERIOD                  { R_UNITARY }
+  | R_MEAS PERIOD                     { R_MEAS }
+  | R_IF qs = terms PERIOD            { R_IF qs }
   | R_WHILE qs = terms phi = terms PERIOD { R_WHILE (qs, phi) }
   | R_WHILE_WHILE qs = terms phi = terms PERIOD { R_WHILE_WHILE (qs, phi) }
-  | R_MEAS_MEAS SWITCH_ID PERIOD { R_MEAS_MEAS true }
-  | R_MEAS_MEAS SWITCH_SWAP PERIOD { R_MEAS_MEAS false }
-  | R_MEAS_SAMPLE SWITCH_ID PERIOD { R_MEAS_SAMPLE true }
-  | R_MEAS_SAMPLE SWITCH_SWAP PERIOD { R_MEAS_SAMPLE false }
+  | R_MEAS_MEAS SWITCH_ID PERIOD      { R_MEAS_MEAS true }
+  | R_MEAS_MEAS SWITCH_SWAP PERIOD    { R_MEAS_MEAS false }
+  | R_MEAS_SAMPLE SWITCH_ID PERIOD    { R_MEAS_SAMPLE true }
+  | R_MEAS_SAMPLE SWITCH_SWAP PERIOD  { R_MEAS_SAMPLE false }
 
-  | JUDGE_SWAP PERIOD { JUDGE_SWAP }
-  | CQ_ENTAIL PERIOD { CQ_ENTAIL }
-  | DIRAC PERIOD { DIRAC }
-  | SIMPL_ENTAIL PERIOD { SIMPL_ENTAIL }
-  | ENTAIL_TRANS t = terms PERIOD { ENTAIL_TRANS t }
-  | CYLINDER_EXT t = terms PERIOD { CYLINDER_EXT t }
-
-// qvlist :
-//   | q = ID { [q] }
-//   | q = ID qs = qvlist { q :: qs }
+  | JUDGE_SWAP PERIOD                 { JUDGE_SWAP }
+  | CQ_ENTAIL PERIOD                  { CQ_ENTAIL }
+  | DIRAC PERIOD                      { DIRAC }
+  | SIMPL_ENTAIL PERIOD               { SIMPL_ENTAIL }
+  | ENTAIL_TRANS t = terms PERIOD     { ENTAIL_TRANS t }
+  | CYLINDER_EXT t = terms PERIOD     { CYLINDER_EXT t }
 
 terms:
   | LPAREN t1 = terms RPAREN { t1 }

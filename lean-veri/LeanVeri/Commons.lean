@@ -425,7 +425,7 @@ lemma adjoint_Hadamard_eq : Hadamard.adjoint = outerProduct 𝕜 ketP ket0 + out
   unfold Hadamard
   simp [adjoint_outerProduct]
 
-lemma adjoint_Hadamard_mul_ketbraP_mul_Hadamard_eq_ketbra0 :
+lemma adj_H_mul_ketbraP_mul_H_eq_ketbra0 :
     Hadamard.adjoint * (ketbraP : 𝕜² →ₗ[𝕜] 𝕜²) * Hadamard = ketbra0 := by
   rw [adjoint_Hadamard_eq, Hadamard]
   unfold ketbraP

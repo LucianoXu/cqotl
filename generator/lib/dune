@@ -29,6 +29,7 @@
   transformer
   quantum_ast
   obligations
+  coqQ_ast
   mapper)
  (libraries menhirLib)
  

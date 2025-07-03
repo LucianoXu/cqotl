@@ -25,7 +25,6 @@ QED.
 
 Def Psym2 := |(true, false)> @ <(true, false)| + |(false, true)> @ <(false, true)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
 
-
 Prove Lemma1 : forall (x : CTerm[bit]), ~ ~ x = x.
 
     intro x. simpl. refl.

@@ -27,6 +27,7 @@ and tactic =
   | Choose    of int
   | Split
   | ByLean
+  | ByRocq
   | Simpl
   | Rewrite_L2R of terms
   | Rewrite_R2L of terms
@@ -81,6 +82,7 @@ type proof_frame = {
   proof_prop: terms;
   goals     : (envItem list * terms) list;
   lean_goals: (envItem list * terms) list;
+  rocq_goals: (envItem list * terms) list;
 }
 [@@deriving show]
 

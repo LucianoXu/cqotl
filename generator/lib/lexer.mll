@@ -39,8 +39,6 @@ rule token = parse
     | "<-$"                         { RNDARROW }
     | "<-"                          { LARROW }
     | ":="                          { ASSIGN }
-    (* | "*="                          { STARASSIGN } *)
-    (* | "|0>"                         { KET0 } *)
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
@@ -62,7 +60,6 @@ rule token = parse
     | "<"                           { LANGLE }
     | "^D"                          { ADJ }
     | '_'                           { UNDERSCORE }
-
 
     (* Commands *)
     | "Def"                         { DEF }
@@ -88,6 +85,7 @@ rule token = parse
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
+    | "by_rocq"                     { BYROCQ }
     | "simpl"                       { SIMPL }
     | "rewrite"                     { REWRITE }
     | "rwrule"                      { RWRULE }
