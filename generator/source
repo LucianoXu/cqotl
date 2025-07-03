@@ -1,3 +1,16 @@
+Var o : OType[bit, bit].
+
+(* Var pf: UOpt[o]. *)
+Check UOpt[o].
+Check POpt[o].
+
+Var pfP : POpt[o].
+
+Var Hpf: forall (o' : OType[bit, bit]), forall (hpf: POpt[o]), UOpt[o'].
+
+Synthesize UOpt[o].
+
+
 
 (*
 

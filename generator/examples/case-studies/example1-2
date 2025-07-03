@@ -2,10 +2,19 @@
 (* Example 1 - with While *)
 
 Var H : OType[bit, bit].
+
+Prove pfHUnitary : UOpt[H].
+    sorry.
+QED.
+
 Var vplus : KType[bit].
 
 Def P0 : OType[bit, bit] := |false> @ <false|.
 Def P1 : OType[bit, bit] := |true> @ <true|.
+
+Prove pfProjMeasOpt: ProjMeasOptPair[(P0, P1)].
+    sorry. 
+QED.
 
 (* The uniform distribution on bit. *)
 Var mu : PDist[bit].
@@ -108,9 +117,8 @@ Prove RandomWalkProof :
     r_seq 0 1 ~ (((lt @ i) @ m)  /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (|false> @ <false|)_(q,q)) | 0O[bit]_(q,q).
 
     r_initq.
-        simpl. simpl_entail. simpl.
-        dirac. simpl_entail. refl.
-
+    (** possible example for term rewriting system demonstration *)
+        simpl. simpl_entail. simpl. dirac. simpl_entail. refl.
         
     r_seq 0 1 ~ (((lt @ i) @ m) /\ ((x == x') /\ (i == i'))) -> 0O[bit, bit]_(q, q) /\ (true -> (vplus @ vplus^D)_(q,q)) | 0O[bit]_(q,q).
 

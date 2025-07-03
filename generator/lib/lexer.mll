@@ -39,8 +39,6 @@ rule token = parse
     | "<-$"                         { RNDARROW }
     | "<-"                          { LARROW }
     | ":="                          { ASSIGN }
-    (* | "*="                          { STARASSIGN } *)
-    (* | "|0>"                         { KET0 } *)
     | ";"                           { SEMICOLON }
     | "["                           { LBRACK }
     | "]"                           { RBRACK }
@@ -63,7 +61,6 @@ rule token = parse
     | "^D"                          { ADJ }
     | '_'                           { UNDERSCORE }
 
-
     (* Commands *)
     | "Def"                         { DEF }
     | "Var"                         { VAR }
@@ -74,6 +71,7 @@ rule token = parse
     | "Pause"                       { PAUSE }
     | "Prove"                       { PROVE }
     | "QED"                         { QED }
+    | "Synthesize"                  { SYNTHESIZE }
     
     (* Tactics *)
     | "sorry"                       { SORRY }
@@ -87,6 +85,7 @@ rule token = parse
     | "choose"                      { CHOOSE }
     | "split"                       { SPLIT }
     | "by_lean"                     { BYLEAN }
+    | "by_rocq"                     { BYROCQ }
     | "simpl"                       { SIMPL }
     | "rewrite"                     { REWRITE }
     | "rwrule"                      { RWRULE }
@@ -116,7 +115,6 @@ rule token = parse
 
 
     (* terms *)
-    | "Type"                        { TYPE }
     | "forall"                      { FORALL }
     | "fun"                         { FUN }
     | "tr"                          { TR }

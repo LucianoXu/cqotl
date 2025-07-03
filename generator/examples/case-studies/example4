@@ -1,14 +1,29 @@
 
 Var H : OType[bit, bit].
+
+Prove pfHUnitary : UOpt[H].
+    (* H is a unitary operator. *)
+    sorry.
+QED.
+
 Var vplus : KType[bit].
 
 Def P0 : OType[bit, bit] := |false> @ < false|.
 Def P1 : OType[bit, bit] := |true> @ <true|.
 
+
+Prove pfProjMeasOpt: ProjMeasOptPair[(P0, P1)].
+    sorry. 
+QED.
+
 Var X : OType[bit, bit].
 
-Def Psym2 := |(true, false)> @ <(true, false)| + |(false, true)> @ <(false, true)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
+Prove pfXUnitary : UOpt[X].
+    (* H is a unitary operator. *)
+    sorry.
+QED.
 
+Def Psym2 := |(true, false)> @ <(true, false)| + |(false, true)> @ <(false, true)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
 
 Prove Lemma1 : forall (x : CTerm[bit]), ~ ~ x = x.
 

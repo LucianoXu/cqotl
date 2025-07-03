@@ -12,6 +12,7 @@ type command =
   | Prove of {x : string; p : terms}
   | Tactic of tactic
   | QED
+  | Synthesize of {t : terms}
   [@@deriving show]
 
 and tactic =
@@ -26,6 +27,7 @@ and tactic =
   | Choose    of int
   | Split
   | ByLean
+  | ByRocq
   | Simpl
   | Rewrite_L2R of terms
   | Rewrite_R2L of terms
@@ -80,6 +82,7 @@ type proof_frame = {
   proof_prop: terms;
   goals     : (envItem list * terms) list;
   lean_goals: (envItem list * terms) list;
+  rocq_goals: (envItem list * terms) list;
 }
 [@@deriving show]
 
@@ -145,6 +148,7 @@ type typing_result =
 
 (* The reserved term symbols *)
 
+(* a trick: we use Type[Type[...]] to represent the typing hierarchy. *)
 let _type     = "Type"
 let _forall   = "FORALL"
 let _fun      = "FUN"
@@ -223,6 +227,13 @@ let _inspace    = "INSPACE"
 let _entailment = "ENTAILMENT"
 
 let _judgement  = "JUDGEMENT"
+
+
+let _dopt = "DOpt" (* is density operator *)
+let _popt = "POpt" (* is projector operator *)
+let _uopt = "UOpt" (* is unitary operator *)
+let _hopt = "HOpt" (* is Hermitian operator *)
+let _projmeasoptpair = "ProjMeasOptPair" (* is a pair of projective operators *)
 let _qcoupling  = "QCOUPLING"
 
 let reserved_symbols = [
@@ -296,6 +307,12 @@ let reserved_symbols = [
   _inspace;
   _entailment;
   _judgement;
+  _dopt;
+  _popt;
+  _uopt;
+  _hopt;
+  _projmeasoptpair;
+
   _qcoupling;]
 
 (** return the substitution result t\[v/x\] *)

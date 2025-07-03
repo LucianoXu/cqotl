@@ -1,4 +1,5 @@
 open Ast
+open Ast_transform
 open Pretty_printer
 open Utils
 
@@ -48,25 +49,48 @@ let find_item (wfctx: wf_ctx) (name: string) : envItem option =
     | Some _ -> env_res
     | None -> None
 
+(** check whether the term is of [Type[Type[...]]] form 
+  If yes, return the level of the type. (Type is at level 1)*)
+let rec is_type_term (t: terms) : int option =
+  match t with
+  | Symbol sym when sym = _type -> Some 1
+  | Fun {head; args=[t]} when head = _type ->
+    begin match is_type_term t with
+    | Some n -> Some (n + 1)
+    | None -> None
+    end
+  | _ -> None
+
+let rec construct_type_term (level : int) : terms =
+  if level = 1 then
+    Symbol _type
+  else if level > 1 then
+    Fun {head=_type; args=[construct_type_term (level-1)]}
+  else
+    failwith "construct_type_term: level should be strictly positive"
+
+
 (** Calculate the type of the term. Raise the corresponding error when typing fails. *)
 let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result = 
   match s with
   (* Type *)
-  | Symbol sym when sym = _type -> 
-      Type (Symbol _type)
+  | _ when is_type_term s <> None ->
+    Type (Fun {head=_type; args=[s]})
   
   (* forall *)
+  (* type hierarchy rule needs investigating *)
   | Fun {head; args=[Symbol x; t; t']} when head = _forall ->
       begin
-        match type_check wfctx t (Symbol _type) with
-        | Type _ -> 
+        match is_type wfctx t with
+        | Some n -> 
           begin
             let new_wfctx = {wfctx with ctx = Assumption {name = x; t = t} :: wfctx.ctx} in
-            match type_check new_wfctx t' (Symbol _type) with
-            | Type _ -> Type (Symbol _type)
-            | TypeError _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
+            match is_type new_wfctx t' with
+            | Some m -> 
+              Type (construct_type_term ((max n m) + 1))
+            | None -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t'))
           end
-        | TypeError _ ->
+        | None ->
           TypeError (Printf.sprintf "%s typing failed. %s is not typed as Type." (term2str s) (term2str t))
       end
   
@@ -364,6 +388,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
     end
 
   (* Unitary *)
+  (* need to check is_unitary *)
   | Fun {head; args=[u; qs]} when head = _unitary ->
     begin
       match calc_type wfctx u, calc_type wfctx qs with
@@ -373,7 +398,12 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
         head2 = _qreg &&
         t1 = t1' && t1 = t2
       ) ->
-        Type (Symbol _progstt)
+        begin match type_is_unitary wfctx u with
+        | None -> 
+          Type (Symbol _progstt)
+        | Some msg ->
+          TypeError (Printf.sprintf "%s typing failed. %s is not a valid unitary operator. %s" (term2str s) (term2str u) msg)
+        end
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
@@ -391,7 +421,13 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
             head3 = _qreg &&
             t2 = t3
           ) ->
-          Type (Symbol _progstt)
+          (* check projective measurement operators *)
+          begin match type_is_projmeaoptpair wfctx m_opt with
+          | None ->
+            Type (Symbol _progstt)
+          | Some msg ->
+            TypeError (Printf.sprintf "%s typing failed. %s" (term2str s) msg)
+          end
 
         | Fun {head=head1; args}, _, _ when head1 = _cvar && args <> [Symbol _bit] ->
           TypeError (Printf.sprintf "%s typing failed. %s is typed as %s, instead of CVar[bit]." (term2str s) x (term2str (Fun {head=_cvar; args})))
@@ -433,6 +469,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | Type type_t1, Type type_t2 ->
         begin
           match type_t1, type_t2 with
+
           (* product of ctype *)
           | Symbol v1, Symbol v2 when v1 = _ctype && v2 = _ctype ->
             Type (Symbol _ctype)
@@ -723,7 +760,11 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       match calc_type wfctx t1, calc_type wfctx t2 with
       | Type type_t1, Type type_t2 ->
         begin
-          match type_t1, type_t2 with
+          match is_type wfctx t1, is_type wfctx t2 with
+          | Some n, Some m ->
+            Type (construct_type_term (max n m))
+          | _ ->
+          begin match type_t1, type_t2 with
           (* type conjunction *)
           | _ when type_t1 = Symbol _type && type_t2 = Symbol _type ->
             Type (Symbol _type)
@@ -737,8 +778,16 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
           (* otype projector conjunction *)
           | Fun {head=head1; _}, _ when head1 = _otype && type_t1 = type_t2 ->
-            Type type_t1
-            
+            (* check projection *)
+            begin match type_is_projector wfctx t1, type_is_projector wfctx t2 with
+            | None, None ->
+              Type type_t1
+            | None, Some msg2 ->
+              TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t2) msg2)
+            | Some msg1, _ ->
+              TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t1) msg1)
+            end 
+
           (* dtype projector conjunction *)
           | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]},
             Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when head1 = _dtype && head2 = _dtype && s1 = s2 && s1' = s2' ->
@@ -752,6 +801,7 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
 
           | _ ->
               TypeError (Printf.sprintf "%s typing failed." (term2str s))
+          end
         end
       | TypeError msg, _ -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t1) msg)
       | _, TypeError msg -> TypeError (Printf.sprintf "%s typing failed. %s is not well typed. %s" (term2str s) (term2str t2) msg)
@@ -767,11 +817,19 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
             Type (Fun {head=_cterm; args=[Symbol _bit]})
           else match type_t1, type_t2 with
 
-          (* otype projector conjunction *)
+          (* otype projector disjunction *)
           | Fun {head=head1; _}, _ when head1 = _otype && type_t1 = type_t2 ->
-            Type type_t1
+            (* check projection *)
+            begin match type_is_projector wfctx t1, type_is_projector wfctx t2 with
+            | None, None ->
+              Type type_t1
+            | None, Some msg2 ->
+              TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t2) msg2)
+            | Some msg1, _ ->
+              TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t1) msg1)
+            end 
 
-          (* dtype projector conjunction *)
+          (* dtype projector disjunction *)
           | Fun {head=head1; args=[Fun{args=s1; _}; Fun{args=s2; _}]},
             Fun {head=head2; args=[Fun{args=s1'; _}; Fun{args=s2'; _}]} when head1 = _dtype && head2 = _dtype && s1 = s2 && s1' = s2' ->
               let new_s1 = list_union s1 s1' in
@@ -825,7 +883,15 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
           begin match type_t1, type_t2 with
             (* Sasaki implication (OType) *)
             | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _otype && head2 = _otype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
+            (* check projection *)
+              begin match type_is_projector wfctx t1, type_is_projector wfctx t2 with
+              | None, None ->
                 Type (Fun {head=_otype; args=[tt1; tt1]})
+              | None, Some msg2 ->
+                TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t2) msg2)
+              | Some msg1, _ ->
+                TypeError (Printf.sprintf "%s typing failed. %s is not a valid projector. %s" (term2str s) (term2str t1) msg1)
+              end 
 
             (* Sasaki implication (DType) *)
             | Fun {head=head1; args=[tt1; tt2]}, Fun {head=head2; args=[tt1'; tt2']} when head1 = _dtype && head2 = _dtype && tt1=tt2 && tt1'=tt2' && tt1=tt1' ->
@@ -972,6 +1038,22 @@ let rec calc_type (wfctx : wf_ctx) (s : terms) : typing_result =
       | _ -> TypeError (Printf.sprintf "%s typing failed." (term2str s))
     end
 
+  (* uopt | dopt | popt | hopt *)
+  | Fun {head; args=[o]} when head = _uopt || head = _dopt || head = _popt || head = _hopt ->
+    begin match calc_type wfctx o with
+    | Type (Fun {head=head; args=[t1; t2]}) when head = _otype && t1 = t2 ->
+      Type (Symbol _type)
+    | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as squared OType." (term2str s) (term2str o))
+    end
+
+  | Fun {head; args=[pair]} when head = _projmeasoptpair ->
+    (* check whether the pair is typed as OptPair *)
+    begin match calc_type wfctx pair with
+    | Type (Fun {head; _}) when head = _optpair ->
+      Type (Symbol _type)
+    | _ -> TypeError (Printf.sprintf "%s typing failed. %s is not typed as OptPair." (term2str s) (term2str pair))
+    end
+
   (* qcoupling *)
   | Fun {head; args=[left; p; post]} when head = _qcoupling ->
     begin
@@ -1016,6 +1098,14 @@ and type_check (wfctx : wf_ctx) (s : terms) (t : terms) : typing_result =
     | _, _ -> 
         TypeError (Printf.sprintf "The term %s is not typed as %s, but %s." (term2str s) (term2str t) (term2str type_t))
 
+
+(** check whether the term can be typed as Type or Type[...]. 
+    If yes, return the level of the type. *)
+and is_type (wfctx: wf_ctx) (s : terms) : int option = 
+  match calc_type wfctx s with
+  | Type t -> is_type_term t
+  | TypeError _ -> None
+
 and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   let calc_type_res = calc_type wfctx s in
   match calc_type_res with
@@ -1024,3 +1114,106 @@ and is_cterm (wfctx : wf_ctx) (s : terms) : typing_result =
   | Type t'                                                           -> 
       TypeError (Printf.sprintf "The term %s is not typed as CTerm, but %s." (term2str s) (term2str t'))
   | TypeError msg -> TypeError msg
+
+and type_is_unitary (wfctx : wf_ctx) (opt : terms) : string option =
+  let goal = Fun {head=_uopt; args=[opt]} in
+  if term_synthesize wfctx goal then
+    None
+  else
+    Some (Printf.sprintf "%s cannot be synthesized." (term2str goal))
+
+and type_is_projmeaoptpair (wfctx : wf_ctx) (optpair: terms) : string option =
+  let goal = Fun {head=_projmeasoptpair; args=[optpair]} in
+  if term_synthesize wfctx goal then
+    None
+  else
+    Some (Printf.sprintf "%s cannot be synthesized." (term2str goal))
+
+and type_is_projector (wfctx : wf_ctx) (opt: terms) : string option =
+  let goal = Fun {head=_popt; args=[opt]} in
+  if term_synthesize wfctx goal then
+    None
+  else
+    Some (Printf.sprintf "%s cannot be synthesized." (term2str goal))
+
+(* Try to synthesis the term of type t in the context. 
+    Note: t will not be go through type checking here.
+
+    Key idea:
+      To apply 'apply_t' to 't', we need to check two kinds of parameters. For the parameters assigned after matching, we can just skip. For the parameters that are not unified, we try to further synthesize them in the context.
+*)
+
+and term_synthesize (wfctx: wf_ctx) (t: terms) : bool =
+  let rec term_synthesis_by_term (wfctx: wf_ctx) (t: terms) (apply_t: terms) (apply_t_var_ls: (string * terms) list): bool =
+
+    let direct_match =
+      let is_var = fun x -> 
+        List.exists (fun (var, _) -> var = x) apply_t_var_ls
+      in
+      let match_res = matchs 
+        ~is_var:is_var
+        [(apply_t, t)]
+        []
+      in
+      match match_res with
+      (* try to synthesize all arguments *)
+      (* a bug left here *)
+      | Some s -> 
+        (* Printf.printf "Match result: %s\n" (subst2str s); *)
+        let rec discharge_arg inside_wfctx (apply_t_var_ls: (string * terms) list) =
+          (* Printf.printf "Discharging arguments: %s\n" (String.concat ", " (List.map fst apply_t_var_ls)); *)
+          begin match apply_t_var_ls with
+          | [] -> true
+          | (name, t') :: rest ->
+            let new_t' = apply_subst s t' in
+            let discharge_result = 
+              (* check whether the name appears in the matched substitution *)
+              if List.exists (fun (var, _) -> var = name) s then
+                true
+              else
+                term_synthesize inside_wfctx new_t'
+            in
+            if discharge_result then
+              let new_inside_wfctx = 
+                {inside_wfctx with ctx = Assumption {name; t=new_t'} :: inside_wfctx.ctx} in
+              discharge_arg new_inside_wfctx rest
+            else
+              false
+          end
+        in discharge_arg wfctx apply_t_var_ls
+      | None -> false
+
+    in
+    (* Printf.printf "Trying to synthesize using %s.\n" (term2str apply_t);       *)
+    if direct_match then 
+      true
+    else
+      match apply_t with
+      | Fun {head; args=[Symbol x; t'; t'']} when head = _forall ->
+        (* try to synthesize t' *)
+        term_synthesis_by_term wfctx t t'' (apply_t_var_ls @ [(x, t')])
+
+      | _ -> false
+  in
+  let get_type (item : envItem) : terms =
+    match item with
+    | Assumption {t; _} -> t
+    | Definition {t; _} -> t
+  in
+  (* Printf.printf "Synthesizing %s ...\n" (term2str t); *)
+  if List.exists
+    (fun (item : envItem) -> term_synthesis_by_term wfctx t (get_type item) [])
+    (wfctx.ctx @ wfctx.env)
+  then
+    begin
+      (* Printf.printf "Synthesis successful.\n"; *)
+      true
+    end
+  else
+    begin
+      (* Printf.printf "Synthesis failed.\n"; *)
+      false
+    end
+      
+
+
