@@ -42,10 +42,12 @@ let simpl_rules = [
   parse_rw_rule "(~ b1 -> 0O[T, T]_(q, q)) /\\ (~ b2 -> 0O[T, T]_(q, q)) --> (~ (b1 /\\ b2) -> 0O[T, T]_(q, q))";
 ]
 
+
 let simpl (typing: wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
   let simpl_transforms = List.map (fun r -> apply_rewriting_rule_all r typing wfctx) simpl_rules
-  in  (* apply_rewriting_rule  *)
-      repeat_transforms simpl_transforms t
+  in
+  (* apply_rewriting_rule  *)
+  repeat_transforms simpl_transforms t
 
 (* destruct the cq-assertion entailment *)
 let cq_entailment_destruct (t : terms) : terms option = 
@@ -218,6 +220,8 @@ let dirac_rules = [
   parse_rw_rule "INSPACE[rho_(q, q), P_(q, q)] --> INSPACE[rho, P]";
   parse_rw_rule "tr[P_(q, q)] --> tr[P]";
 ]
+
+
 
 let dirac_simpl (typing : wf_ctx -> terms -> terms option) (wfctx : wf_ctx) (t : terms) : terms =
   let dirac_transforms = 
@@ -612,20 +616,40 @@ let cylinder_ext (wfctx : wf_ctx) (qs : terms) (s : terms) : terms option =
               }
             )
           | _ -> None
+
         (* extend on the left *)
-        else 
-          if qs'1 = qsr then
-            match calc_type wfctx qsl with
-            | Type (Fun {head=head_qreg; args=[tt']}) when head_qreg = _qreg ->
-              Some (Fun {head = _subscript;
-                          args = [(* tensor product *)
-                                  Fun {   head = _star;
-                                          args = [Fun {head = _oneo; args = [tt'];}; opt;]  };
-                                  (* the extended quantum register *)
-                                  Fun {   head = _pair; args = [qs; qs]}]})
-            | _ -> None
-          else  None
+        else if qs'1 = qsr then
+          match calc_type wfctx qsl with
+          | Type (Fun {head=head_qreg; args=[tt']}) when head_qreg = _qreg ->
+            Some (
+              Fun {
+                head = _subscript;
+                args = [
+                  (* tensor product *)
+                  Fun {
+                    head = _star;
+                    args = [
+                      Fun {
+                        head = _oneo;
+                        args = [tt'];
+                      };
+                      opt;
+                    ]
+                  }
+                  ;
+                  (* the extended quantum register *)
+                  Fun {
+                    head = _pair;
+                    args = [qs; qs]
+                  }
+                ]
+              }
+            )
+          | _ -> None
+        else
+          None
       end
     | _ -> None
     end
+    
   | _ -> None
