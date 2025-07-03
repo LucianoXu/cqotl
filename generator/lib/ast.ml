@@ -12,6 +12,7 @@ type command =
   | Prove of {x : string; p : terms}
   | Tactic of tactic
   | QED
+  | Synthesize of {t : terms}
   [@@deriving show]
 
 and tactic =
@@ -226,6 +227,13 @@ let _inspace    = "INSPACE"
 let _entailment = "ENTAILMENT"
 
 let _judgement  = "JUDGEMENT"
+
+
+let _dopt = "DOpt" (* is density operator *)
+let _popt = "POpt" (* is projector operator *)
+let _uopt = "UOpt" (* is unitary operator *)
+let _hopt = "HOpt" (* is Hermitian operator *)
+let _projmeasoptpair = "ProjMeasOptPair" (* is a pair of projective operators *)
 let _qcoupling  = "QCOUPLING"
 
 let reserved_symbols = [
@@ -299,6 +307,12 @@ let reserved_symbols = [
   _inspace;
   _entailment;
   _judgement;
+  _dopt;
+  _popt;
+  _uopt;
+  _hopt;
+  _projmeasoptpair;
+
   _qcoupling;]
 
 (** return the substitution result t\[v/x\] *)

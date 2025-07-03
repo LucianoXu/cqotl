@@ -139,8 +139,8 @@ let env2str (env: envItem list): string =
     |> Printf.sprintf "Environment: [\n%s\n]"
 
 let wfctx2str (wfctx: wf_ctx): string =
-  let env_str = List.map envItem2str wfctx.env in
-  let ctx_str = List.map envItem2str wfctx.ctx in
+  let env_str = List.map envItem2str (List.rev wfctx.env) in
+  let ctx_str = List.map envItem2str (List.rev wfctx.ctx) in
     Printf.sprintf "Environment: [\n%s\n]\nContext: [\n%s\n]"
       (String.concat "\n" env_str)
       (String.concat "\n" ctx_str)
@@ -227,6 +227,8 @@ let rec eval (p: prover) (cmd: command) : eval_result =
         eval_tactic p t
     | QED                     ->
         eval_QED p
+    | Synthesize {t} ->
+        eval_Synthesize p t
     (* | _ -> raise (Failure "Command not implemented yet") *)
   in match res with
     | ProverError msg -> 
@@ -369,6 +371,16 @@ and eval_QED (p: prover) : eval_result =
       let new_frame = close_proof proof_f in
       p.stack <- new_frame :: p.stack;
       Success
+
+and eval_Synthesize (p: prover) (t: terms) : eval_result = 
+  let frame = get_frame p in
+  let wfctx : wf_ctx = get_frame_wfctx frame in
+  let synthesize_res = term_synthesize wfctx t in
+  match synthesize_res with
+  | true -> Success
+  | false -> ProverError (Printf.sprintf "The term %s cannot be synthesized." (term2str t))
+
+
 
 and eval_tactic (p: prover) (tac : tactic) : eval_result =
   let frame = get_frame p in
