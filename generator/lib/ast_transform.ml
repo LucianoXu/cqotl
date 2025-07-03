@@ -69,22 +69,22 @@ let rec matchs ?(is_var = is_var) (pairs : (terms * terms) list) (s : subst)  : 
   | [] -> Some s                                                (* all done *)
   | (Symbol x, t) :: ls when is_var x ->                        (* V x ↦ t  *)
       if indom x s then
-        if app s x = t then matchs ls s                         (* same binding – ok *)
+        if app s x = t then matchs ~is_var:is_var ls s                         (* same binding – ok *)
         else None                                               (* incompatible *)
       else
-        matchs ls ((x, t) :: s)                                 (* extend θ *)
+        matchs ~is_var:is_var ls ((x, t) :: s)                                 (* extend θ *)
   | (_, Symbol x) :: _ when is_var x ->                         (* obj side var – forbid *)
       None
   | (Fun {head = f; args = ts}, Fun {head = g; args = us}) :: ls ->
       if f = g && List.length ts = List.length us then
         let zipped = List.combine ts us in
-        matchs (zipped @ ls) s                                  (* descend *)
+        matchs ~is_var:is_var (zipped @ ls) s                                  (* descend *)
       else
         None
   | (Symbol c1, Symbol c2) :: ls ->                             (* constants *)
-      if c1 = c2 then matchs ls s else None
+      if c1 = c2 then matchs ~is_var:is_var ls s else None
   | (Opaque, Opaque) :: ls ->                                   (* identical opaques *)
-      matchs ls s
+      matchs ~is_var:is_var ls s
   | _ -> None                                                   (* every other mismatch *)
 
 

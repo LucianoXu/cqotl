@@ -6,8 +6,6 @@ Def P1 : OType[bit, bit] := |true> @ <true|.
 
 Def Psym2 := |(true, false)> @ <(false, true)| + |(false, true)> @ <(true, false)| + |(true, true)> @ <(true, true)| + |(false, false)> @ <(false, false)|.
 
-
-
 Prove Lemma1 : forall (x : CTerm[bit]), ~ ~ x = x.
 
     intro x. simpl. refl.
@@ -21,13 +19,47 @@ Prove Lemma2 : forall (x : CTerm[bit]),
     rewrite <- Lemma1 @ x.
     rewrite H. simpl. refl.
 QED.
-    
+
+Prove pfU : 
+    forall (U: OType[bit, bit]), 
+    forall (HU: UOpt[U]), 
+        UOpt[((|false> @ <false|) * 1O[bit] + (|true> @ <true|) * U)].
+
+    (* this should also be proved in Lean. *)
+    sorry.
+
+QED.
+
+Prove pfProjMeasOpt: ProjMeasOptPair[(P0, P1)].
+
+    (* this should also be proved in Lean. *)
+    sorry.
+QED.
+
+Prove pfP0Proj : POpt[P0].
+    sorry.
+QED.
+
+Prove pfP1Proj : POpt[P1].
+    sorry.
+QED.
+
+Prove pfProj1 : POpt[|(false, false)>@<(false, false)|].
+    sorry.
+QED.
+
+Prove pfProj2 : POpt[|(true, true)>@<(true, true)|].
+    sorry.
+QED.
+
+
 Prove Pf2 : 
     forall (x : CVar[bit]), forall (x' : CVar[bit]), 
     forall (y : CVar[bit]), forall (y' : CVar[bit]), 
     forall (q1 : QReg[bit]), forall (q1' : QReg[bit]),
     forall (q2 : QReg[bit]), forall (q2' : QReg[bit]),
     forall (U : OType[bit, bit]),
+    forall (HU : UOpt[U]),
 
     {true -> (
         (|(false, false)>@<(false, false)| \/ |(true, true)>@<(true, true)|)_((q1, q1'), (q1, q1')) 
@@ -51,7 +83,7 @@ Prove Pf2 :
 
 
     intro x. intro x'. intro y. intro y'.
-    intro q1. intro q1'. intro q2. intro q2'. intro U.
+    intro q1. intro q1'. intro q2. intro q2'. intro U. intro HU.
     expand Psym2.
     r_seq -1 -1 (~(x == x') -> 0O[bit]_(q1, q1) /\ ((x == x') -> Psym2_((q2, q2'), (q2, q2')))) | 0O[bit]_(q1, q1).
 
@@ -66,24 +98,29 @@ Prove Pf2 :
         rewrite Lemma2 @ (x == x') @ H.
         dirac. simpl. dirac.
         (* this obligation involves quantum coupling and it's not sure how to deal with it for now *)
-        by_lean.
+        
+        sorry.
+        (* by_lean. *)
 
     
         intro H. 
         rewrite Lemma2 @ (x == x') @ H.
         dirac. simpl. dirac.
         (* same as before *)
-        by_lean.
+        sorry.
+        (* by_lean. *)
         
 
         split.
         intro H.
         rewrite H. simpl. dirac.
         (* same as before *)
-        by_lean.
+        sorry.
+        (* by_lean. *)
 
         (* same as before *)
-        by_lean.
+        sorry.
+        (* by_lean. *)
 
     r_seq 2 -1 (~(x == x') -> 0O[bit]_(q1, q1) 
                 /\ ((x == false /\ x' == false) -> Psym2_((q2, q2'), (q2, q2'))) 
@@ -112,7 +149,8 @@ Prove Pf2 :
             rwrule 1O[bit]_(q1, q1) /\ A --> A.
             
             (* problem: need to use a lemma of <= *)
-            by_lean.
+            sorry.
+            (* by_lean. *)
         
             refl.
 
@@ -121,11 +159,14 @@ Prove Pf2 :
         \/ (|(true, true)> @ <(true, true)|)_((q1, q1'), (q1, q1')) /\ U_(q2, q2) @ Psym2_((q2, q2'), (q2, q2')) @ U^D_(q2, q2)) | 0O[bit]_(q1, q1).
 
     r_unitary.
-    dirac. simpl_entail. split. simpl.
+        dirac. simpl_entail. split. simpl.
+        cq_entail. intro H. simpl.
+            
+            
 
-    (* crazy obligation that requires adjusting labels *)
-    by_lean.
-
+        (* crazy obligation that requires adjusting labels *)
+        sorry.
+    (* by_lean. *)
     (* *)
     rwrule A @ 0O[bit, bit]_(q1, q1) --> 0O[bit, bit]_(q1, q1).
 
@@ -139,6 +180,8 @@ Prove Pf2 :
         (* *)
         intro H.
         (* crazy obligation *)
+        (* dirac. *)
+        Pause.
         by_lean.
 
         (* *)

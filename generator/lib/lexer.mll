@@ -74,6 +74,7 @@ rule token = parse
     | "Pause"                       { PAUSE }
     | "Prove"                       { PROVE }
     | "QED"                         { QED }
+    | "Synthesize"                  { SYNTHESIZE }
     
     (* Tactics *)
     | "sorry"                       { SORRY }
